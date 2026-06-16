@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: smeta-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: smeta
+      POSTGRES_PASSWORD: smeta
+      POSTGRES_DB: smeta
+    ports:
+      - "5432:5432"
+    volumes:
+      - smeta_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smeta -d smeta"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  smeta_pgdata:

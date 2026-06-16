@@ -1,0 +1,95 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { prisma } from '../prisma.js';
+import { ah } from '../util.js';
+import * as s from '../serialize.js';
+
+export const materialsRouter = Router();
+
+// Global katalog (tenantId=null) + tenant'ning shaxsiy materiallari
+materialsRouter.get(
+  '/',
+  ah(async (req, res) => {
+    const tenantId = req.user!.tenantId;
+    const q = (req.query.q as string | undefined)?.trim();
+    const category = req.query.category as string | undefined;
+    const where: any = { OR: [{ tenantId: null }, { tenantId }] };
+    const and: any[] = [];
+    if (q) and.push({ OR: [{ name: { contains: q, mode: 'insensitive' } }, { provider: { contains: q, mode: 'insensitive' } }] });
+    if (category && category !== 'Barchasi') and.push({ category });
+    if (and.length) where.AND = and;
+    const materials = await prisma.material.findMany({ where, orderBy: { name: 'asc' } });
+    res.json(materials.map(s.material));
+  }),
+);
+
+materialsRouter.get(
+  '/categories',
+  ah(async (req, res) => {
+    const tenantId = req.user!.tenantId;
+    const rows = await prisma.material.findMany({
+      where: { OR: [{ tenantId: null }, { tenantId }] },
+      select: { category: true },
+      distinct: ['category'],
+    });
+    res.json(rows.map((r) => r.category));
+  }),
+);
+
+const upsertSchema = z.object({
+  name: z.string().min(1),
+  category: z.string().optional(),
+  provider: z.string().optional().nullable(),
+  unit: z.string().optional(),
+  priceUzs: z.number().nonnegative().optional(),
+  priceUsd: z.number().nonnegative().optional(),
+  stock: z.number().nonnegative().optional(),
+  rating: z.number().min(0).max(5).optional(),
+  imageUrl: z.string().optional().nullable(),
+});
+
+materialsRouter.post(
+  '/',
+  ah(async (req, res) => {
+    const tenantId = req.user!.tenantId;
+    const body = upsertSchema.parse(req.body);
+    const m = await prisma.material.create({
+      data: {
+        tenantId,
+        name: body.name,
+        category: body.category ?? 'Umumiy',
+        provider: body.provider ?? null,
+        unit: body.unit ?? 'dona',
+        priceUzs: body.priceUzs ?? 0,
+        priceUsd: body.priceUsd ?? 0,
+        stock: body.stock ?? 0,
+        rating: body.rating ?? 0,
+        imageUrl: body.imageUrl ?? null,
+      },
+    });
+    res.status(201).json(s.material(m));
+  }),
+);
+
+materialsRouter.patch(
+  '/:id',
+  ah(async (req, res) => {
+    const tenantId = req.user!.tenantId;
+    const existing = await prisma.material.findFirst({ where: { id: req.params.id, tenantId } });
+    if (!existing) return res.status(404).json({ error: 'not_found', message: 'Material topilmadi (yoki global katalogga tegishli)' });
+    const body = upsertSchema.partial().parse(req.body);
+    const m = await prisma.material.update({ where: { id: req.params.id }, data: body });
+    res.json(s.material(m));
+  }),
+);
+
+materialsRouter.delete(
+  '/:id',
+  ah(async (req, res) => {
+    const tenantId = req.user!.tenantId;
+    const existing = await prisma.material.findFirst({ where: { id: req.params.id, tenantId } });
+    if (!existing) return res.status(404).json({ error: 'not_found', message: 'Material topilmadi' });
+    await prisma.material.delete({ where: { id: req.params.id } });
+    res.status(204).end();
+  }),
+);

@@ -1,0 +1,10 @@
+node_modules
+**/node_modules
+**/dist
+apps/api/.pgdata
+.git
+.shots
+.env
+.env.*
+*.log
+**/public/_demo.html

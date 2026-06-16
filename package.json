@@ -1,0 +1,31 @@
+{
+  "name": "smeta-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Smeta AI — qurilish smetalarini AI yordamida hisoblovchi SaaS platforma",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web,admin -c blue,green,magenta \"npm:dev:api\" \"npm:dev:web\" \"npm:dev:admin\"",
+    "dev:api": "npm run dev -w @smeta/api",
+    "dev:web": "npm run dev -w @smeta/web",
+    "dev:admin": "npm run dev -w @smeta/admin",
+    "build": "npm run build -w @smeta/shared && npm run build -w @smeta/api && npm run build -w @smeta/web && npm run build -w @smeta/admin",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "db:embedded": "npm run db:embedded -w @smeta/api",
+    "db:migrate": "npm run db:migrate -w @smeta/api",
+    "db:seed": "npm run db:seed -w @smeta/api",
+    "db:reset": "npm run db:reset -w @smeta/api",
+    "setup": "npm install && npm run build -w @smeta/shared && npm run db:up && npm run db:migrate && npm run db:seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

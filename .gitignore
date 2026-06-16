@@ -1,0 +1,19 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.log
+npm-debug.log*
+.DS_Store
+coverage/
+.vite/
+*.tsbuildinfo
+apps/api/prisma/*.db
+apps/api/prisma/migrations/dev.db*
+.turbo/
+
+# Demo/screenshot artefaktlari
+.shots/
+**/public/_demo.html
+apps/api/.pgdata/

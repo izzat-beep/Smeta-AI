@@ -1,0 +1,27 @@
+# Smeta AI — reverse proxy + avtomatik HTTPS (Let's Encrypt)
+# DOMAIN va ACME_EMAIL .env dan olinadi.
+{
+	email {$ACME_EMAIL}
+}
+
+# Mijoz ilovasi: https://DOMAIN
+{$DOMAIN} {
+	@api path /api/*
+	handle @api {
+		reverse_proxy api:4000
+	}
+	handle {
+		reverse_proxy web:80
+	}
+}
+
+# Admin panel: https://admin.DOMAIN
+admin.{$DOMAIN} {
+	@api path /api/*
+	handle @api {
+		reverse_proxy api:4000
+	}
+	handle {
+		reverse_proxy admin:80
+	}
+}

@@ -1,0 +1,254 @@
+// Smeta AI — Prisma sxemasi (PostgreSQL)
+// Multi-tenant qurilish smeta SaaS. Har Tenant — bitta mijoz-kompaniya.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  BOSHLANGICH
+  PROFESSIONAL
+  KORPORATIV
+}
+
+enum TenantStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+enum UserRole {
+  OWNER
+  MANAGER
+  ENGINEER
+}
+
+enum AdminRole {
+  SUPERADMIN
+  SUPPORT
+}
+
+enum ProjectStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+enum Currency {
+  UZS
+  USD
+}
+
+enum EstimateItemType {
+  MATERIAL
+  LABOR
+  EQUIPMENT
+}
+
+enum EstimateStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum InvoiceStatus {
+  PAID
+  PENDING
+  OVERDUE
+  CANCELLED
+}
+
+enum ChatRole {
+  user
+  assistant
+}
+
+model Tenant {
+  id          String       @id @default(cuid())
+  name        String
+  inn         String?
+  phone       String?
+  plan        Plan         @default(BOSHLANGICH)
+  status      TenantStatus @default(TRIAL)
+  trialEndsAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  users       User[]
+  projects    Project[]
+  materials   Material[]
+  estimates   Estimate[]
+  activities  Activity[]
+  chatSessions ChatSession[]
+  invoices    Invoice[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  fullName     String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         UserRole @default(OWNER)
+  position     String?
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  managedProjects Project[]    @relation("ProjectManager")
+  activities      Activity[]
+  chatSessions    ChatSession[]
+
+  @@index([tenantId])
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  fullName     String
+  passwordHash String
+  role         AdminRole @default(SUPPORT)
+  createdAt    DateTime  @default(now())
+}
+
+model Project {
+  id         String        @id @default(cuid())
+  tenantId   String
+  tenant     Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code       String
+  title      String
+  clientName String
+  category   String        @default("Umumiy")
+  value      Decimal       @default(0) @db.Decimal(18, 2)
+  currency   Currency      @default(UZS)
+  deadline   DateTime?
+  progress   Int           @default(0)
+  status     ProjectStatus @default(PLANNED)
+  managerId  String?
+  manager    User?         @relation("ProjectManager", fields: [managerId], references: [id])
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  estimates  Estimate[]
+
+  @@index([tenantId])
+}
+
+model Material {
+  id        String   @id @default(cuid())
+  tenantId  String? // null = global katalog
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  category  String   @default("Umumiy")
+  provider  String?
+  unit      String   @default("dona")
+  priceUzs  Decimal  @default(0) @db.Decimal(18, 2)
+  priceUsd  Decimal  @default(0) @db.Decimal(18, 2)
+  stock     Decimal  @default(0) @db.Decimal(18, 2)
+  rating    Float    @default(0)
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([category])
+}
+
+model Estimate {
+  id        String         @id @default(cuid())
+  tenantId  String
+  tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  projectId String?
+  project   Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  title     String
+  currency  Currency       @default(UZS)
+  taxRate   Float          @default(12)
+  subtotal  Decimal        @default(0) @db.Decimal(18, 2)
+  taxAmount Decimal        @default(0) @db.Decimal(18, 2)
+  total     Decimal        @default(0) @db.Decimal(18, 2)
+  status    EstimateStatus @default(DRAFT)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  items     EstimateItem[]
+
+  @@index([tenantId])
+}
+
+model EstimateItem {
+  id         String           @id @default(cuid())
+  estimateId String
+  estimate   Estimate         @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  materialId String?
+  name       String
+  type       EstimateItemType @default(MATERIAL)
+  qty        Decimal          @default(0) @db.Decimal(18, 3)
+  unit       String           @default("dona")
+  unitPrice  Decimal          @default(0) @db.Decimal(18, 2)
+  lineTotal  Decimal          @default(0) @db.Decimal(18, 2)
+
+  @@index([estimateId])
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action      String
+  projectName String?
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+model ChatSession {
+  id        String        @id @default(cuid())
+  tenantId  String
+  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  title     String        @default("Yangi suhbat")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  messages  ChatMessage[]
+
+  @@index([tenantId])
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      ChatRole
+  content   String      @db.Text
+  createdAt DateTime    @default(now())
+
+  @@index([sessionId])
+}
+
+model Invoice {
+  id       String        @id @default(cuid())
+  tenantId String
+  tenant   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  amount   Decimal       @default(0) @db.Decimal(18, 2)
+  currency Currency      @default(UZS)
+  period   String
+  status   InvoiceStatus @default(PENDING)
+  issuedAt DateTime      @default(now())
+  paidAt   DateTime?
+
+  @@index([tenantId])
+}

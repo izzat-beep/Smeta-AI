@@ -1,0 +1,71 @@
+# Smeta AI — to'liq production stack (Contabo/har qanday VPS uchun).
+# Ishga tushirish (VPS'da):  docker compose -f docker-compose.prod.yml up -d --build
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: smeta
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-smeta}
+      POSTGRES_DB: smeta
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smeta -d smeta"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://smeta:${DB_PASSWORD:-smeta}@db:5432/smeta?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      AI_MODEL: ${AI_MODEL:-claude-opus-4-8}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@smeta.ai}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin1234}
+      NODE_ENV: production
+      API_PORT: 4000
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - admin
+      - api
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

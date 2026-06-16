@@ -1,0 +1,68 @@
+# Render.com blueprint — Smeta AI (API + web + admin + Postgres)
+# Railway uchun ham xizmat sifatida sozlash mumkin (build/start buyruqlari bir xil).
+
+databases:
+  - name: smeta-db
+    databaseName: smeta
+    user: smeta
+    plan: free
+
+services:
+  # ─── Backend API ──────────────────────────────────────────────────────
+  - type: web
+    name: smeta-api
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build -w @smeta/shared && npm run db:generate -w @smeta/api && npm run build -w @smeta/api
+    # Migratsiya + idempotent bootstrap (admin + global katalog). Demo ma'lumotini
+    # bir marta qo'shish uchun Render Shell'da: npm run db:seed -w @smeta/api
+    startCommand: npm run db:deploy -w @smeta/api && npm run db:bootstrap -w @smeta/api && npm run start -w @smeta/api
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: smeta-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: AI_MODEL
+        value: claude-opus-4-8
+      - key: NODE_ENV
+        value: production
+      - key: API_PORT
+        value: 4000
+      - key: WEB_ORIGIN
+        sync: false
+      - key: ADMIN_ORIGIN
+        sync: false
+
+  # ─── Mijoz ilovasi (static) ───────────────────────────────────────────
+  - type: web
+    name: smeta-web
+    runtime: static
+    buildCommand: npm install && npm run build -w @smeta/shared && npm run build -w @smeta/web
+    staticPublishPath: apps/web/dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false # smeta-api URL manzilini qo'ying
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # ─── Admin panel (static) ─────────────────────────────────────────────
+  - type: web
+    name: smeta-admin
+    runtime: static
+    buildCommand: npm install && npm run build -w @smeta/shared && npm run build -w @smeta/admin
+    staticPublishPath: apps/admin/dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
