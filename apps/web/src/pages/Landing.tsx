@@ -51,9 +51,7 @@ export function Landing() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#5555E7] rounded-md flex items-center justify-center">
-              <Icon icon="lucide:hard-hat" className="w-[22px] h-[22px] text-white" />
-            </div>
+            <img src="/logo.svg" alt="Smeta AI" className="h-9 w-auto" />
             <span className="font-bold text-xl font-display text-[#5555E7]">Smeta AI</span>
           </Link>
           <div className="hidden md:flex items-center gap-1">

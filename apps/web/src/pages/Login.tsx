@@ -11,8 +11,8 @@ export function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [email, setEmail] = useState('j.abduvoxidov@smeta.ai');
-  const [password, setPassword] = useState('demo1234');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
 
@@ -44,9 +44,7 @@ export function Login() {
 
       <header className="relative z-20 w-full h-20 border-b border-[#343841]/10 backdrop-blur-md flex items-center justify-between px-6 lg:px-10">
         <Link to="/" className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#5555E7] rounded-md flex items-center justify-center shadow-lg shadow-[#5555E7]/20">
-            <Icon icon="lucide:hard-hat" className="w-[22px] h-[22px] text-white" />
-          </div>
+          <img src="/logo.svg" alt="Smeta AI" className="h-9 w-auto" />
           <span className="font-display text-xl font-bold text-[#5555E7]">Smeta AI</span>
         </Link>
         <div className="flex items-center gap-4 lg:gap-8">
