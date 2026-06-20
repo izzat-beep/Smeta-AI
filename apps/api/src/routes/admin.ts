@@ -40,7 +40,68 @@ adminRouter.post(
 );
 
 // ─── Quyidagilar uchun admin token kerak ──────────────────────────────────
-adminRouter.use(requireAdmin);
+// — Admin users (faqat SUPERADMIN uchun) —
+function requireSuperadmin(req: any, res: any, next: any) {
+  if (req.admin?.role !== 'SUPERADMIN') {
+    return res.status(403).json({ error: 'forbidden', message: 'Faqat superadmin uchun ruxsat' });
+  }
+  next();
+}
+
+adminRouter.get(
+  '/admin-users',
+  requireSuperadmin,
+  ah(async (req, res) => {
+    const admins = await prisma.adminUser.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(admins.map((a) => s.adminUser(a)));
+  })
+);
+
+adminRouter.post(
+  '/admin-users',
+  requireSuperadmin,
+  ah(async (req, res) => {
+    const body = z
+      .object({
+        email: z.string().email(),
+        fullName: z.string().min(2),
+        password: z.string().min(6),
+        role: z.enum(['SUPERADMIN', 'SUPPORT']).default('SUPPORT'),
+      })
+      .parse(req.body);
+
+    const existing = await prisma.adminUser.findUnique({ where: { email: body.email } });
+    if (existing) {
+      return res.status(409).json({ error: 'conflict', message: 'Bu email allaqachon mavjud' });
+    }
+
+    const passwordHash = await bcrypt.hash(body.password, 10);
+    const admin = await prisma.adminUser.create({
+      data: {
+        email: body.email,
+        fullName: body.fullName,
+        passwordHash,
+        role: body.role,
+      },
+    });
+
+    res.status(201).json(s.adminUser(admin));
+  })
+);
+
+adminRouter.delete(
+  '/admin-users/:id',
+  requireSuperadmin,
+  ah(async (req, res) => {
+    if (req.admin!.sub === req.params.id) {
+      return res.status(400).json({ error: 'bad_request', message: "O'zingizni o'chira olmaysiz" });
+    }
+    await prisma.adminUser.delete({ where: { id: req.params.id } });
+    res.json({ ok: true });
+  })
+);
 
 adminRouter.get(
   '/me',
