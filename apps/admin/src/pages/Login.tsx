@@ -7,8 +7,8 @@ import { ApiError } from '../lib/api';
 export function Login() {
   const { login } = useAdminAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('admin@smeta.ai');
-  const [password, setPassword] = useState('admin1234');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -66,7 +66,7 @@ export function Login() {
           </button>
         </form>
         <p className="mt-6 text-[11px] text-center text-[#BCC0C7]/60">
-          Demo: <span className="text-[#5555E7]">admin@smeta.ai</span> / <span className="text-[#5555E7]">admin1234</span>
+          <span className="text-[#5555E7]"></span> / <span className="text-[#5555E7]"></span>
         </p>
       </div>
     </div>
