@@ -24,21 +24,23 @@ export function Layout() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#16181D] text-[#BCC0C7] font-sans relative overflow-x-hidden">
-      {/* Fon bezaklari */}
+    // App-shell: butun ekran balandligi, tashqi scroll YO'Q.
+    <div className="flex h-screen overflow-hidden bg-[#16181D] text-[#BCC0C7] font-sans relative">
+      {/* Fon bezaklari (qotgan) */}
       <div className="fixed top-[-149px] right-[-100px] w-[576px] h-[593px] bg-[#5555E7]/10 rounded-full blur-[120px] pointer-events-none z-0" />
       <div className="fixed bottom-[-100px] left-[-72px] w-[432px] h-[445px] bg-[#06B6D4]/10 rounded-full blur-[120px] pointer-events-none z-0" />
 
-      {/* Sidebar */}
+      {/* ─── Sidebar — qotib turadi (sahifa bilan scroll bo'lmaydi) ─── */}
       <aside
-        className={`${open ? 'w-64' : 'w-20'} hidden md:flex flex-col border-r border-[#343841]/40 bg-[#16181D]/40 backdrop-blur-xl sticky top-0 h-screen transition-all duration-300 z-50`}
+        className={`${open ? 'w-64' : 'w-20'} hidden md:flex flex-col border-r border-[#343841]/40 bg-[#16181D]/40 backdrop-blur-xl h-screen shrink-0 transition-all duration-300 z-50 relative`}
       >
         <div className="p-4 flex flex-col h-full">
-          <div className="flex items-center gap-2 px-2 mb-6 h-9">
+          <div className="flex items-center gap-2 px-2 mb-6 h-9 shrink-0">
             <img src="/logo.svg" alt="Smeta AI" className="h-9 w-9 object-contain shrink-0" />
           </div>
 
-          <nav className="flex-1 space-y-1">
+          {/* Faqat menyu uzun bo'lsa shu yer scroll bo'ladi */}
+          <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar -mr-2 pr-2">
             {NAV.map((item) => (
               <NavLink
                 key={item.to}
@@ -62,7 +64,7 @@ export function Layout() {
             ))}
           </nav>
 
-          <div className="border-t border-[#343841]/40 pt-4 space-y-1">
+          <div className="border-t border-[#343841]/40 pt-4 space-y-1 shrink-0">
             <NavLink
               to="/app/sozlamalar"
               className={({ isActive }) =>
@@ -90,9 +92,10 @@ export function Layout() {
         </button>
       </aside>
 
-      {/* Asosiy qism */}
-      <main className="flex-1 flex flex-col min-w-0 z-10">
-        <header className="h-16 border-b border-[#343841]/40 bg-[#16181D]/60 backdrop-blur-2xl sticky top-0 z-40 px-4 md:px-10 flex items-center justify-between">
+      {/* ─── Asosiy qism — header qotgan, faqat content scroll ─── */}
+      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden z-10">
+        {/* Header — qotib turadi (scroll bo'lmaydi) */}
+        <header className="h-16 shrink-0 border-b border-[#343841]/40 bg-[#16181D]/60 backdrop-blur-2xl z-40 px-4 md:px-10 flex items-center justify-between">
           <div className="flex items-center gap-3 md:hidden">
             <img src="/logo.svg" alt="Smeta AI" className="h-8 w-8 object-contain" />
           </div>
@@ -129,7 +132,8 @@ export function Layout() {
           </div>
         </header>
 
-        <div className="flex-1">
+        {/* Faqat shu konteyner scroll bo'ladi */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
           <Outlet />
         </div>
       </main>
