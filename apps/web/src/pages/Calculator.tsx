@@ -14,6 +14,8 @@ interface LineItem {
 }
 
 const TAX_RATE = 12;
+const USD_RATE = 12600; // 1 USD ≈ so'm (taxminiy kurs)
+const USTA_TYPES = ['Suvoq ishi', 'Travertin', 'Shtukaturka', "Bo'yoq ishi", 'Kafel terish', 'Boshqa ish'];
 
 const INITIAL_ITEMS: LineItem[] = [
   { name: 'Sement M400', type: 'MATERIAL', qty: 50, unit: 'qop', unitPrice: 50000 },
@@ -36,6 +38,13 @@ export function Calculator() {
   const [laborHours, setLaborHours] = useState('120');
   const [laborRate, setLaborRate] = useState('25000');
   const [equipDays, setEquipDays] = useState('2');
+
+  // Usta ishi (m²/m³) — suvoqchi, travertinchi va h.k.
+  const [ustaType, setUstaType] = useState(USTA_TYPES[0]);
+  const [ustaArea, setUstaArea] = useState('45');
+  const [ustaUnit, setUstaUnit] = useState<'m²' | 'm³'>('m²');
+  const [ustaRate, setUstaRate] = useState('6');
+  const [ustaCur, setUstaCur] = useState<'USD' | 'UZS'>('USD');
 
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
@@ -87,6 +96,18 @@ export function Calculator() {
       next.push({ name: 'Maxsus texnika', type: 'EQUIPMENT', qty: days, unit: 'sutka', unitPrice: 800000 });
     }
     if (next.length) setItems((prev) => [...prev, ...next]);
+  }
+
+  function addUstaWork() {
+    const area = parseFloat(ustaArea) || 0;
+    const rate = parseFloat(ustaRate) || 0;
+    if (area <= 0 || rate <= 0) return;
+    const unitPriceUzs = ustaCur === 'USD' ? rate * USD_RATE : rate;
+    const label = ustaCur === 'USD' ? `$${rate}` : `${fmtNumber(rate)} so'm`;
+    setItems((prev) => [
+      ...prev,
+      { name: `${ustaType} (${label}/${ustaUnit})`, type: 'LABOR', qty: area, unit: ustaUnit, unitPrice: unitPriceUzs },
+    ]);
   }
 
   function removeItem(idx: number) {
@@ -203,6 +224,66 @@ export function Calculator() {
               >
                 <img src="/assets/calculator/IMG_15.svg" className="w-4 h-4" alt="Add" />
                 Qo'shish
+              </button>
+            </div>
+
+            <div className="my-8 border-t border-[#343841]/40"></div>
+
+            {/* Usta ishi — m²/m³ bo'yicha (suvoqchi, travertinchi) */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8.5 h-8.5 bg-[#FF6B1A]/10 border border-[#FF6B1A]/20 rounded-xl flex items-center justify-center">
+                <Icon icon="lucide:ruler" className="w-4 h-4 text-[#FF6B1A]" />
+              </div>
+              <h3 className="font-display font-semibold text-sm tracking-widest text-white/80 uppercase">Usta ishi (m²/m³)</h3>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[12px] font-medium mb-2">Ish turi</label>
+                <select
+                  value={ustaType}
+                  onChange={(e) => setUstaType(e.target.value)}
+                  className="w-full bg-[#343841]/30 border border-[#343841]/40 rounded-xl px-3 py-2 text-sm text-white outline-none"
+                >
+                  {USTA_TYPES.map((t) => (
+                    <option key={t} value={t} className="bg-[#191B1F]">{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-[12px] font-medium mb-2">Maydon</label>
+                  <input type="number" value={ustaArea} onChange={(e) => setUstaArea(e.target.value)} className="w-full bg-[#343841]/30 border border-[#343841]/40 rounded-xl px-3 py-2 text-sm text-white outline-none" />
+                </div>
+                <div className="w-24">
+                  <label className="block text-[12px] font-medium mb-2">Birlik</label>
+                  <div className="flex bg-[#343841]/30 border border-[#343841]/40 rounded-xl p-1">
+                    {(['m²', 'm³'] as const).map((u) => (
+                      <button key={u} type="button" onClick={() => setUstaUnit(u)} className={`flex-1 py-1 text-[10px] font-bold rounded ${ustaUnit === u ? 'bg-[#FF6B1A] text-white' : 'text-white'}`}>{u}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-[12px] font-medium mb-2">Narx (1 {ustaUnit})</label>
+                  <input type="number" value={ustaRate} onChange={(e) => setUstaRate(e.target.value)} className="w-full bg-[#343841]/30 border border-[#343841]/40 rounded-xl px-3 py-2 text-sm text-white outline-none" />
+                </div>
+                <div className="w-24">
+                  <label className="block text-[12px] font-medium mb-2">Valyuta</label>
+                  <div className="flex bg-[#343841]/30 border border-[#343841]/40 rounded-xl p-1">
+                    {(['USD', 'UZS'] as const).map((c) => (
+                      <button key={c} type="button" onClick={() => setUstaCur(c)} className={`flex-1 py-1 text-[9px] font-bold rounded ${ustaCur === c ? 'bg-[#FF6B1A] text-white' : 'text-white'}`}>{c}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-between text-[11px] px-1">
+                <span className="text-[#BCC0C7]">Jami ish haqi:</span>
+                <span className="text-[#FF6B1A] font-bold">{fmtMoney((parseFloat(ustaArea) || 0) * (parseFloat(ustaRate) || 0) * (ustaCur === 'USD' ? USD_RATE : 1), 'UZS')}</span>
+              </div>
+              <button type="button" onClick={addUstaWork} className="w-full py-2.5 border border-[#FF6B1A]/40 bg-[#16181D] text-[#FF6B1A] rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#FF6B1A]/5 transition-colors">
+                <Icon icon="lucide:plus" className="w-4 h-4" />
+                Usta ishini qo'shish
               </button>
             </div>
           </div>

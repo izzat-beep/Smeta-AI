@@ -89,6 +89,7 @@ model Tenant {
   activities  Activity[]
   chatSessions ChatSession[]
   invoices    Invoice[]
+  sales       Sale[]
 }
 
 model User {
@@ -249,6 +250,23 @@ model Invoice {
   status   InvoiceStatus @default(PENDING)
   issuedAt DateTime      @default(now())
   paidAt   DateTime?
+
+  @@index([tenantId])
+}
+
+// Sotilgan honadonlar (kelgan pullar)
+model Sale {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  unitName  String
+  buyerName String
+  area      Decimal  @default(0) @db.Decimal(18, 2)
+  price     Decimal  @default(0) @db.Decimal(18, 2)
+  paid      Decimal  @default(0) @db.Decimal(18, 2)
+  currency  Currency @default(UZS)
+  soldAt    DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([tenantId])
 }

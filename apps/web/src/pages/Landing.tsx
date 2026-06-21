@@ -51,8 +51,7 @@ export function Landing() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.svg" alt="Smeta AI" className="h-9 w-auto" />
-            <span className="font-bold text-xl font-display text-[#5555E7]">Smeta AI</span>
+            <img src="/logo.svg" alt="Smeta AI" className="h-10 w-auto" />
           </Link>
           <div className="hidden md:flex items-center gap-1">
             {['Imkoniyatlar', 'Narxlar', 'Mijozlar'].map((l) => (
@@ -239,10 +238,7 @@ export function Landing() {
       <footer className="pt-16 pb-10 border-t border-[#343841]/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-[#5555E7] rounded-lg flex items-center justify-center">
-              <Icon icon="lucide:hard-hat" className="w-6 h-6 text-white" />
-            </div>
-            <span className="font-bold text-2xl font-display text-[#5555E7]">Smeta AI</span>
+            <img src="/logo.svg" alt="Smeta AI" className="h-11 w-auto" />
           </div>
           <p className="text-[12px] text-[#BCC0C7] tracking-widest uppercase">© 2026 Smeta AI — Qurilish hisob-kitoblarining kelajagi</p>
         </div>

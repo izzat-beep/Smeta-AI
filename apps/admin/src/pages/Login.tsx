@@ -34,9 +34,7 @@ export function Login() {
       <div className="w-full max-w-[420px] bg-[#191B1F]/40 rounded-[28px] border border-[#343841]/40 backdrop-blur-[40px] shadow-2xl p-8 lg:p-10 relative z-10">
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#5555E7]/60 to-transparent" />
         <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 bg-[#5555E7] rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-[#5555E7]/30">
-            <Icon icon="lucide:shield" className="w-8 h-8 text-white" />
-          </div>
+          <img src="/logo.svg" alt="Smeta AI" className="h-16 w-16 object-contain mb-4" />
           <h1 className="text-2xl font-bold font-display text-white">Admin Panel</h1>
           <p className="text-sm text-[#BCC0C7] mt-1">Smeta AI boshqaruv markazi</p>
         </div>

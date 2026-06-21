@@ -13,6 +13,7 @@ import { reportsRouter } from './routes/reports.js';
 import { activitiesRouter } from './routes/activities.js';
 import { settingsRouter } from './routes/settings.js';
 import { aiRouter } from './routes/ai.js';
+import { salesRouter } from './routes/sales.js';
 import { adminRouter } from './routes/admin.js';
 
 const app = express();
@@ -41,6 +42,7 @@ app.use('/api/reports', requireAuth, reportsRouter);
 app.use('/api/activities', requireAuth, activitiesRouter);
 app.use('/api/settings', requireAuth, settingsRouter);
 app.use('/api/ai', requireAuth, aiRouter);
+app.use('/api/sales', requireAuth, salesRouter);
 
 // Admin panel route'lari (o'z auth'i ichida)
 app.use('/api/admin', adminRouter);

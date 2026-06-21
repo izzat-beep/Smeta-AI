@@ -127,6 +127,21 @@ export function invoice(i: any) {
   };
 }
 
+export function sale(x: any) {
+  return {
+    id: x.id,
+    tenantId: x.tenantId,
+    unitName: x.unitName,
+    buyerName: x.buyerName,
+    area: toNum(x.area),
+    price: toNum(x.price),
+    paid: toNum(x.paid),
+    currency: x.currency,
+    soldAt: iso(x.soldAt),
+    createdAt: iso(x.createdAt),
+  };
+}
+
 export function adminUser(a: any) {
   return {
     id: a.id,
