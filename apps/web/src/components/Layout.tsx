@@ -36,7 +36,7 @@ export function Layout() {
       >
         <div className="p-4 flex flex-col h-full">
           <div className="flex items-center gap-2 px-2 mb-6 h-9 shrink-0">
-            <img src="/logo.svg" alt="Smeta AI" className="h-9 w-9 object-contain shrink-0" />
+            <img src="/logo.svg" alt="Smeta AI" className="h-10 w-auto object-contain shrink-0" />
           </div>
 
           {/* Faqat menyu uzun bo'lsa shu yer scroll bo'ladi */}

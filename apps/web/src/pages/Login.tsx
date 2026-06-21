@@ -109,11 +109,6 @@ export function Login() {
               </div>
             </form>
 
-            {mode === 'login' && (
-              <p className="mt-6 text-[11px] text-center text-[#BCC0C7]/60">
-                Demo kirish: <span className="text-[#3DF2FF]">j.abduvoxidov@smeta.ai</span> / <span className="text-[#3DF2FF]">demo1234</span>
-              </p>
-            )}
           </div>
         </div>
       </main>

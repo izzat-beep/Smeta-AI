@@ -20,7 +20,7 @@ export function AdminLayout() {
       <aside className="w-64 hidden md:flex flex-col border-r border-[#343841]/40 bg-[#16181D]/40 backdrop-blur-xl sticky top-0 h-screen z-50">
         <div className="p-4 flex flex-col h-full">
           <div className="flex items-center gap-2 px-2 mb-2 h-9">
-            <img src="/logo.svg" alt="Smeta AI" className="h-9 w-9 object-contain" />
+            <img src="/logo.svg" alt="Smeta AI" className="h-9 w-auto object-contain" />
             <div className="text-[10px] text-[#BCC0C7] uppercase tracking-widest font-bold">Admin Panel</div>
           </div>
 

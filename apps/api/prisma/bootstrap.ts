@@ -12,8 +12,9 @@ dotenv.config({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)),
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminEmail = process.env.ADMIN_EMAIL ?? 'admin@smeta.ai';
-  const adminPassword = process.env.ADMIN_PASSWORD ?? 'admin1234';
+  // Super admin (kodda saqlanadi — saytda ko'rsatilmaydi). Prodda ADMIN_EMAIL/ADMIN_PASSWORD bilan almashtiring.
+  const adminEmail = process.env.ADMIN_EMAIL ?? 'superadmin@smeta-ai.uz';
+  const adminPassword = process.env.ADMIN_PASSWORD ?? 'Smeta@Admin2026';
 
   // Admin (upsert — mavjud bo'lsa tegmaydi/yangilaydi)
   await prisma.adminUser.upsert({
@@ -26,7 +27,11 @@ async function main() {
       role: 'SUPERADMIN',
     },
   });
-  console.log(`✓ Admin tayyor: ${adminEmail}`);
+  // Eski demo admin'ni o'chiramiz (agar boshqa super admin belgilangan bo'lsa)
+  if (adminEmail !== 'admin@smeta.ai') {
+    await prisma.adminUser.deleteMany({ where: { email: 'admin@smeta.ai' } });
+  }
+  console.log(`✓ Super admin tayyor: ${adminEmail}`);
 
   // Global materiallar katalogi — faqat bo'sh bo'lsa
   const globalCount = await prisma.material.count({ where: { tenantId: null } });
