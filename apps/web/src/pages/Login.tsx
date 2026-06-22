@@ -44,7 +44,7 @@ export function Login() {
 
       <header className="relative z-20 w-full h-20 border-b border-[#343841]/10 backdrop-blur-md flex items-center justify-between px-6 lg:px-10">
         <Link to="/" className="flex items-center gap-3">
-          <img src="/logo.svg" alt="Smeta AI" className="h-10 w-auto" />
+          <img src="/logo.svg" alt="Smeta AI" className="h-16 w-auto" />
         </Link>
         <div className="flex items-center gap-4 lg:gap-8">
           <Link to="/" className="text-sm font-medium hover:text-white transition-colors">Asosiy sahifa</Link>

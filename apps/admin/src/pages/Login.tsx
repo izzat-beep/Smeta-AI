@@ -63,9 +63,6 @@ export function Login() {
             {!loading && <Icon icon="lucide:arrow-right" className="w-4 h-4" />}
           </button>
         </form>
-        <p className="mt-6 text-[11px] text-center text-[#BCC0C7]/60">
-          <span className="text-[#5555E7]"></span> / <span className="text-[#5555E7]"></span>
-        </p>
       </div>
     </div>
   );
