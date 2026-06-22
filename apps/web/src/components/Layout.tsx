@@ -35,7 +35,7 @@ export function Layout() {
         className={`${open ? 'w-64' : 'w-20'} hidden md:flex flex-col border-r border-[#343841]/40 bg-[#16181D]/40 backdrop-blur-xl h-screen shrink-0 transition-all duration-300 z-50 relative`}
       >
         <div className="p-4 flex flex-col h-full">
-          <div className="flex items-center gap-2 px-2 mb-6 h-16 shrink-0">
+          <div className="flex items-center gap-2 px-2 h-16 shrink-0">
             <img src="/logo.svg" alt="Smeta AI" className="h-16 w-auto object-contain shrink-0" />
           </div>
 
@@ -95,7 +95,7 @@ export function Layout() {
       {/* ─── Asosiy qism — header qotgan, faqat content scroll ─── */}
       <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden z-10">
         {/* Header — qotib turadi (scroll bo'lmaydi) */}
-        <header className="h-16 shrink-0 border-b border-[#343841]/40 bg-[#16181D]/60 backdrop-blur-2xl z-40 px-4 md:px-10 flex items-center justify-between">
+        <header className="h-24 shrink-0 border-b border-[#343841]/40 bg-[#16181D]/60 backdrop-blur-2xl z-40 px-4 md:px-10 flex items-center justify-between">
           <div className="flex items-center gap-3 md:hidden">
             <img src="/logo.svg" alt="Smeta AI" className="h-16 w-auto object-contain" />
           </div>
