@@ -90,6 +90,7 @@ model Tenant {
   chatSessions ChatSession[]
   invoices    Invoice[]
   sales       Sale[]
+  realtors    Realtor[]
 }
 
 model User {
@@ -256,17 +257,55 @@ model Invoice {
 
 // Sotilgan honadonlar (kelgan pullar)
 model Sale {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  unitName   String
+  buyerName  String
+  buyerPhone String? // xonadon egasining telefon raqami
+  area       Decimal  @default(0) @db.Decimal(18, 2)
+  price      Decimal  @default(0) @db.Decimal(18, 2)
+  paid       Decimal  @default(0) @db.Decimal(18, 2)
+  currency   Currency @default(UZS)
+  soldAt     DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  // Makler/realtor orqali sotuv (ixtiyoriy)
+  realtorId        String?
+  realtor          Realtor? @relation(fields: [realtorId], references: [id], onDelete: SetNull)
+  commissionAmount Decimal  @default(0) @db.Decimal(18, 2)
+
+  payments Payment[]
+
+  @@index([tenantId])
+  @@index([realtorId])
+}
+
+// Makler / Realtor — uy sotuvchi vositachilar
+model Realtor {
   id        String   @id @default(cuid())
   tenantId  String
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  unitName  String
-  buyerName String
-  area      Decimal  @default(0) @db.Decimal(18, 2)
-  price     Decimal  @default(0) @db.Decimal(18, 2)
-  paid      Decimal  @default(0) @db.Decimal(18, 2)
-  currency  Currency @default(UZS)
-  soldAt    DateTime @default(now())
+  name      String
+  phone     String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sales Sale[]
 
   @@index([tenantId])
+}
+model Payment {
+  id         String   @id @default(cuid())
+  saleId     String
+  sale       Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  amount     Decimal  @db.Decimal(18, 2)
+  currency   Currency @default(UZS)
+  location   String?  // "qayerda berdi": Ofis, Qurilish maydoni, Bank o'tkazma...
+  method     String?  // naqd, karta, o'tkazma
+  note       String?
+  paidAt     DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([saleId])
 }

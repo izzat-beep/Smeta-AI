@@ -127,18 +127,54 @@ export function invoice(i: any) {
   };
 }
 
+export function payment(p: any) {
+  return {
+    id: p.id,
+    saleId: p.saleId,
+    amount: toNum(p.amount),
+    currency: p.currency,
+    location: p.location ?? null,
+    method: p.method ?? null,
+    note: p.note ?? null,
+    paidAt: iso(p.paidAt),
+    createdAt: iso(p.createdAt),
+  };
+}
+
+export function realtor(r: any) {
+  return {
+    id: r.id,
+    tenantId: r.tenantId,
+    name: r.name,
+    phone: r.phone ?? null,
+    salesCount: r._count?.sales,
+    createdAt: iso(r.createdAt),
+  };
+}
+
 export function sale(x: any) {
+  // To'lovlar tarixi (kelgan bo'lsa) — vaqt bo'yicha o'sish tartibida.
+  const payments = Array.isArray(x.payments)
+    ? [...x.payments].sort((a, b) => +new Date(a.paidAt) - +new Date(b.paidAt)).map(payment)
+    : undefined;
+  const lastPaymentAt = payments && payments.length ? payments[payments.length - 1].paidAt : null;
+
   return {
     id: x.id,
     tenantId: x.tenantId,
     unitName: x.unitName,
     buyerName: x.buyerName,
+    buyerPhone: x.buyerPhone ?? null,
     area: toNum(x.area),
     price: toNum(x.price),
     paid: toNum(x.paid),
     currency: x.currency,
     soldAt: iso(x.soldAt),
     createdAt: iso(x.createdAt),
+    realtorId: x.realtorId ?? null,
+    commissionAmount: toNum(x.commissionAmount),
+    realtor: x.realtor ? realtor(x.realtor) : null,
+    ...(payments ? { payments, lastPaymentAt } : {}),
   };
 }
 

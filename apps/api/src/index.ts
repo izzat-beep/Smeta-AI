@@ -14,8 +14,13 @@ import { activitiesRouter } from './routes/activities.js';
 import { settingsRouter } from './routes/settings.js';
 import { aiRouter } from './routes/ai.js';
 import { salesRouter } from './routes/sales.js';
+import { realtorsRouter } from './routes/realtors.js';
 import { adminRouter } from './routes/admin.js';
 const app = express();
+
+// ETag o'chirildi — 304 "Not Modified" javoblari eski (cached) ma'lumot
+// ko'rsatishiga sabab bo'lmasligi uchun.
+app.set('etag', false);
 
 app.use(
   cors({
@@ -28,6 +33,15 @@ app.use(
   }),
 );
 app.use(express.json({ limit: '2mb' }));
+
+// API javoblari hech qachon keshlanmasin — deploy'dan keyin brauzer/proxy
+// eski ma'lumotni ko'rsatib qolmasligi uchun.
+app.use('/api', (_req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'smeta-ai-api', time: new Date().toISOString() }));
 
@@ -42,6 +56,7 @@ app.use('/api/activities', requireAuth, activitiesRouter);
 app.use('/api/settings', requireAuth, settingsRouter);
 app.use('/api/ai', requireAuth, aiRouter);
 app.use('/api/sales', requireAuth, salesRouter);
+app.use('/api/realtors', requireAuth, realtorsRouter);
 
 // Admin panel route'lari (o'z auth'i ichida)
 app.use('/api/admin', adminRouter);

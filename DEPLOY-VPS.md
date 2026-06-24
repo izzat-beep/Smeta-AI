@@ -38,14 +38,30 @@ Bir necha daqiqada Caddy avtomatik bepul SSL oladi. Tayyor:
 docker compose -f docker-compose.prod.yml exec api npm run db:seed -w @smeta/api
 ```
 
+## Yangilash (deploy)
+Har bir update'da quyidagi skriptni ishga tushiring — u eski konteynerlarni
+to'xtatadi, image'larni noldan quradi (`--no-cache`), migratsiyalarni qo'llaydi
+va yangi konteynerlarni ko'taradi:
+```bash
+bash deploy.sh
+```
+
 ## Foydali buyruqlar
 ```bash
 docker compose -f docker-compose.prod.yml logs -f api   # loglar
-docker compose -f docker-compose.prod.yml down           # to'xtatish
-docker compose -f docker-compose.prod.yml up -d --build  # yangilash (git pull dan keyin)
+docker compose -f docker-compose.prod.yml down          # to'xtatish (ma'lumot saqlanadi)
+bash deploy.sh                                          # to'liq yangilash
 ```
+
+## ⚠️ Ma'lumotlar bazasi haqida — MUHIM
+- Postgres ma'lumotlari `pgdata` nomli volume'da saqlanadi — qayta ishga
+  tushirish va deploy'larda **yo'qolmaydi**.
+- **HECH QACHON `docker compose down -v` ishlatmang!** `-v` flagi `pgdata`
+  volume'ni o'chiradi va barcha mijoz ma'lumotlari butunlay yo'qoladi
+  ("ma'lumotlar o'chib ketdi" muammosining asosiy sababi).
+- Frontend (web/admin) `index.html` keshlanmaydi (nginx `no-cache`), shuning
+  uchun deploy'dan keyin foydalanuvchilar avtomatik eng yangi versiyani oladi.
 
 ## Eslatma
 - Portlar **80** va **443** ochiq bo'lsin (Contabo firewall / ufw).
-- Postgres ma'lumotlari `pgdata` volume'da saqlanadi — qayta ishga tushirishda yo'qolmaydi.
 - Lokal `embedded-postgres` va `render.yaml` bu yerda ishlatilmaydi — VPS haqiqiy Postgres'dan foydalanadi.

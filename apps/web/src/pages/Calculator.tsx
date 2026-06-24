@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Icon } from '@iconify/react';
 import { api, ApiError } from '../lib/api';
 import { fmtMoney, fmtNumber } from '../lib/format';
+import { GeneralExpenses } from '../components/GeneralExpenses';
 
 type ItemType = 'MATERIAL' | 'LABOR' | 'EQUIPMENT';
 
@@ -454,6 +455,11 @@ export function Calculator() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Umumiy harajatlar — dinamik xarajat qatorlari + avtomatik jami (Task 2) */}
+      <div className="max-w-[1400px] mx-auto mt-6">
+        <GeneralExpenses />
       </div>
     </main>
   );

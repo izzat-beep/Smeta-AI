@@ -10,6 +10,7 @@ const NAV = [
   { to: '/app/materiallar', label: 'Materiallar', icon: 'lucide:package' },
   { to: '/app/hisobotlar', label: 'Hisobotlar', icon: 'lucide:chart-column' },
   { to: '/app/sotuvlar', label: 'Kelgan pullar', icon: 'lucide:hand-coins' },
+  { to: '/app/maklerlar', label: 'Maklerlar', icon: 'lucide:user-round-cog' },
   { to: '/app/ai', label: 'AI Chat', icon: 'lucide:message-square' },
 ];
 
