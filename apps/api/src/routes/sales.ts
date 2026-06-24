@@ -6,6 +6,7 @@ import * as s from '../serialize.js';
 
 export const salesRouter = Router();
 
+// GET /api/sales — Barcha sotuvlar ro'yxati
 salesRouter.get(
   '/',
   ah(async (req, res) => {
@@ -13,6 +14,7 @@ salesRouter.get(
       where: { tenantId: req.user!.tenantId },
       orderBy: { soldAt: 'desc' },
     });
+    
     const totalsByCurrency: Record<string, { paid: number; remaining: number }> = {};
     for (const x of sales) {
       const cur = x.currency;
@@ -20,6 +22,7 @@ salesRouter.get(
       totalsByCurrency[cur].paid += toNum(x.paid);
       totalsByCurrency[cur].remaining += toNum(x.price) - toNum(x.paid);
     }
+    
     res.json({
       sales: sales.map(s.sale),
       totalsByCurrency,
@@ -38,6 +41,7 @@ const upsert = z.object({
   soldAt: z.string().optional().nullable(),
 });
 
+// POST /api/sales — Yangi sotuv qo'shish
 salesRouter.post(
   '/',
   ah(async (req, res) => {
@@ -54,12 +58,20 @@ salesRouter.post(
         soldAt: b.soldAt ? new Date(b.soldAt) : new Date(),
       },
     });
+    
     await prisma.activity.create({
-      data: { tenantId: req.user!.tenantId, userId: req.user!.sub, action: 'honadon sotdi', projectName: b.unitName },
+      data: { 
+        tenantId: req.user!.tenantId, 
+        userId: req.user!.sub, 
+        action: 'honadon sotdi', 
+        projectName: b.unitName 
+      },
     });
+    
     res.status(201).json(s.sale(sale));
   }),
 );
+
 // ============ PAYMENTS (to'lovlar) ============
 
 const paymentInput = z.object({
@@ -75,6 +87,7 @@ const paymentInput = z.object({
 salesRouter.get(
   "/:saleId/payments",
   ah(async (req, res) => {
+    // Prisma model nomi kichik harfda chaqiriladi: prisma.payment
     const payments = await prisma.payment.findMany({
       where: {
         saleId: req.params.saleId,
@@ -108,11 +121,13 @@ salesRouter.post(
       },
     });
 
+    // To'lovlar yig'indisini hisoblash
     const total = await prisma.payment.aggregate({
       where: { saleId: req.params.saleId },
       _sum: { amount: true },
     });
 
+    // Sotuv (Sale) balansini yangilash
     await prisma.sale.update({
       where: { id: req.params.saleId },
       data: { paid: total._sum.amount ?? 0 },
@@ -126,13 +141,13 @@ salesRouter.post(
 salesRouter.delete(
   "/payments/:id",
   ah(async (req, res) => {
-    const payment = await prisma.payment.findFirst({
-      where: { id: req.params.id, sale: { tenantId: req.user!.tenantId } },
+    const payment = await prisma.payment.findFirst({where: { id: req.params.id, sale: { tenantId: req.user!.tenantId } },
     });
     if (!payment) return res.status(404).json({ error: "not_found", message: "To'lov topilmadi" });
 
     await prisma.payment.delete({ where: { id: req.params.id } });
 
+    // O'chirilgandan keyin qayta hisoblash
     const total = await prisma.payment.aggregate({
       where: { saleId: payment.saleId },
       _sum: { amount: true },
@@ -146,22 +161,31 @@ salesRouter.delete(
     res.status(204).end();
   })
 );
+
+// PATCH /api/sales/:id — Sotuv ma'lumotlarini tahrirlash
 salesRouter.patch(
   '/:id',
   ah(async (req, res) => {
-    const b = z.object({ paid: z.number().nonnegative().optional(), price: z.number().nonnegative().optional() }).parse(req.body);
+    const b = z.object({ 
+      paid: z.number().nonnegative().optional(), 
+      price: z.number().nonnegative().optional() 
+    }).parse(req.body);
+    
     const ex = await prisma.sale.findFirst({ where: { id: req.params.id, tenantId: req.user!.tenantId } });
     if (!ex) return res.status(404).json({ error: 'not_found', message: 'Sotuv topilmadi' });
+    
     const sale = await prisma.sale.update({ where: { id: req.params.id }, data: b });
     res.json(s.sale(sale));
   }),
 );
 
+// DELETE /api/sales/:id — Sotuvni butunlay o'chirish
 salesRouter.delete(
   '/:id',
   ah(async (req, res) => {
     const ex = await prisma.sale.findFirst({ where: { id: req.params.id, tenantId: req.user!.tenantId } });
     if (!ex) return res.status(404).json({ error: 'not_found', message: 'Sotuv topilmadi' });
+    
     await prisma.sale.delete({ where: { id: req.params.id } });
     res.status(204).end();
   }),

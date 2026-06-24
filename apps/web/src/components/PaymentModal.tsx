@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getPayments, addPayment, Payment } from "../lib/payments";
+import { getPayments, addPayment, Payment } from "@/lib/payments";
 
 const LOCATIONS = ["Ofis", "Qurilish maydoni", "Bank o'tkazma", "Boshqa"];
 const METHODS = ["Naqd", "Karta", "O'tkazma"];
