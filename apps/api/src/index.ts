@@ -15,7 +15,6 @@ import { settingsRouter } from './routes/settings.js';
 import { aiRouter } from './routes/ai.js';
 import { salesRouter } from './routes/sales.js';
 import { adminRouter } from './routes/admin.js';
-
 const app = express();
 
 app.use(

@@ -13,13 +13,16 @@ salesRouter.get(
       where: { tenantId: req.user!.tenantId },
       orderBy: { soldAt: 'desc' },
     });
-    const totalPrice = sales.reduce((a, x) => a + toNum(x.price), 0);
-    const totalPaid = sales.reduce((a, x) => a + toNum(x.paid), 0);
+    const totalsByCurrency: Record<string, { paid: number; remaining: number }> = {};
+    for (const x of sales) {
+      const cur = x.currency;
+      if (!totalsByCurrency[cur]) totalsByCurrency[cur] = { paid: 0, remaining: 0 };
+      totalsByCurrency[cur].paid += toNum(x.paid);
+      totalsByCurrency[cur].remaining += toNum(x.price) - toNum(x.paid);
+    }
     res.json({
       sales: sales.map(s.sale),
-      totalPrice,
-      totalPaid,
-      remaining: totalPrice - totalPaid,
+      totalsByCurrency,
       count: sales.length,
     });
   }),
@@ -57,7 +60,92 @@ salesRouter.post(
     res.status(201).json(s.sale(sale));
   }),
 );
+// ============ PAYMENTS (to'lovlar) ============
 
+const paymentInput = z.object({
+  amount: z.number().positive(),
+  currency: z.enum(["UZS", "USD"]).optional(),
+  location: z.string().optional(),
+  method: z.string().optional(),
+  note: z.string().optional(),
+  paidAt: z.string().optional(),
+});
+
+// GET /api/sales/:saleId/payments — to'lovlar tarixi
+salesRouter.get(
+  "/:saleId/payments",
+  ah(async (req, res) => {
+    const payments = await prisma.payment.findMany({
+      where: {
+        saleId: req.params.saleId,
+        sale: { tenantId: req.user!.tenantId },
+      },
+      orderBy: { paidAt: "desc" },
+    });
+    res.json(payments.map((p) => ({ ...p, amount: toNum(p.amount) })));
+  })
+);
+
+// POST /api/sales/:saleId/payments — yangi to'lov qo'shish
+salesRouter.post(
+  "/:saleId/payments",
+  ah(async (req, res) => {
+    const b = paymentInput.parse(req.body);
+    const sale = await prisma.sale.findFirst({
+      where: { id: req.params.saleId, tenantId: req.user!.tenantId },
+    });
+    if (!sale) return res.status(404).json({ error: "not_found", message: "Sotuv topilmadi" });
+
+    const payment = await prisma.payment.create({
+      data: {
+        saleId: req.params.saleId,
+        amount: b.amount,
+        currency: b.currency ?? sale.currency,
+        location: b.location,
+        method: b.method,
+        note: b.note,
+        paidAt: b.paidAt ? new Date(b.paidAt) : new Date(),
+      },
+    });
+
+    const total = await prisma.payment.aggregate({
+      where: { saleId: req.params.saleId },
+      _sum: { amount: true },
+    });
+
+    await prisma.sale.update({
+      where: { id: req.params.saleId },
+      data: { paid: total._sum.amount ?? 0 },
+    });
+
+    res.status(201).json({ ...payment, amount: toNum(payment.amount) });
+  })
+);
+
+// DELETE /api/sales/payments/:id — to'lovni o'chirish
+salesRouter.delete(
+  "/payments/:id",
+  ah(async (req, res) => {
+    const payment = await prisma.payment.findFirst({
+      where: { id: req.params.id, sale: { tenantId: req.user!.tenantId } },
+    });
+    if (!payment) return res.status(404).json({ error: "not_found", message: "To'lov topilmadi" });
+
+    await prisma.payment.delete({ where: { id: req.params.id } });
+
+    const total = await prisma.payment.aggregate({
+      where: { saleId: payment.saleId },
+      _sum: { amount: true },
+    });
+
+    await prisma.sale.update({
+      where: { id: payment.saleId },
+      data: { paid: total._sum.amount ?? 0 },
+    });
+
+    res.status(204).end();
+  })
+);
 salesRouter.patch(
   '/:id',
   ah(async (req, res) => {
