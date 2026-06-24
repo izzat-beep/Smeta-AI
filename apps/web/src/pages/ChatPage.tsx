@@ -87,7 +87,7 @@ export function ChatPage() {
   }
 
   return (
-    <div className="p-4 lg:p-6 h-[calc(100vh-4rem)]">
+    <div className="p-4 lg:p-6 h-full min-h-[520px]">
       <div className="max-w-4xl mx-auto h-full flex flex-col glass-panel rounded-2xl border-[#343841]/40 overflow-hidden relative">
         <div className="absolute -top-24 -left-24 w-64 h-64 bg-[#F97316]/5 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-[#06B6D4]/10 rounded-full blur-[100px] pointer-events-none" />

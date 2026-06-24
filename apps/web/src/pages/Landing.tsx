@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { motion } from 'motion/react';
@@ -39,7 +40,29 @@ const STATS = [
   { value: 99, suffix: '.8%', label: 'Hisoblash aniqligi', color: 'text-[#FF6B1A]' },
 ];
 
+const NAV_LINKS = [
+  { label: 'Imkoniyatlar', href: '#Imkoniyatlar' },
+  { label: 'Biz haqimizda', href: '#biz-haqimizda' },
+  { label: 'Narxlar', href: '#Narxlar' },
+  { label: 'Mijozlar', href: '#Mijozlar' },
+];
+
+// ⚠️ Haqiqiy manzillarga almashtiring (placeholder):
+const CONTACT_EMAIL = 'info@smeta-ai.uz';
+const SOCIAL = [
+  { label: 'Telegram', icon: 'mdi:telegram', href: 'https://t.me/smeta_ai' },
+  { label: 'Instagram', icon: 'mdi:instagram', href: 'https://instagram.com/smeta.ai' },
+  { label: 'Facebook', icon: 'mdi:facebook', href: 'https://facebook.com/smeta.ai' },
+];
+
+const ABOUT_POINTS = [
+  { icon: 'lucide:target', title: 'Bizning maqsad', desc: "O'zbekiston quruvchilari uchun smeta tayyorlashni soddalashtirish va xatolarni kamaytirish." },
+  { icon: 'lucide:users', title: 'Jamoamiz', desc: 'Muhandislar, dasturchilar va qurilish mutaxassislaridan iborat tajribali jamoa.' },
+  { icon: 'lucide:shield-check', title: 'Ishonch', desc: "Ma'lumotlaringiz xavfsiz saqlanadi, narxlar bozorga mos real vaqtda yangilanadi." },
+];
+
 export function Landing() {
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className="min-h-screen bg-[#16181D] text-white font-sans selection:bg-[#FF6B1A]/30 overflow-x-hidden">
       {/* Navigation */}
@@ -49,20 +72,41 @@ export function Landing() {
         transition={{ duration: 0.6 }}
         className="fixed top-0 left-0 right-0 z-50 bg-[#16181D]/60 backdrop-blur-xl border-b border-[#343841]/40"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.svg" alt="Smeta AI" className="h-16 w-auto" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <img src="/logo.svg" alt="Smeta AI" className="h-12 sm:h-14 w-auto" />
           </Link>
           <div className="hidden md:flex items-center gap-1">
-            {['Imkoniyatlar', 'Narxlar', 'Mijozlar'].map((l) => (
-              <a key={l} href={`#${l}`} className="px-4 py-2 text-sm font-medium text-[#BCC0C7] hover:text-white transition-colors">{l}</a>
+            {NAV_LINKS.map((l) => (
+              <a key={l.label} href={l.href} className="px-4 py-2 text-sm font-medium text-[#BCC0C7] hover:text-white transition-colors">{l.label}</a>
             ))}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link to="/kirish" className="hidden sm:block px-4 py-2 text-sm font-medium text-[#22D3EE] border border-[#22D3EE] rounded-lg hover:bg-[#22D3EE]/10 transition-colors">Kirish</Link>
-            <Link to="/kirish" className="px-4 py-2 text-sm font-medium bg-[#FF6B1A] rounded-lg hover:bg-[#FF6B1A]/90 transition-colors">Ro‘yxatdan o‘tish</Link>
+            <Link to="/kirish" className="hidden sm:block px-4 py-2 text-sm font-medium bg-[#FF6B1A] rounded-lg hover:bg-[#FF6B1A]/90 transition-colors">Ro‘yxatdan o‘tish</Link>
+            {/* Mobil hamburger */}
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="md:hidden w-11 h-11 flex items-center justify-center rounded-lg text-white hover:bg-white/5"
+              aria-label="Menyu"
+            >
+              <Icon icon={menuOpen ? 'lucide:x' : 'lucide:menu'} className="w-6 h-6" />
+            </button>
           </div>
         </div>
+
+        {/* Mobil menyu paneli */}
+        {menuOpen && (
+          <div className="md:hidden border-t border-[#343841]/40 bg-[#16181D]/95 backdrop-blur-xl px-4 py-4 space-y-1">
+            {NAV_LINKS.map((l) => (
+              <a key={l.label} href={l.href} onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-sm font-medium text-[#BCC0C7] hover:bg-white/5 hover:text-white transition-colors">{l.label}</a>
+            ))}
+            <div className="grid grid-cols-2 gap-3 pt-3">
+              <Link to="/kirish" onClick={() => setMenuOpen(false)} className="px-4 py-3 text-center text-sm font-medium text-[#22D3EE] border border-[#22D3EE] rounded-xl">Kirish</Link>
+              <Link to="/kirish" onClick={() => setMenuOpen(false)} className="px-4 py-3 text-center text-sm font-medium bg-[#FF6B1A] rounded-xl">Ro‘yxatdan o‘tish</Link>
+            </div>
+          </div>
+        )}
       </motion.nav>
 
       {/* Hero */}
@@ -123,7 +167,7 @@ export function Landing() {
       </section>
 
       {/* Features */}
-      <section id="Imkoniyatlar" className="py-24 bg-[#191B1F]/30">
+      <section id="Imkoniyatlar" className="py-24 bg-[#191B1F]/30 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
             <div className="text-center mb-16">
@@ -164,8 +208,50 @@ export function Landing() {
         </div>
       </section>
 
+      {/* Biz haqimizda */}
+      <section id="biz-haqimizda" className="py-20 sm:py-24 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+            <Reveal>
+              <div>
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#FF6B1A]/10 border border-[#FF6B1A]/30 rounded-full text-[12px] font-semibold text-[#FF6B1A] mb-6">
+                  <Icon icon="lucide:info" className="w-4 h-4" /> Biz haqimizda
+                </span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-display mb-6 leading-tight">
+                  Qurilish hisob-kitoblarini <span className="text-[#22D3EE]">aqlli</span> qilamiz
+                </h2>
+                <p className="text-[#BCC0C7] leading-relaxed mb-4">
+                  Smeta AI — O'zbekistondagi pudratchilar, muhandislar va hunarmandlar uchun yaratilgan
+                  sun'iy intellektga asoslangan smeta platformasi. Biz murakkab va ko'p vaqt
+                  oladigan hisob-kitoblarni soniyalar ichida, aniq va shaffof qilishni maqsad qilganmiz.
+                </p>
+                <p className="text-[#BCC0C7] leading-relaxed">
+                  Materiallar katalogi, usta ish haqi kalkulyatori, loyiha boshqaruvi va AI konsultant —
+                  barchasi yagona, qulay tizimda jamlangan.
+                </p>
+              </div>
+            </Reveal>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+              {ABOUT_POINTS.map((p, i) => (
+                <Reveal key={p.title} delay={i * 0.1}>
+                  <div className="glass-card rounded-2xl p-6 flex items-start gap-4 bg-[#191B1F]/40 h-full">
+                    <div className="w-11 h-11 shrink-0 rounded-xl bg-[#22D3EE]/10 border border-[#22D3EE]/20 flex items-center justify-center">
+                      <Icon icon={p.icon} className="w-5 h-5 text-[#22D3EE]" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold font-display text-white mb-1">{p.title}</h3>
+                      <p className="text-sm text-[#BCC0C7] leading-relaxed">{p.desc}</p>
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing */}
-      <section id="Narxlar" className="py-24">
+      <section id="Narxlar" className="py-24 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
             <div className="text-center mb-16">
@@ -204,7 +290,7 @@ export function Landing() {
       </section>
 
       {/* Testimonials */}
-      <section id="Mijozlar" className="py-24 bg-[#191B1F]/20">
+      <section id="Mijozlar" className="py-24 bg-[#191B1F]/20 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
           <Reveal><h2 className="text-3xl md:text-4xl font-bold font-display text-center">Mijozlarimiz fikri</h2></Reveal>
         </div>
@@ -235,12 +321,61 @@ export function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="pt-16 pb-10 border-t border-[#343841]/40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <img src="/logo.svg" alt="Smeta AI" className="h-11 w-auto" />
+      <footer id="kontakt" className="pt-16 pb-10 border-t border-[#343841]/40 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
+            {/* Brend */}
+            <div className="space-y-4">
+              <img src="/logo.svg" alt="Smeta AI" className="h-14 w-auto" />
+              <p className="text-sm text-[#BCC0C7] leading-relaxed max-w-xs">
+                Sun'iy intellekt yordamida qurilish smetalarini soniyalarda tayyorlovchi O'zbekiston platformasi.
+              </p>
+            </div>
+
+            {/* Tezkor havolalar */}
+            <div>
+              <h4 className="font-display font-bold text-white mb-4">Havolalar</h4>
+              <ul className="space-y-2.5 text-sm">
+                {NAV_LINKS.map((l) => (
+                  <li key={l.label}>
+                    <a href={l.href} className="text-[#BCC0C7] hover:text-white transition-colors">{l.label}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Biz bilan bog'laning */}
+            <div>
+              <h4 className="font-display font-bold text-white mb-4">Biz bilan bog'laning</h4>
+              <a
+                href={`mailto:${CONTACT_EMAIL}`}
+                className="inline-flex items-center gap-2 text-sm text-[#BCC0C7] hover:text-[#22D3EE] transition-colors mb-5"
+              >
+                <Icon icon="lucide:mail" className="w-4 h-4 text-[#22D3EE]" />
+                {CONTACT_EMAIL}
+              </a>
+              <div className="flex items-center gap-3">
+                {SOCIAL.map((s) => (
+                  <a
+                    key={s.label}
+                    href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={s.label}
+                    title={s.label}
+                    className="w-11 h-11 flex items-center justify-center rounded-xl bg-[#191B1F] border border-[#343841]/60 text-[#BCC0C7] hover:text-white hover:border-[#FF6B1A]/50 hover:bg-[#FF6B1A]/10 transition-colors"
+                  >
+                    <Icon icon={s.icon} className="w-5 h-5" />
+                  </a>
+                ))}
+              </div>
+            </div>
           </div>
-          <p className="text-[12px] text-[#BCC0C7] tracking-widest uppercase">© 2026 Smeta AI — Qurilish hisob-kitoblarining kelajagi</p>
+
+          <div className="pt-8 border-t border-[#343841]/40 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <p className="text-[12px] text-[#BCC0C7] tracking-widest uppercase text-center">© 2026 Smeta AI — Qurilish hisob-kitoblarining kelajagi</p>
+            <p className="text-[12px] text-[#BCC0C7]/60">Toshkent, O'zbekiston</p>
+          </div>
         </div>
       </footer>
     </div>

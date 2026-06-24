@@ -83,18 +83,18 @@ export function Materials() {
               className="w-full bg-[#16181D]/50 border border-white/10 rounded-xl py-4 pl-12 pr-4 focus:outline-none focus:border-[#5555E7]/50 transition-colors"
             />
           </div>
-          <div className="flex gap-3">
-            <button className="flex items-center gap-2 px-6 py-4 bg-[#16181D]/30 border border-white/10 rounded-xl hover:bg-white/5 transition-colors">
-              <Icon icon="lucide:arrow-up-down" className="w-5 h-5 text-[#22D3EE]" />
-              <span className="text-sm font-medium text-white">Saralash</span>
+          <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
+            <button className="flex items-center justify-center gap-2 px-3 sm:px-6 py-3.5 bg-[#16181D]/30 border border-white/10 rounded-xl hover:bg-white/5 transition-colors min-w-0">
+              <Icon icon="lucide:arrow-up-down" className="w-5 h-5 text-[#22D3EE] shrink-0" />
+              <span className="text-sm font-medium text-white truncate">Saralash</span>
             </button>
-            <button className="flex items-center gap-2 px-6 py-4 bg-[#00F0FF]/10 border border-[#00F0FF]/20 rounded-xl text-[#00F0FF] hover:bg-[#00F0FF]/20 transition-colors">
-              <Icon icon="lucide:upload" className="w-5 h-5" />
-              <span className="text-sm font-medium">Import</span>
+            <button className="flex items-center justify-center gap-2 px-3 sm:px-6 py-3.5 bg-[#00F0FF]/10 border border-[#00F0FF]/20 rounded-xl text-[#00F0FF] hover:bg-[#00F0FF]/20 transition-colors min-w-0">
+              <Icon icon="lucide:upload" className="w-5 h-5 shrink-0" />
+              <span className="text-sm font-medium truncate">Import</span>
             </button>
-            <button className="flex items-center gap-2 px-6 py-4 bg-[#5555E7] rounded-xl text-white shadow-[0_0_20px_rgba(85,85,231,0.4)] hover:bg-[#4444d6] transition-colors">
-              <Icon icon="lucide:download" className="w-5 h-5" />
-              <span className="text-sm font-bold">Eksport</span>
+            <button className="flex items-center justify-center gap-2 px-3 sm:px-6 py-3.5 bg-[#5555E7] rounded-xl text-white shadow-[0_0_20px_rgba(85,85,231,0.4)] hover:bg-[#4444d6] transition-colors min-w-0">
+              <Icon icon="lucide:download" className="w-5 h-5 shrink-0" />
+              <span className="text-sm font-bold truncate">Eksport</span>
             </button>
           </div>
         </div>
