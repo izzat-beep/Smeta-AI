@@ -5,15 +5,44 @@ import { fmtMoney } from '../lib/format';
 type Currency = 'UZS' | 'USD';
 interface Row { id: number; name: string; amount: string }
 
+const STORAGE_KEY = 'smeta:umumiy-harajatlar';
+const DEFAULT_ROWS: Row[] = [
+  { id: 1, name: '', amount: '' },
+  { id: 2, name: '', amount: '' },
+];
+
+// Saqlangan harajatlarni localStorage'dan o'qish (sahifa qayta yuklanganda saqlanib qoladi).
+function loadSaved(): { rows: Row[]; currency: Currency } | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed?.rows) && parsed.rows.length) {
+      return { rows: parsed.rows, currency: parsed.currency === 'USD' ? 'USD' : 'UZS' };
+    }
+  } catch {
+    /* buzuq ma'lumot — e'tiborsiz qoldiramiz */
+  }
+  return null;
+}
+
 // Umumiy harajatlar — foydalanuvchi ixtiyoriy xarajat qatorlarini (nomi + summa)
-// qo'shib/o'chirib ketadi, pastda umumiy summa avtomatik hisoblanadi.
+// qo'shib/o'chirib ketadi, pastda umumiy summa avtomatik hisoblanadi va saqlanadi.
 export function GeneralExpenses() {
-  const nextId = useRef(3);
-  const [currency, setCurrency] = useState<Currency>('UZS');
-  const [rows, setRows] = useState<Row[]>([
-    { id: 1, name: '', amount: '' },
-    { id: 2, name: '', amount: '' },
-  ]);
+  const [currency, setCurrency] = useState<Currency>(() => loadSaved()?.currency ?? 'UZS');
+  const [rows, setRows] = useState<Row[]>(() => loadSaved()?.rows ?? DEFAULT_ROWS);
+  const [saved, setSaved] = useState(false);
+  const nextId = useRef(rows.reduce((m, r) => Math.max(m, r.id), 0) + 1);
+
+  function handleSave() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows, currency }));
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 2500);
+    } catch {
+      /* localStorage to'la/bloklangan bo'lishi mumkin */
+    }
+  }
 
   // Float precision xatolaridan qochish uchun summani CENTda (butun son) hisoblaymiz.
   // Masalan 100.10 + 0.10: float'da 100.19999... bo'lardi; centda 10010 + 10 = 10020 → 100.20.
@@ -97,6 +126,20 @@ export function GeneralExpenses() {
         <span className="text-sm font-bold text-white">Umumiy summa:</span>
         <span className="text-2xl font-display font-black text-[#FF6B1A]">{fmtMoney(total, currency)}</span>
       </div>
+
+      {/* Saqlash — hisoblangan harajatlarni saqlaydi (qayta yuklashda saqlanib qoladi) */}
+      <button
+        type="button"
+        onClick={handleSave}
+        className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors ${
+          saved
+            ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30'
+            : 'bg-[#FF6B1A] hover:bg-[#FF6B1A]/90 text-white'
+        }`}
+      >
+        <Icon icon={saved ? 'lucide:check' : 'lucide:save'} className="w-4 h-4" />
+        {saved ? 'Saqlandi ✓' : 'Saqlash'}
+      </button>
     </div>
   );
 }
