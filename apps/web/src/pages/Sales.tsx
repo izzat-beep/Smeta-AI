@@ -138,7 +138,7 @@ export function Sales() {
                   <FragmentRow key={x.id}>
                     <tr className="hover:bg-white/5">
                       <td className="px-4 py-4">
-                        <button onClick={() => setExpanded(isOpen ? null : x.id)} className="p-1 rounded-lg hover:bg-white/10 text-[#BCC0C7]" title="To'lovlar tarixi">
+                        <button onClick={() => setExpanded(isOpen ? null : x.id)} className="w-11 h-11 inline-flex items-center justify-center rounded-lg hover:bg-white/10 text-[#BCC0C7]" title="To'lovlar tarixi">
                           <Icon icon={isOpen ? 'lucide:chevron-down' : 'lucide:chevron-right'} className="w-4 h-4" />
                         </button>
                       </td>
@@ -168,8 +168,8 @@ export function Sales() {
                         ) : '—'}
                       </td>
                       <td className="px-4 py-4 text-right whitespace-nowrap">
-                        <button onClick={() => setPayFor(x)} className="p-2 rounded-lg text-[#FF6B1A] hover:bg-[#FF6B1A]/10" title="To'lovlarni boshqarish"><Icon icon="lucide:receipt-text" className="w-4 h-4" /></button>
-                        <button onClick={() => remove(x.id, x.unitName)} className="p-2 rounded-lg text-[#E11919] hover:bg-[#E11919]/10" title="O'chirish"><Icon icon="lucide:trash-2" className="w-4 h-4" /></button>
+                        <button onClick={() => setPayFor(x)} className="w-11 h-11 inline-flex items-center justify-center rounded-lg text-[#FF6B1A] hover:bg-[#FF6B1A]/10" title="To'lovlarni boshqarish"><Icon icon="lucide:receipt-text" className="w-4 h-4" /></button>
+                        <button onClick={() => remove(x.id, x.unitName)} className="w-11 h-11 inline-flex items-center justify-center rounded-lg text-[#E11919] hover:bg-[#E11919]/10" title="O'chirish"><Icon icon="lucide:trash-2" className="w-4 h-4" /></button>
                       </td>
                     </tr>
                     {isOpen && (
@@ -307,7 +307,7 @@ function AddModal({ onClose, onDone }: { onClose: () => void; onDone: () => void
       <form onClick={(e) => e.stopPropagation()} onSubmit={submit} className="w-full max-w-md bg-[#191B1F] border border-[#343841]/60 rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold text-white font-display">Yangi sotuv</h3>
-          <button type="button" onClick={onClose} className="text-[#BCC0C7] hover:text-white"><Icon icon="lucide:x" className="w-5 h-5" /></button>
+          <button type="button" onClick={onClose} aria-label="Yopish" className="w-11 h-11 -mr-2 inline-flex items-center justify-center rounded-lg text-[#BCC0C7] hover:text-white hover:bg-white/5"><Icon icon="lucide:x" className="w-5 h-5" /></button>
         </div>
         {err && <div className="px-4 py-2.5 bg-[#E11919]/10 border border-[#E11919]/30 rounded-lg text-[#ff6b6b] text-sm">{err}</div>}
         <div className="space-y-1.5">

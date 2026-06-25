@@ -63,7 +63,7 @@ export default function PaymentModal({ saleId, unitName, currency, onClose, onUp
             <Icon icon="lucide:receipt-text" className="w-5 h-5 text-[#FF6B1A]" />
             <h3 className="text-lg font-bold text-white font-display">{unitName} — To'lovlar tarixi</h3>
           </div>
-          <button onClick={onClose} className="text-[#BCC0C7] hover:text-white"><Icon icon="lucide:x" className="w-5 h-5" /></button>
+          <button onClick={onClose} aria-label="Yopish" className="w-11 h-11 -mr-2 inline-flex items-center justify-center rounded-lg text-[#BCC0C7] hover:text-white hover:bg-white/5"><Icon icon="lucide:x" className="w-5 h-5" /></button>
         </div>
 
         {/* Yangi to'lov qo'shish */}
@@ -109,7 +109,7 @@ export default function PaymentModal({ saleId, unitName, currency, onClose, onUp
                     <td className="px-4 py-2.5 text-[#BCC0C7]">{p.method || '—'}</td>
                     <td className="px-4 py-2.5 text-[#BCC0C7]">{p.note || '—'}</td>
                     <td className="px-4 py-2.5 text-right">
-                      <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg text-[#E11919] hover:bg-[#E11919]/10"><Icon icon="lucide:trash-2" className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => handleDelete(p.id)} aria-label="O'chirish" className="w-10 h-10 inline-flex items-center justify-center rounded-lg text-[#E11919] hover:bg-[#E11919]/10"><Icon icon="lucide:trash-2" className="w-4 h-4" /></button>
                     </td>
                   </tr>
                 ))

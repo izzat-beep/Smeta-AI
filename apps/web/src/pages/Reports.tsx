@@ -53,8 +53,8 @@ export function Reports() {
             Shablonni saqlash
           </button>
           <div className="flex bg-[#343841]/30 border border-[#343841]/50 rounded-xl p-1">
-            <button className="p-1.5 hover:bg-white/5 rounded-lg"><Icon icon="lucide:file-spreadsheet" className="w-4 h-4" /></button>
-            <button className="p-1.5 hover:bg-white/5 rounded-lg"><Icon icon="lucide:file-text" className="w-4 h-4" /></button>
+            <button aria-label="Excel eksport" className="w-10 h-10 inline-flex items-center justify-center hover:bg-white/5 rounded-lg"><Icon icon="lucide:file-spreadsheet" className="w-4 h-4" /></button>
+            <button aria-label="PDF eksport" className="w-10 h-10 inline-flex items-center justify-center hover:bg-white/5 rounded-lg"><Icon icon="lucide:file-text" className="w-4 h-4" /></button>
           </div>
         </div>
       </div>

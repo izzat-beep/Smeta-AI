@@ -92,8 +92,8 @@ export function Realtors() {
                   {r.phone && <p className="text-[12px] text-[#BCC0C7] flex items-center gap-1"><Icon icon="lucide:phone" className="w-3 h-3" />{r.phone}</p>}
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => setEdit(r)} className="p-1.5 rounded-lg text-[#22D3EE] hover:bg-[#22D3EE]/10"><Icon icon="lucide:pencil" className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => removeRealtor(r.id, r.name)} className="p-1.5 rounded-lg text-[#E11919] hover:bg-[#E11919]/10"><Icon icon="lucide:trash-2" className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => setEdit(r)} aria-label="Tahrirlash" className="w-10 h-10 inline-flex items-center justify-center rounded-lg text-[#22D3EE] hover:bg-[#22D3EE]/10"><Icon icon="lucide:pencil" className="w-4 h-4" /></button>
+                  <button onClick={() => removeRealtor(r.id, r.name)} aria-label="O'chirish" className="w-10 h-10 inline-flex items-center justify-center rounded-lg text-[#E11919] hover:bg-[#E11919]/10"><Icon icon="lucide:trash-2" className="w-4 h-4" /></button>
                 </div>
               </div>
               <div className="flex items-center gap-4 text-sm">
@@ -200,7 +200,7 @@ function RealtorModal({ realtor, onClose, onDone }: { realtor: Realtor | null; o
       <form onClick={(e) => e.stopPropagation()} onSubmit={submit} className="w-full max-w-md bg-[#191B1F] border border-[#343841]/60 rounded-2xl p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold text-white font-display">{realtor ? 'Maklerni tahrirlash' : 'Yangi makler'}</h3>
-          <button type="button" onClick={onClose} className="text-[#BCC0C7] hover:text-white"><Icon icon="lucide:x" className="w-5 h-5" /></button>
+          <button type="button" onClick={onClose} aria-label="Yopish" className="w-11 h-11 -mr-2 inline-flex items-center justify-center rounded-lg text-[#BCC0C7] hover:text-white hover:bg-white/5"><Icon icon="lucide:x" className="w-5 h-5" /></button>
         </div>
         {err && <div className="px-4 py-2.5 bg-[#E11919]/10 border border-[#E11919]/30 rounded-lg text-[#ff6b6b] text-sm">{err}</div>}
         <div className="space-y-1.5">

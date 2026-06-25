@@ -1,8 +1,18 @@
 // Pul va sana formatlash yordamchilari
 
 export function fmtMoney(value: number, currency: 'UZS' | 'USD' = 'UZS'): string {
+  if (currency === 'USD') {
+    // USD doimo 2 xona kasr (cent) bilan ko'rsatiladi: 100.2 emas → 100.20.
+    // Avval Math.round + maximumFractionDigits:0 ishlatilgani sabab cent yo'qolardi.
+    const n = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+    return `${n} USD`;
+  }
+  // UZS — so'mda cent yo'q, butun songa yaxlitlanadi.
   const n = new Intl.NumberFormat('uz-UZ', { maximumFractionDigits: 0 }).format(Math.round(value));
-  return `${n} ${currency}`;
+  return `${n} UZS`;
 }
 
 export function fmtNumber(value: number): string {

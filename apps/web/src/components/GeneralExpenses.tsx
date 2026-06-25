@@ -15,8 +15,10 @@ export function GeneralExpenses() {
     { id: 2, name: '', amount: '' },
   ]);
 
+  // Float precision xatolaridan qochish uchun summani CENTda (butun son) hisoblaymiz.
+  // Masalan 100.10 + 0.10: float'da 100.19999... bo'lardi; centda 10010 + 10 = 10020 → 100.20.
   const total = useMemo(
-    () => rows.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0),
+    () => rows.reduce((cents, r) => cents + Math.round((parseFloat(r.amount) || 0) * 100), 0) / 100,
     [rows],
   );
 

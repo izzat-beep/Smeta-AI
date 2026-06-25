@@ -69,6 +69,40 @@ authRouter.post(
   }),
 );
 
+// Parolni tiklash — email xizmati yo'qligi sababli ro'yxatdan o'tishda kiritilgan
+// telefon raqami orqali tasdiqlanadi (email + telefon mos kelsa, yangi parol o'rnatiladi).
+const forgotSchema = z.object({
+  email: z.string().email(),
+  phone: z.string().min(3),
+  newPassword: z.string().min(6),
+});
+
+authRouter.post(
+  '/forgot-password',
+  ah(async (req, res) => {
+    const body = forgotSchema.parse(req.body);
+    const u = await prisma.user.findUnique({ where: { email: body.email }, include: { tenant: true } });
+
+    // Telefonni faqat raqamlar bo'yicha solishtiramiz ("+998 90..." == "99890...")
+    const digits = (p?: string | null) => (p ?? '').replace(/\D/g, '');
+    const given = digits(body.phone);
+    const matches =
+      !!u && given.length >= 7 && (digits(u.phone) === given || digits(u.tenant?.phone) === given);
+
+    if (!u || !matches) {
+      return res.status(400).json({
+        error: 'invalid',
+        message:
+          "Email yoki telefon raqami mos kelmadi. Ro'yxatdan o'tishda telefon kiritmagan bo'lsangiz, qo'llab-quvvatlashga murojaat qiling.",
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(body.newPassword, 10);
+    await prisma.user.update({ where: { id: u.id }, data: { passwordHash } });
+    res.json({ ok: true, message: 'Parol muvaffaqiyatli yangilandi. Endi yangi parol bilan kiring.' });
+  }),
+);
+
 authRouter.post(
   '/refresh',
   ah(async (req, res) => {

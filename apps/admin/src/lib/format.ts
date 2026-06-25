@@ -2,7 +2,11 @@ import { PLAN_LABELS, TENANT_STATUS_LABELS, INVOICE_STATUS_LABELS } from '@smeta
 import type { Plan, TenantStatus, InvoiceStatus } from '@smeta/shared';
 
 export function fmtMoney(value: number, currency: 'UZS' | 'USD' = 'UZS'): string {
-  return `${new Intl.NumberFormat('uz-UZ', { maximumFractionDigits: 0 }).format(Math.round(value))} ${currency}`;
+  if (currency === 'USD') {
+    // USD doimo 2 xona kasr (cent) bilan: 100.2 emas → 100.20
+    return `${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)} USD`;
+  }
+  return `${new Intl.NumberFormat('uz-UZ', { maximumFractionDigits: 0 }).format(Math.round(value))} UZS`;
 }
 export function fmtNumber(value: number): string {
   return new Intl.NumberFormat('uz-UZ', { maximumFractionDigits: 0 }).format(Math.round(value));
