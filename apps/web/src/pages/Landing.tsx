@@ -48,11 +48,11 @@ const NAV_LINKS = [
 ];
 
 // ⚠️ Haqiqiy manzillarga almashtiring (placeholder):
-const CONTACT_EMAIL = 'info@smeta-ai.uz';
+const CONTACT_EMAIL = 'info.smeta.ai@gmail.com';
 const SOCIAL = [
-  { label: 'Telegram', icon: 'mdi:telegram', href: 'https://t.me/smeta_ai' },
-  { label: 'Instagram', icon: 'mdi:instagram', href: 'https://instagram.com/smeta.ai' },
-  { label: 'Facebook', icon: 'mdi:facebook', href: 'https://facebook.com/smeta.ai' },
+  { label: 'Telegram', icon: 'mdi:telegram', href: 'https://t.me/smeta_a' },
+  { label: 'Instagram', icon: 'mdi:instagram', href: 'https://instagram.com/smeta_ai' },
+  { label: 'Facebook', icon: 'mdi:facebook', href: 'https://www.facebook.com/share/195MpvZ5Vi/?mibextid=wwXIfr' },
 ];
 
 const ABOUT_POINTS = [
