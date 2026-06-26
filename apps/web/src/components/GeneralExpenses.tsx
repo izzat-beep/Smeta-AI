@@ -1,52 +1,34 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '@iconify/react';
 import { fmtMoney } from '../lib/format';
-
+ 
 type Currency = 'UZS' | 'USD';
-interface Row { id: number; name: string; amount: string }
-
-const STORAGE_KEY = 'smeta:umumiy-harajatlar';
+interface Row {
+  id: number;
+  name: string;
+  amount: string;
+}
+ 
 const DEFAULT_ROWS: Row[] = [
   { id: 1, name: '', amount: '' },
   { id: 2, name: '', amount: '' },
 ];
-
-// Saqlangan harajatlarni localStorage'dan o'qish (sahifa qayta yuklanganda saqlanib qoladi).
-function handleSave() {
-  fetch('/api/expenses', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ rows, currency }),
-  })
-    .then(() => {
-      setSaved(true);
-      window.setTimeout(() => setSaved(false), 2500);
-    })
-    .catch(() => {
-      /* server xatosi */
-    });
-}
-
+ 
 // Umumiy harajatlar — foydalanuvchi ixtiyoriy xarajat qatorlarini (nomi + summa)
-// qo'shib/o'chirib ketadi, pastda umumiy summa avtomatik hisoblanadi va saqlanadi.
+// qo'shib/o'chirib ketadi, pastda umumiy summa avtomatik hisoblanadi va serverga saqlanadi.
 export function GeneralExpenses() {
-  const [currency, setCurrency] = useState<Currency>(() => loadSaved()?.currency ?? 'UZS');
-  const [rows, setRows] = useState<Row[]>(() => loadSaved()?.rows ?? DEFAULT_ROWS);
-  const [saved, setSaved] = useState(false);
-  const nextId = useRef(rows.reduce((m, r) => Math.max(m, r.id), 0) + 1);
-
-  export function GeneralExpenses() {
   const [currency, setCurrency] = useState<Currency>('UZS');
   const [rows, setRows] = useState<Row[]>(DEFAULT_ROWS);
   const [saved, setSaved] = useState(false);
   const nextId = useRef(rows.reduce((m, r) => Math.max(m, r.id), 0) + 1);
-
+ 
+  // Saqlangan harajatlarni serverdan o'qish (sahifa qayta yuklanganda saqlanib qoladi).
   useEffect(() => {
     fetch('/api/expenses')
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length) {
-          setRows(data.map((d: any) => ({ id: d.id, label: d.label, amount: d.amount })));
+          setRows(data.map((d: any) => ({ id: d.id, name: d.label ?? d.name ?? '', amount: String(d.amount ?? '') })));
           setCurrency(data[0]?.currency === 'USD' ? 'USD' : 'UZS');
           nextId.current = Math.max(...data.map((d: any) => d.id), 0) + 1;
         }
@@ -55,14 +37,14 @@ export function GeneralExpenses() {
         /* server javob bermasa, default qoladi */
       });
   }, []);
-
+ 
   // Float precision xatolaridan qochish uchun summani CENTda (butun son) hisoblaymiz.
   // Masalan 100.10 + 0.10: float'da 100.19999... bo'lardi; centda 10010 + 10 = 10020 → 100.20.
   const total = useMemo(
     () => rows.reduce((cents, r) => cents + Math.round((parseFloat(r.amount) || 0) * 100), 0) / 100,
     [rows],
   );
-
+ 
   function update(id: number, patch: Partial<Row>) {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
@@ -72,9 +54,25 @@ export function GeneralExpenses() {
   function removeRow(id: number) {
     setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== id) : prev));
   }
-
+ 
+  // Hisoblangan harajatlarni saqlaydi (qayta yuklashda saqlanib qoladi).
+  function handleSave() {
+    fetch('/api/expenses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows, currency }),
+    })
+      .then(() => {
+        setSaved(true);
+        window.setTimeout(() => setSaved(false), 2500);
+      })
+      .catch(() => {
+        /* server xatosi */
+      });
+  }
+ 
   const inp = 'bg-[#16181D] border border-[#343841]/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[#FF6B1A]/50';
-
+ 
   return (
     <div className="bg-[#191B1F]/40 backdrop-blur-3xl border border-[#343841]/40 rounded-2xl p-6 space-y-5">
       <div className="flex items-center justify-between gap-3">
@@ -93,7 +91,7 @@ export function GeneralExpenses() {
           ))}
         </div>
       </div>
-
+ 
       {/* Qatorlar */}
       <div className="space-y-2.5">
         {rows.map((r, i) => (
@@ -124,7 +122,7 @@ export function GeneralExpenses() {
           </div>
         ))}
       </div>
-
+ 
       <button
         type="button"
         onClick={addRow}
@@ -132,14 +130,14 @@ export function GeneralExpenses() {
       >
         <Icon icon="lucide:plus" className="w-4 h-4" /> Qator qo'shish
       </button>
-
+ 
       {/* Avtomatik jami summa */}
       <div className="flex items-center justify-between pt-4 border-t border-[#343841]/40">
         <span className="text-sm font-bold text-white">Umumiy summa:</span>
         <span className="text-2xl font-display font-black text-[#FF6B1A]">{fmtMoney(total, currency)}</span>
       </div>
-
-      {/* Saqlash — hisoblangan harajatlarni saqlaydi (qayta yuklashda saqlanib qoladi) */}
+ 
+      {/* Saqlash tugmasi */}
       <button
         type="button"
         onClick={handleSave}
