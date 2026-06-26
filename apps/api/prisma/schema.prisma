@@ -309,3 +309,12 @@ model Payment {
 
   @@index([saleId])
 }
+model GeneralExpense {
+  id        Int      @id @default(autoincrement())
+  tenantId  String
+  label     String
+  amount    Float
+  currency  String   @default("UZS")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -12,18 +12,19 @@ const DEFAULT_ROWS: Row[] = [
 ];
 
 // Saqlangan harajatlarni localStorage'dan o'qish (sahifa qayta yuklanganda saqlanib qoladi).
-function loadSaved(): { rows: Row[]; currency: Currency } | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed?.rows) && parsed.rows.length) {
-      return { rows: parsed.rows, currency: parsed.currency === 'USD' ? 'USD' : 'UZS' };
-    }
-  } catch {
-    /* buzuq ma'lumot — e'tiborsiz qoldiramiz */
-  }
-  return null;
+function handleSave() {
+  fetch('/api/expenses', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rows, currency }),
+  })
+    .then(() => {
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 2500);
+    })
+    .catch(() => {
+      /* server xatosi */
+    });
 }
 
 // Umumiy harajatlar — foydalanuvchi ixtiyoriy xarajat qatorlarini (nomi + summa)
@@ -34,15 +35,26 @@ export function GeneralExpenses() {
   const [saved, setSaved] = useState(false);
   const nextId = useRef(rows.reduce((m, r) => Math.max(m, r.id), 0) + 1);
 
-  function handleSave() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows, currency }));
-      setSaved(true);
-      window.setTimeout(() => setSaved(false), 2500);
-    } catch {
-      /* localStorage to'la/bloklangan bo'lishi mumkin */
-    }
-  }
+  export function GeneralExpenses() {
+  const [currency, setCurrency] = useState<Currency>('UZS');
+  const [rows, setRows] = useState<Row[]>(DEFAULT_ROWS);
+  const [saved, setSaved] = useState(false);
+  const nextId = useRef(rows.reduce((m, r) => Math.max(m, r.id), 0) + 1);
+
+  useEffect(() => {
+    fetch('/api/expenses')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length) {
+          setRows(data.map((d: any) => ({ id: d.id, label: d.label, amount: d.amount })));
+          setCurrency(data[0]?.currency === 'USD' ? 'USD' : 'UZS');
+          nextId.current = Math.max(...data.map((d: any) => d.id), 0) + 1;
+        }
+      })
+      .catch(() => {
+        /* server javob bermasa, default qoladi */
+      });
+  }, []);
 
   // Float precision xatolaridan qochish uchun summani CENTda (butun son) hisoblaymiz.
   // Masalan 100.10 + 0.10: float'da 100.19999... bo'lardi; centda 10010 + 10 = 10020 → 100.20.
