@@ -15,6 +15,7 @@ import { settingsRouter } from './routes/settings.js';
 import { aiRouter } from './routes/ai.js';
 import { salesRouter } from './routes/sales.js';
 import { realtorsRouter } from './routes/realtors.js';
+import { expensesRouter } from './routes/expenses.js';
 import { adminRouter } from './routes/admin.js';
 const app = express();
 
@@ -57,6 +58,7 @@ app.use('/api/settings', requireAuth, settingsRouter);
 app.use('/api/ai', requireAuth, aiRouter);
 app.use('/api/sales', requireAuth, salesRouter);
 app.use('/api/realtors', requireAuth, realtorsRouter);
+app.use('/api/expenses', requireAuth, expensesRouter);
 
 // Admin panel route'lari (o'z auth'i ichida)
 app.use('/api/admin', adminRouter);

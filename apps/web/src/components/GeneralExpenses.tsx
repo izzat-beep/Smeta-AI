@@ -1,78 +1,94 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '@iconify/react';
+import { api, ApiError } from '../lib/api';
 import { fmtMoney } from '../lib/format';
- 
+
 type Currency = 'UZS' | 'USD';
-interface Row {
-  id: number;
-  name: string;
-  amount: string;
-}
- 
+interface Row { id: number; name: string; amount: string }
+
 const DEFAULT_ROWS: Row[] = [
   { id: 1, name: '', amount: '' },
   { id: 2, name: '', amount: '' },
 ];
- 
-// Umumiy harajatlar — foydalanuvchi ixtiyoriy xarajat qatorlarini (nomi + summa)
-// qo'shib/o'chirib ketadi, pastda umumiy summa avtomatik hisoblanadi va serverga saqlanadi.
+
+interface ExpensesResponse {
+  items: { id: number; label: string; amount: number }[];
+  currency: Currency;
+}
+
+// Umumiy harajatlar — xarajat qatorlarini (nomi + summa) qo'shib/o'chirib ketadi,
+// jami summa avtomatik hisoblanadi. Ma'lumot SERVERGA (tenant profiliga) saqlanadi,
+// shuning uchun boshqa qurilmadan kirilganda ham ko'rinadi.
 export function GeneralExpenses() {
   const [currency, setCurrency] = useState<Currency>('UZS');
   const [rows, setRows] = useState<Row[]>(DEFAULT_ROWS);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const nextId = useRef(rows.reduce((m, r) => Math.max(m, r.id), 0) + 1);
- 
-  // Saqlangan harajatlarni serverdan o'qish (sahifa qayta yuklanganda saqlanib qoladi).
+  const [error, setError] = useState<string | null>(null);
+  const nextId = useRef(3);
+
+  // Serverdan yuklash (boshqa qurilmalarda ham bir xil ko'rinadi)
   useEffect(() => {
-    fetch('/api/expenses')
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data) && data.length) {
-          setRows(data.map((d: any) => ({ id: d.id, name: d.label ?? d.name ?? '', amount: String(d.amount ?? '') })));
-          setCurrency(data[0]?.currency === 'USD' ? 'USD' : 'UZS');
-          nextId.current = Math.max(...data.map((d: any) => d.id), 0) + 1;
+    let active = true;
+    (async () => {
+      try {
+        const data = await api.get<ExpensesResponse>('/expenses');
+        if (!active) return;
+        if (data.items.length) {
+          const loaded = data.items.map((it, i) => ({ id: i + 1, name: it.label, amount: String(it.amount) }));
+          setRows(loaded);
+          nextId.current = loaded.length + 1;
+          setCurrency(data.currency === 'USD' ? 'USD' : 'UZS');
         }
-      })
-      .catch(() => {
-        /* server javob bermasa, default qoladi */
-      });
+      } catch {
+        /* yuklab bo'lmadi — standart bo'sh qatorlar qoladi */
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
   }, []);
- 
+
   // Float precision xatolaridan qochish uchun summani CENTda (butun son) hisoblaymiz.
   // Masalan 100.10 + 0.10: float'da 100.19999... bo'lardi; centda 10010 + 10 = 10020 → 100.20.
   const total = useMemo(
     () => rows.reduce((cents, r) => cents + Math.round((parseFloat(r.amount) || 0) * 100), 0) / 100,
     [rows],
   );
- 
+
   function update(id: number, patch: Partial<Row>) {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    setSaved(false);
   }
   function addRow() {
     setRows((prev) => [...prev, { id: nextId.current++, name: '', amount: '' }]);
+    setSaved(false);
   }
   function removeRow(id: number) {
     setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== id) : prev));
+    setSaved(false);
   }
- 
-  // Hisoblangan harajatlarni saqlaydi (qayta yuklashda saqlanib qoladi).
-  function handleSave() {
-    fetch('/api/expenses', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows, currency }),
-    })
-      .then(() => {
-        setSaved(true);
-        window.setTimeout(() => setSaved(false), 2500);
-      })
-      .catch(() => {
-        /* server xatosi */
+
+  async function handleSave() {
+    setSaving(true);
+    setError(null);
+    try {
+      await api.post('/expenses', {
+        currency,
+        rows: rows.map((r) => ({ name: r.name, amount: r.amount })),
       });
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 2500);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Saqlashda xatolik yuz berdi');
+    } finally {
+      setSaving(false);
+    }
   }
- 
+
   const inp = 'bg-[#16181D] border border-[#343841]/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[#FF6B1A]/50';
- 
+
   return (
     <div className="bg-[#191B1F]/40 backdrop-blur-3xl border border-[#343841]/40 rounded-2xl p-6 space-y-5">
       <div className="flex items-center justify-between gap-3">
@@ -87,13 +103,13 @@ export function GeneralExpenses() {
         </div>
         <div className="flex bg-[#343841]/40 border border-[#343841]/40 rounded-xl p-1">
           {(['UZS', 'USD'] as Currency[]).map((c) => (
-            <button key={c} type="button" onClick={() => setCurrency(c)} className={`px-3 py-1 text-xs font-bold rounded-lg ${currency === c ? 'bg-[#191B1F] text-white' : 'text-[#BCC0C7]'}`}>{c}</button>
+            <button key={c} type="button" onClick={() => { setCurrency(c); setSaved(false); }} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${currency === c ? 'bg-[#191B1F] text-white' : 'text-[#BCC0C7]'}`}>{c}</button>
           ))}
         </div>
       </div>
- 
+
       {/* Qatorlar */}
-      <div className="space-y-2.5">
+      <div className={`space-y-2.5 ${loading ? 'opacity-50' : ''}`}>
         {rows.map((r, i) => (
           <div key={r.id} className="flex items-center gap-2.5">
             <span className="w-6 text-center text-xs text-[#7A7F8A] shrink-0">{i + 1}</span>
@@ -101,28 +117,29 @@ export function GeneralExpenses() {
               value={r.name}
               onChange={(e) => update(r.id, { name: e.target.value })}
               placeholder="Xarajat nomi (masalan: Transport)"
-              className={`${inp} flex-1`}
+              className={`${inp} flex-1 min-w-0`}
             />
             <input
               type="number"
               value={r.amount}
               onChange={(e) => update(r.id, { amount: e.target.value })}
               placeholder="Summa"
-              className={`${inp} w-40`}
+              className={`${inp} w-28 sm:w-40`}
             />
             <button
               type="button"
               onClick={() => removeRow(r.id)}
               disabled={rows.length <= 1}
-              className="p-2 rounded-lg text-[#E11919] hover:bg-[#E11919]/10 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+              className="w-10 h-10 inline-flex items-center justify-center rounded-lg text-[#E11919] hover:bg-[#E11919]/10 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
               title="Qatorni o'chirish"
+              aria-label="Qatorni o'chirish"
             >
               <Icon icon="lucide:trash-2" className="w-4 h-4" />
             </button>
           </div>
         ))}
       </div>
- 
+
       <button
         type="button"
         onClick={addRow}
@@ -130,25 +147,30 @@ export function GeneralExpenses() {
       >
         <Icon icon="lucide:plus" className="w-4 h-4" /> Qator qo'shish
       </button>
- 
+
       {/* Avtomatik jami summa */}
       <div className="flex items-center justify-between pt-4 border-t border-[#343841]/40">
         <span className="text-sm font-bold text-white">Umumiy summa:</span>
         <span className="text-2xl font-display font-black text-[#FF6B1A]">{fmtMoney(total, currency)}</span>
       </div>
- 
-      {/* Saqlash tugmasi */}
+
+      {error && (
+        <div className="px-4 py-2.5 bg-[#E11919]/10 border border-[#E11919]/30 rounded-lg text-[#ff6b6b] text-sm">{error}</div>
+      )}
+
+      {/* Saqlash — serverga (tenant profiliga) saqlaydi */}
       <button
         type="button"
         onClick={handleSave}
-        className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors ${
+        disabled={saving || loading}
+        className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-60 ${
           saved
             ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30'
             : 'bg-[#FF6B1A] hover:bg-[#FF6B1A]/90 text-white'
         }`}
       >
-        <Icon icon={saved ? 'lucide:check' : 'lucide:save'} className="w-4 h-4" />
-        {saved ? 'Saqlandi ✓' : 'Saqlash'}
+        <Icon icon={saving ? 'lucide:loader' : saved ? 'lucide:check' : 'lucide:save'} className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} />
+        {saving ? 'Saqlanmoqda...' : saved ? 'Saqlandi ✓' : 'Saqlash'}
       </button>
     </div>
   );
