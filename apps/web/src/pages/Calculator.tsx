@@ -6,6 +6,9 @@ import { api, ApiError } from '../lib/api';
 import { fmtNumber } from '../lib/format';
 import { useCurrency } from '../lib/currency';
 import { GeneralExpenses } from '../components/GeneralExpenses';
+import { VoiceButton } from '../components/VoiceButton';
+import { VoiceConfirm } from '../components/VoiceConfirm';
+import type { VoiceIntent } from '../lib/voice';
 
 type ItemType = 'MATERIAL' | 'LABOR' | 'EQUIPMENT';
 
@@ -83,6 +86,7 @@ export function Calculator() {
 
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+  const [voice, setVoice] = useState<{ intent: VoiceIntent; transcript: string } | null>(null);
 
   const ustaType = USTA_TYPES.find((u) => u.key === ustaTypeKey)!;
 
@@ -213,6 +217,23 @@ export function Calculator() {
     } finally {
       setSaving(false);
     }
+  }
+
+  // Ovozli buyruq: kalkulyatorga pozitsiya qo'shish (masalan g'isht 5000 dona × 1000 so'm).
+  function addFromVoice() {
+    const v = voice;
+    setVoice(null);
+    if (!v || v.intent.action !== 'calculator_input') return;
+    const it = v.intent;
+    const qty = it.qty ?? 0;
+    const priceUzs = (it.unitPrice ?? 0) * (it.currency === 'USD' ? rate : 1);
+    if (qty <= 0 || priceUzs <= 0) return;
+    const unit = it.unit === 'm2' ? 'm²' : it.unit === 'm3' ? 'm³' : it.unit || 'dona';
+    setItems((prev) => [
+      ...prev,
+      { name: it.itemName || t('calc.materials'), type: 'MATERIAL', paymentType: unit === 'dona' ? 'PER_UNIT' : undefined, qty, unit, unitPrice: priceUzs },
+    ]);
+    setTab('details');
   }
 
   const typeLabel = (type: ItemType) =>
@@ -429,6 +450,7 @@ export function Calculator() {
                 </button>
               ))}
             </div>
+            <VoiceButton hint={t('voice.hintCalc')} onIntent={(intent, transcript) => setVoice({ intent, transcript })} />
           </div>
 
           {/* Tab: Xulosa */}
@@ -634,6 +656,16 @@ export function Calculator() {
       <div className="max-w-[1400px] mx-auto mt-6">
         <GeneralExpenses />
       </div>
+
+      {voice && (
+        <VoiceConfirm
+          intent={voice.intent}
+          transcript={voice.transcript}
+          onConfirm={addFromVoice}
+          onEdit={() => setVoice(null)}
+          onClose={() => setVoice(null)}
+        />
+      )}
     </main>
   );
 }

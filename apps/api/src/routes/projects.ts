@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { prisma } from '../prisma.js';
+import { prisma, toNum } from '../prisma.js';
 import { ah } from '../util.js';
 import { requireRole } from '../auth.js';
 import * as s from '../serialize.js';
@@ -37,6 +37,57 @@ projectsRouter.get(
   }),
 );
 
+// GET /api/projects/:id/finance — bino moliyasi (kelgan pul, harajat, foyda).
+// Barcha summalar tenant kursida UZS'ga normallashtirilib hisoblanadi.
+projectsRouter.get(
+  '/:id/finance',
+  ah(async (req, res) => {
+    const tenantId = req.user!.tenantId;
+    const [project, tenant] = await Promise.all([
+      prisma.project.findFirst({
+        where: { id: req.params.id, tenantId },
+        include: { sales: { select: { price: true, paid: true, currency: true } } },
+      }),
+      prisma.tenant.findUnique({ where: { id: tenantId }, select: { usdRate: true } }),
+    ]);
+    if (!project) return res.status(404).json({ error: 'not_found', message: 'Loyiha topilmadi' });
+
+    const expenses = await prisma.generalExpenses.findMany({
+      where: { tenantId, projectId: req.params.id },
+      select: { amount: true, currency: true },
+    });
+
+    const rate = toNum(tenant?.usdRate ?? 12600) || 12600;
+    const toUzs = (amount: number, currency: string) => (currency === 'USD' ? amount * rate : amount);
+
+    let incoming = 0;
+    let salesTotal = 0;
+    for (const sale of project.sales) {
+      salesTotal += toUzs(toNum(sale.price), sale.currency);
+      incoming += toUzs(toNum(sale.paid), sale.currency);
+    }
+    const expensesTotal = expenses.reduce((sum, e) => sum + toUzs(e.amount, e.currency), 0);
+    const purchasePrice = toNum(project.purchasePrice);
+    const remaining = salesTotal - incoming;
+    const profit = incoming - purchasePrice - expensesTotal;
+
+    res.json({
+      projectId: project.id,
+      title: project.title,
+      currency: 'UZS', // normallashtirilgan
+      rate,
+      totalUnits: project.totalUnits,
+      soldUnits: project.sales.length,
+      purchasePrice,
+      salesTotal,
+      incoming,
+      remaining,
+      expenses: expensesTotal,
+      profit,
+    });
+  }),
+);
+
 const upsertSchema = z.object({
   title: z.string().min(2),
   clientName: z.string().min(1),
@@ -47,6 +98,8 @@ const upsertSchema = z.object({
   progress: z.number().min(0).max(100).optional(),
   status: z.enum(['PLANNED', 'IN_PROGRESS', 'COMPLETED', 'ARCHIVED']).optional(),
   managerId: z.string().optional().nullable(),
+  totalUnits: z.number().int().nonnegative().optional(),
+  purchasePrice: z.number().nonnegative().optional(),
 });
 
 projectsRouter.post(
@@ -69,6 +122,8 @@ projectsRouter.post(
         progress: body.progress ?? 0,
         status: body.status ?? 'PLANNED',
         managerId: body.managerId ?? null,
+        totalUnits: body.totalUnits ?? 0,
+        purchasePrice: body.purchasePrice ?? 0,
       },
       include: { manager: true },
     });

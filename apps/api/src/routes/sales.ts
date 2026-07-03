@@ -16,15 +16,17 @@ salesRouter.get(
   '/',
   ah(async (req, res) => {
     const unit = typeof req.query.unit === 'string' ? req.query.unit.trim() : '';
+    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId.trim() : '';
     const sort = req.query.sort === 'lastPayment' ? 'lastPayment' : 'soldAt';
 
     const sales = await prisma.sale.findMany({
       where: {
         tenantId: req.user!.tenantId,
         ...(unit ? { unitName: { contains: unit, mode: 'insensitive' } } : {}),
+        ...(projectId ? { projectId } : {}),
       },
       orderBy: { soldAt: 'desc' },
-      include: { payments: true, realtor: true },
+      include: { payments: true, realtor: true, project: true },
     });
 
     // Valyuta bo'yicha alohida yig'indilar (UZS va USD aralashmasin)
@@ -52,6 +54,7 @@ salesRouter.get(
 );
 
 const upsert = z.object({
+  projectId: z.string().optional().nullable(),
   unitName: z.string().min(1),
   buyerName: z.string().min(1),
   buyerPhone: z.string().optional().nullable(),
@@ -63,6 +66,13 @@ const upsert = z.object({
   realtorId: z.string().optional().nullable(),
   commissionAmount: z.number().nonnegative().optional(),
 });
+
+// Berilgan projectId shu tenant'ga tegishli ekanini tekshiradi.
+async function assertProject(projectId: string | null | undefined, tenantId: string): Promise<boolean> {
+  if (!projectId) return true;
+  const p = await prisma.project.findFirst({ where: { id: projectId, tenantId } });
+  return !!p;
+}
 
 // POST /api/sales — Yangi sotuv qo'shish
 salesRouter.post(
@@ -79,10 +89,14 @@ salesRouter.post(
       const r = await prisma.realtor.findFirst({ where: { id: b.realtorId, tenantId: req.user!.tenantId } });
       if (!r) return res.status(400).json({ error: 'bad_request', message: 'Makler topilmadi' });
     }
+    if (!(await assertProject(b.projectId, req.user!.tenantId))) {
+      return res.status(400).json({ error: 'bad_request', message: 'Loyiha (bino) topilmadi' });
+    }
 
     const sale = await prisma.sale.create({
       data: {
         tenantId: req.user!.tenantId,
+        projectId: b.projectId ?? null,
         unitName: b.unitName,
         buyerName: b.buyerName,
         buyerPhone: b.buyerPhone ?? null,
@@ -99,7 +113,7 @@ salesRouter.post(
           ? { payments: { create: { amount: initialPaid, currency, location: "Boshlang'ich", paidAt: soldAt } } }
           : {}),
       },
-      include: { payments: true, realtor: true },
+      include: { payments: true, realtor: true, project: true },
     });
 
     await prisma.activity.create({
@@ -204,6 +218,7 @@ salesRouter.delete(
 // PATCH /api/sales/:id — Sotuv ma'lumotlarini tahrirlash
 // (paid bu yerda o'zgartirilmaydi — u to'lovlar yig'indisidan kelib chiqadi)
 const patchInput = z.object({
+  projectId: z.string().nullable().optional(),
   unitName: z.string().min(1).optional(),
   buyerName: z.string().min(1).optional(),
   buyerPhone: z.string().nullable().optional(),
@@ -226,11 +241,14 @@ salesRouter.patch(
       const r = await prisma.realtor.findFirst({ where: { id: b.realtorId, tenantId: req.user!.tenantId } });
       if (!r) return res.status(400).json({ error: 'bad_request', message: 'Makler topilmadi' });
     }
+    if (b.projectId && !(await assertProject(b.projectId, req.user!.tenantId))) {
+      return res.status(400).json({ error: 'bad_request', message: 'Loyiha (bino) topilmadi' });
+    }
 
     const sale = await prisma.sale.update({
       where: { id: req.params.id },
       data: b,
-      include: { payments: true, realtor: true },
+      include: { payments: true, realtor: true, project: true },
     });
     res.json(s.sale(sale));
   }),

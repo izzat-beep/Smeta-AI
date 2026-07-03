@@ -20,7 +20,7 @@ interface ExpensesResponse {
 // Umumiy harajatlar — xarajat qatorlarini (nomi + summa) qo'shib/o'chirib ketadi,
 // jami summa avtomatik hisoblanadi. Ma'lumot SERVERGA (tenant profiliga) saqlanadi,
 // shuning uchun boshqa qurilmadan kirilganda ham ko'rinadi.
-export function GeneralExpenses() {
+export function GeneralExpenses({ projectId }: { projectId?: string } = {}) {
   const { t } = useTranslation();
   const [currency, setCurrency] = useState<Currency>('UZS');
   const [rows, setRows] = useState<Row[]>(DEFAULT_ROWS);
@@ -35,7 +35,7 @@ export function GeneralExpenses() {
     let active = true;
     (async () => {
       try {
-        const data = await api.get<ExpensesResponse>('/expenses');
+        const data = await api.get<ExpensesResponse>('/expenses' + (projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''));
         if (!active) return;
         if (data.items.length) {
           const loaded = data.items.map((it, i) => ({ id: i + 1, name: it.label, amount: String(it.amount) }));
@@ -50,7 +50,8 @@ export function GeneralExpenses() {
       }
     })();
     return () => { active = false; };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
 
   // Float precision xatolaridan qochish uchun summani CENTda (butun son) hisoblaymiz.
   // Masalan 100.10 + 0.10: float'da 100.19999... bo'lardi; centda 10010 + 10 = 10020 → 100.20.
@@ -77,6 +78,7 @@ export function GeneralExpenses() {
     setError(null);
     try {
       await api.post('/expenses', {
+        projectId: projectId ?? null,
         currency,
         rows: rows.map((r) => ({ name: r.name, amount: r.amount })),
       });

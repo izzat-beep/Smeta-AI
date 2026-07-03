@@ -17,6 +17,8 @@ export function project(p: any) {
     progress: p.progress,
     status: p.status,
     managerId: p.managerId,
+    totalUnits: p.totalUnits ?? 0,
+    purchasePrice: toNum(p.purchasePrice),
     manager: p.manager
       ? { id: p.manager.id, fullName: p.manager.fullName, avatarUrl: p.manager.avatarUrl }
       : null,
@@ -178,6 +180,8 @@ export function sale(x: any) {
   return {
     id: x.id,
     tenantId: x.tenantId,
+    projectId: x.projectId ?? null,
+    project: x.project ? { id: x.project.id, title: x.project.title, code: x.project.code } : null,
     unitName: x.unitName,
     buyerName: x.buyerName,
     buyerPhone: x.buyerPhone ?? null,

@@ -197,6 +197,8 @@ function NewProjectModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const [value, setValue] = useState('');
   const [currency, setCurrency] = useState<'UZS' | 'USD'>('UZS');
   const [deadline, setDeadline] = useState('');
+  const [totalUnits, setTotalUnits] = useState('');
+  const [purchasePrice, setPurchasePrice] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -217,6 +219,8 @@ function NewProjectModal({ onClose, onCreated }: { onClose: () => void; onCreate
         value: numValue,
         currency,
         deadline: deadline || null,
+        totalUnits: Number(totalUnits) || 0,
+        purchasePrice: Number(purchasePrice) || 0,
       });
       onCreated();
     } catch (err) {
@@ -288,6 +292,23 @@ function NewProjectModal({ onClose, onCreated }: { onClose: () => void; onCreate
                   <div className={fieldWrap}>
                     <Icon icon="lucide:calendar" className="w-4 h-4 text-[#F97316]/70 mr-3 shrink-0" />
                     <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} className="bg-transparent border-none outline-none text-sm text-white w-full placeholder:text-[#BCC0C7]/50 [color-scheme:dark]" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2.5">
+                  <label className="text-sm font-medium text-[#BCC0C7]">{t('projects.modal.totalUnits')}</label>
+                  <div className={fieldWrap}>
+                    <Icon icon="lucide:building" className="w-4 h-4 text-[#5555E7]/70 mr-3 shrink-0" />
+                    <input type="number" min="0" value={totalUnits} onChange={(e) => setTotalUnits(e.target.value)} placeholder="69" className="bg-transparent border-none outline-none text-sm text-white w-full placeholder:text-[#BCC0C7]/50" />
+                  </div>
+                </div>
+                <div className="space-y-2.5">
+                  <label className="text-sm font-medium text-[#BCC0C7]">{t('projects.modal.purchasePrice')}</label>
+                  <div className={fieldWrap}>
+                    <Icon icon="lucide:tag" className="w-4 h-4 text-[#22D3EE]/70 mr-3 shrink-0" />
+                    <input type="number" min="0" value={purchasePrice} onChange={(e) => setPurchasePrice(e.target.value)} placeholder="0" className="bg-transparent border-none outline-none text-sm text-white w-full placeholder:text-[#BCC0C7]/50" />
                   </div>
                 </div>
               </div>

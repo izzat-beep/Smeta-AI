@@ -77,8 +77,25 @@ export interface Project {
   progress: number;
   status: ProjectStatus;
   managerId: string | null;
+  totalUnits: number;
+  purchasePrice: number;
   manager?: Pick<User, 'id' | 'fullName' | 'avatarUrl'> | null;
   createdAt: string;
+}
+
+export interface ProjectFinance {
+  projectId: string;
+  title: string;
+  currency: 'UZS';
+  rate: number;
+  totalUnits: number;
+  soldUnits: number;
+  purchasePrice: number;
+  salesTotal: number;
+  incoming: number;
+  remaining: number;
+  expenses: number;
+  profit: number;
 }
 
 export interface Material {

@@ -82,6 +82,9 @@ export const config = {
   ai: {
     apiKey: process.env.ANTHROPIC_API_KEY ?? '',
     model: process.env.AI_MODEL ?? 'claude-opus-4-8',
+    // STT (nutqni matnga) uchun OpenAI Whisper. Bo'sh bo'lsa demo rejim (brauzer STT).
+    openaiKey: process.env.OPENAI_API_KEY ?? '',
+    whisperModel: process.env.WHISPER_MODEL ?? 'whisper-1',
   },
   cors: {
     origins: buildCorsOrigins(),

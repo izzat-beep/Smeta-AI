@@ -1,17 +1,27 @@
 import { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
+import type { Project, ProjectFinance } from '@smeta/shared';
 import { api, ApiError } from '../lib/api';
-import { fmtMoney, fmtDate } from '../lib/format';
+import { fmtMoney, fmtDate, fmtNumber } from '../lib/format';
 import { Payment } from '../lib/payments';
 import PaymentModal from '../components/PaymentModal';
+import { GeneralExpenses } from '../components/GeneralExpenses';
+import { VoiceButton } from '../components/VoiceButton';
+import { VoiceConfirm } from '../components/VoiceConfirm';
+import type { VoiceIntent } from '../lib/voice';
+
+interface Prefill { projectId?: string; unitName?: string; paid?: string; currency?: Currency }
 
 type Currency = 'UZS' | 'USD';
 
 interface RealtorRef { id: string; name: string; phone: string | null }
+interface ProjectRef { id: string; title: string; code: string }
 
 interface Sale {
   id: string;
+  projectId: string | null;
+  project: ProjectRef | null;
   unitName: string;
   buyerName: string;
   buyerPhone: string | null;
@@ -36,16 +46,27 @@ interface SalesData {
 export function Sales() {
   const { t } = useTranslation();
   const [data, setData] = useState<SalesData | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [building, setBuilding] = useState<string>(''); // '' = barcha binolar
+  const [finance, setFinance] = useState<ProjectFinance | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [cur, setCur] = useState<Currency>('UZS');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<'soldAt' | 'lastPayment'>('soldAt');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [payFor, setPayFor] = useState<Sale | null>(null);
+  const [voice, setVoice] = useState<{ intent: VoiceIntent; transcript: string } | null>(null);
+  const [prefill, setPrefill] = useState<Prefill | null>(null);
+
+  // Loyihalar (binolar) ro'yxati — bir marta yuklanadi.
+  useEffect(() => {
+    api.get<Project[]>('/projects').then(setProjects).catch(() => setProjects([]));
+  }, []);
 
   async function load() {
     const params = new URLSearchParams();
     if (query.trim()) params.set('unit', query.trim());
+    if (building) params.set('projectId', building);
     if (sort === 'lastPayment') params.set('sort', 'lastPayment');
     const qs = params.toString();
     setData(await api.get<SalesData>(`/sales${qs ? `?${qs}` : ''}`));
@@ -54,12 +75,57 @@ export function Sales() {
     const tm = setTimeout(load, 250);
     return () => clearTimeout(tm);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, sort]);
+  }, [query, sort, building]);
+
+  // Tanlangan bino moliyasi (foyda = kelgan − sotib olish − harajat, UZS'da).
+  useEffect(() => {
+    if (!building) { setFinance(null); return; }
+    let active = true;
+    api.get<ProjectFinance>(`/projects/${building}/finance`).then((f) => { if (active) setFinance(f); }).catch(() => { if (active) setFinance(null); });
+    return () => { active = false; };
+  }, [building]);
 
   async function remove(id: string, unit: string) {
     if (!confirm(t('sales.confirmDelete', { unit }))) return;
     await api.delete(`/sales/${id}`);
     load();
+  }
+
+  function refreshFinance() {
+    if (building) api.get<ProjectFinance>(`/projects/${building}/finance`).then(setFinance).catch(() => {});
+  }
+
+  // Ovozli buyruq tasdiqlangach: mavjud sotuvga to'lov qo'shamiz; topilmasa forma prefill.
+  async function confirmVoice() {
+    const v = voice;
+    setVoice(null);
+    if (!v || v.intent.action !== 'add_payment') return;
+    const it = v.intent;
+    const proj = it.projectName ? projects.find((p) => p.title.toLowerCase().includes(it.projectName!.toLowerCase())) : null;
+    const sale = (data?.sales ?? []).find(
+      (s) => (it.unitName ? s.unitName.toLowerCase().includes(it.unitName!.toLowerCase()) : false) && (proj ? s.projectId === proj.id : true),
+    );
+    if (sale && it.amount) {
+      try {
+        await api.post(`/sales/${sale.id}/payments`, { amount: it.amount, currency: it.currency ?? sale.currency });
+        load();
+        refreshFinance();
+        return;
+      } catch { /* pastda formaga tushamiz */ }
+    }
+    // Sotuv topilmadi — formani to'ldirib ochamiz.
+    setPrefill({ projectId: proj?.id ?? building, unitName: it.unitName ?? '', paid: it.amount ? String(it.amount) : '', currency: it.currency ?? 'UZS' });
+    setShowAdd(true);
+  }
+
+  function editVoice() {
+    const v = voice;
+    setVoice(null);
+    if (!v) return;
+    const it = v.intent;
+    const proj = it.projectName ? projects.find((p) => p.title.toLowerCase().includes(it.projectName!.toLowerCase())) : null;
+    setPrefill({ projectId: proj?.id ?? building, unitName: it.unitName ?? '', paid: it.amount ? String(it.amount) : '', currency: it.currency ?? 'UZS' });
+    setShowAdd(true);
   }
 
   const totals: CurTotals = data?.totalsByCurrency[cur] ?? { paid: 0, remaining: 0, commission: 0 };
@@ -75,21 +141,46 @@ export function Sales() {
           </div>
           <p className="text-[#BCC0C7]">{t('sales.subtitle')}</p>
         </div>
-        <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 px-6 py-2.5 bg-[#FF6B1A] hover:bg-[#FF6B1A]/90 text-white rounded-xl font-bold text-sm shadow-[0_0_20px_rgba(255,107,26,0.2)]">
-          <Icon icon="lucide:plus" className="w-5 h-5" /> {t('sales.addSale')}
-        </button>
+        <div className="flex items-end gap-3">
+          <VoiceButton hint={t('voice.hint')} onIntent={(intent, transcript) => setVoice({ intent, transcript })} />
+          <button onClick={() => { setPrefill(null); setShowAdd(true); }} className="flex items-center gap-2 px-6 py-2.5 bg-[#FF6B1A] hover:bg-[#FF6B1A]/90 text-white rounded-xl font-bold text-sm shadow-[0_0_20px_rgba(255,107,26,0.2)]">
+            <Icon icon="lucide:plus" className="w-5 h-5" /> {t('sales.addSale')}
+          </button>
+        </div>
       </div>
 
+      {/* Bino tanlagich */}
+      <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar">
+        <Icon icon="lucide:building-2" className="w-5 h-5 text-[#22D3EE] shrink-0" />
+        <BuildingChip label={t('sales.allBuildings')} active={building === ''} onClick={() => setBuilding('')} />
+        {projects.map((p) => (
+          <BuildingChip key={p.id} label={p.title} active={building === p.id} onClick={() => setBuilding(p.id)} />
+        ))}
+        {projects.length === 0 && <span className="text-xs text-[#7A7F8A] shrink-0">{t('sales.noBuildings')}</span>}
+      </div>
+
+      {/* Bino moliyasi (faqat bino tanlanganda) */}
+      {finance && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <FinCard label={t('sales.finUnits')} value={`${finance.soldUnits}/${finance.totalUnits}`} color="text-[#5555E7]" icon="lucide:building" />
+            <FinCard label={t('sales.finPurchase')} value={fmtMoney(finance.purchasePrice, 'UZS')} color="text-[#BCC0C7]" icon="lucide:tag" />
+            <FinCard label={t('sales.finIncoming')} value={fmtMoney(finance.incoming, 'UZS')} color="text-[#10B981]" icon="lucide:wallet" />
+            <FinCard label={t('sales.finRemaining')} value={fmtMoney(finance.remaining, 'UZS')} color="text-[#F97316]" icon="lucide:clock" />
+            <FinCard label={t('sales.finExpenses')} value={fmtMoney(finance.expenses, 'UZS')} color="text-[#E11919]" icon="lucide:hammer" />
+            <FinCard label={t('sales.finProfit')} value={fmtMoney(finance.profit, 'UZS')} color={finance.profit >= 0 ? 'text-[#26D926]' : 'text-[#E11919]'} icon="lucide:trending-up" />
+          </div>
+          <p className="text-[10px] text-[#7A7F8A]">{t('sales.financeNote')} (1 USD = {fmtNumber(finance.rate)} UZS)</p>
+        </div>
+      )}
+
+      {/* Umumiy statistika (valyuta bo'yicha) */}
       <div className="space-y-4">
         <div className="flex items-center justify-end gap-2">
           <span className="text-xs text-[#BCC0C7]">{t('sales.currency')}</span>
           <div className="flex bg-[#343841]/40 border border-[#343841]/40 rounded-xl p-1">
             {(['UZS', 'USD'] as Currency[]).map((c) => (
-              <button
-                key={c}
-                onClick={() => setCur(c)}
-                className={`px-4 py-1 text-xs font-bold rounded-lg transition-colors ${cur === c ? 'bg-[#191B1F] text-white shadow-sm' : 'text-[#BCC0C7]'}`}
-              >
+              <button key={c} onClick={() => setCur(c)} className={`px-4 py-1 text-xs font-bold rounded-lg transition-colors ${cur === c ? 'bg-[#191B1F] text-white shadow-sm' : 'text-[#BCC0C7]'}`}>
                 {c}{availableCurrencies.includes(c) ? '' : ' ·'}
               </button>
             ))}
@@ -105,12 +196,7 @@ export function Sales() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Icon icon="lucide:search" className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#BCC0C7]" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('sales.searchPh')}
-            className="w-full bg-[#16181D] border border-[#343841]/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white outline-none focus:border-[#FF6B1A]/50"
-          />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('sales.searchPh')} className="w-full bg-[#16181D] border border-[#343841]/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white outline-none focus:border-[#FF6B1A]/50" />
         </div>
         <div className="flex bg-[#343841]/40 border border-[#343841]/40 rounded-xl p-1">
           <button onClick={() => setSort('soldAt')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg ${sort === 'soldAt' ? 'bg-[#191B1F] text-white' : 'text-[#BCC0C7]'}`}>{t('sales.sortSold')}</button>
@@ -123,7 +209,7 @@ export function Sales() {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-[#16181D]/30 border-b border-[#343841]/40">
-                {['', t('sales.unit'), t('sales.buyer'), t('sales.area'), t('sales.price'), t('sales.paid'), t('sales.remaining'), t('sales.realtor'), t('sales.lastPayment'), ''].map((h, i) => (
+                {['', t('sales.building'), t('sales.unit'), t('sales.buyer'), t('sales.price'), t('sales.paid'), t('sales.remaining'), t('sales.realtor'), t('sales.lastPayment'), ''].map((h, i) => (
                   <th key={i} className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7] whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -141,12 +227,12 @@ export function Sales() {
                           <Icon icon={isOpen ? 'lucide:chevron-down' : 'lucide:chevron-right'} className="w-4 h-4" />
                         </button>
                       </td>
+                      <td className="px-4 py-4 text-sm text-[#22D3EE] whitespace-nowrap">{x.project?.title ?? '—'}</td>
                       <td className="px-4 py-4 text-sm font-medium text-white whitespace-nowrap">{x.unitName}</td>
                       <td className="px-4 py-4 text-sm whitespace-nowrap">
                         <div className="text-[#BCC0C7]">{x.buyerName}</div>
                         {x.buyerPhone && <div className="text-[11px] text-[#7A7F8A] flex items-center gap-1"><Icon icon="lucide:phone" className="w-3 h-3" />{x.buyerPhone}</div>}
                       </td>
-                      <td className="px-4 py-4 text-sm text-[#BCC0C7] whitespace-nowrap">{x.area ? `${x.area} m²` : '—'}</td>
                       <td className="px-4 py-4 text-sm font-semibold text-white whitespace-nowrap">{fmtMoney(x.price, x.currency)}</td>
                       <td className="px-4 py-4 text-sm font-semibold text-[#10B981] whitespace-nowrap">{fmtMoney(x.paid, x.currency)}</td>
                       <td className={`px-4 py-4 text-sm font-semibold whitespace-nowrap ${rem > 0 ? 'text-[#F97316]' : 'text-[#10B981]'}`}>{rem > 0 ? fmtMoney(rem, x.currency) : t('sales.fullyPaid')}</td>
@@ -189,7 +275,25 @@ export function Sales() {
         </div>
       </div>
 
-      {showAdd && <AddModal onClose={() => setShowAdd(false)} onDone={() => { setShowAdd(false); load(); }} />}
+      {/* Tanlangan bino uchun umumiy harajatlar */}
+      {building && (
+        <div>
+          <h2 className="text-sm font-bold uppercase tracking-widest text-[#BCC0C7] mb-3">{t('sales.buildingExpenses')}</h2>
+          <GeneralExpenses key={building} projectId={building} />
+        </div>
+      )}
+
+      {voice && (
+        <VoiceConfirm
+          intent={voice.intent}
+          transcript={voice.transcript}
+          onConfirm={confirmVoice}
+          onEdit={editVoice}
+          onClose={() => setVoice(null)}
+        />
+      )}
+
+      {showAdd && <AddModal projects={projects} defaultProject={building} prefill={prefill} onClose={() => { setShowAdd(false); setPrefill(null); }} onDone={() => { setShowAdd(false); setPrefill(null); load(); refreshFinance(); }} />}
       {payFor && (
         <PaymentModal
           saleId={payFor.id}
@@ -199,6 +303,26 @@ export function Sales() {
           onUpdated={load}
         />
       )}
+    </div>
+  );
+}
+
+function BuildingChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap shrink-0 transition-all ${active ? 'bg-[#5555E7]/20 border border-[#5555E7] text-[#5555E7]' : 'bg-[#16181D]/40 border border-white/5 text-[#BCC0C7] hover:border-white/20'}`}>
+      {label}
+    </button>
+  );
+}
+
+function FinCard({ label, value, color, icon }: { label: string; value: string; color: string; icon: string }) {
+  return (
+    <div className="p-4 glass-panel rounded-2xl">
+      <div className="flex items-center gap-2 mb-2">
+        <Icon icon={icon} className={`w-4 h-4 ${color}`} />
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7]">{label}</p>
+      </div>
+      <p className={`text-lg font-display font-bold ${color} break-all`}>{value}</p>
     </div>
   );
 }
@@ -265,9 +389,20 @@ function StatCard({ label, value, icon, color }: { label: string; value: string;
   );
 }
 
-function AddModal({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+function AddModal({ projects, defaultProject, prefill, onClose, onDone }: { projects: Project[]; defaultProject: string; prefill?: Prefill | null; onClose: () => void; onDone: () => void }) {
   const { t } = useTranslation();
-  const [f, setF] = useState({ unitName: '', buyerName: '', buyerPhone: '', area: '', price: '', paid: '', currency: 'UZS' as Currency, realtorId: '', commissionAmount: '' });
+  const [f, setF] = useState({
+    projectId: prefill?.projectId ?? defaultProject,
+    unitName: prefill?.unitName ?? '',
+    buyerName: '',
+    buyerPhone: '',
+    area: '',
+    price: '',
+    paid: prefill?.paid ?? '',
+    currency: (prefill?.currency ?? 'UZS') as Currency,
+    realtorId: '',
+    commissionAmount: '',
+  });
   const [realtors, setRealtors] = useState<RealtorRef[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -282,6 +417,7 @@ function AddModal({ onClose, onDone }: { onClose: () => void; onDone: () => void
     setSaving(true);
     try {
       await api.post('/sales', {
+        projectId: f.projectId || undefined,
         unitName: f.unitName,
         buyerName: f.buyerName,
         buyerPhone: f.buyerPhone || undefined,
@@ -309,6 +445,13 @@ function AddModal({ onClose, onDone }: { onClose: () => void; onDone: () => void
           <button type="button" onClick={onClose} aria-label={t('common.close')} className="w-11 h-11 -mr-2 inline-flex items-center justify-center rounded-lg text-[#BCC0C7] hover:text-white hover:bg-white/5"><Icon icon="lucide:x" className="w-5 h-5" /></button>
         </div>
         {err && <div className="px-4 py-2.5 bg-[#E11919]/10 border border-[#E11919]/30 rounded-lg text-[#ff6b6b] text-sm">{err}</div>}
+        <div className="space-y-1.5">
+          <label className="text-[12px] text-[#BCC0C7]">{t('sales.modal.building')}</label>
+          <select value={f.projectId} onChange={(e) => setF({ ...f, projectId: e.target.value })} className={inp}>
+            <option value="">{t('sales.modal.noBuilding')}</option>
+            {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+          </select>
+        </div>
         <div className="space-y-1.5">
           <label className="text-[12px] text-[#BCC0C7]">{t('sales.modal.unit')}</label>
           <input value={f.unitName} onChange={(e) => setF({ ...f, unitName: e.target.value })} required placeholder={t('sales.modal.unitPh')} className={inp} />
