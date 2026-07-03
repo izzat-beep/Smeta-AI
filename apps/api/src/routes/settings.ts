@@ -20,11 +20,13 @@ const updateSchema = z.object({
   phone: z.string().optional().nullable(),
   position: z.string().optional().nullable(),
   avatarUrl: z.string().optional().nullable(),
+  language: z.enum(['uz', 'ru']).optional(),
   company: z
     .object({
       name: z.string().min(2).optional(),
       inn: z.string().optional().nullable(),
       phone: z.string().optional().nullable(),
+      usdRate: z.number().positive().optional(),
     })
     .optional(),
 });
@@ -40,17 +42,23 @@ settingsRouter.patch(
         phone: body.phone,
         position: body.position,
         avatarUrl: body.avatarUrl,
+        language: body.language,
       },
       include: { tenant: true },
     });
     if (body.company) {
-      // Kompaniya ma'lumotlarini faqat OWNER o'zgartira oladi.
+      // Kompaniya ma'lumotlari va kursni faqat OWNER o'zgartira oladi.
       if (req.user!.role !== 'OWNER') {
         return res.status(403).json({ error: 'forbidden', message: 'Kompaniya ma\'lumotlarini faqat rahbar (OWNER) o\'zgartira oladi' });
       }
       await prisma.tenant.update({
         where: { id: req.user!.tenantId },
-        data: { name: body.company.name, inn: body.company.inn, phone: body.company.phone },
+        data: {
+          name: body.company.name,
+          inn: body.company.inn,
+          phone: body.company.phone,
+          usdRate: body.company.usdRate,
+        },
       });
     }
     const fresh = await prisma.user.findUnique({ where: { id: u.id }, include: { tenant: true } });

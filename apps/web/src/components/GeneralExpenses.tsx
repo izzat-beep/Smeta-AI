@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '@iconify/react';
+import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../lib/api';
 import { fmtMoney } from '../lib/format';
 
@@ -20,6 +21,7 @@ interface ExpensesResponse {
 // jami summa avtomatik hisoblanadi. Ma'lumot SERVERGA (tenant profiliga) saqlanadi,
 // shuning uchun boshqa qurilmadan kirilganda ham ko'rinadi.
 export function GeneralExpenses() {
+  const { t } = useTranslation();
   const [currency, setCurrency] = useState<Currency>('UZS');
   const [rows, setRows] = useState<Row[]>(DEFAULT_ROWS);
   const [loading, setLoading] = useState(true);
@@ -97,8 +99,8 @@ export function GeneralExpenses() {
             <Icon icon="lucide:wallet" className="w-5 h-5 text-[#FF6B1A]" />
           </div>
           <div>
-            <h3 className="font-display font-bold text-lg text-white">Umumiy harajatlar</h3>
-            <p className="text-[12px] text-[#BCC0C7]">Qo'shimcha xarajatlarni qator-qator kiriting</p>
+            <h3 className="font-display font-bold text-lg text-white">{t('expenses.title')}</h3>
+            <p className="text-[12px] text-[#BCC0C7]">{t('expenses.subtitle')}</p>
           </div>
         </div>
         <div className="flex bg-[#343841]/40 border border-[#343841]/40 rounded-xl p-1">
@@ -116,14 +118,14 @@ export function GeneralExpenses() {
             <input
               value={r.name}
               onChange={(e) => update(r.id, { name: e.target.value })}
-              placeholder="Xarajat nomi (masalan: Transport)"
+              placeholder={t('expenses.namePh')}
               className={`${inp} flex-1 min-w-0`}
             />
             <input
               type="number"
               value={r.amount}
               onChange={(e) => update(r.id, { amount: e.target.value })}
-              placeholder="Summa"
+              placeholder={t('expenses.amountPh')}
               className={`${inp} w-28 sm:w-40`}
             />
             <button
@@ -131,8 +133,8 @@ export function GeneralExpenses() {
               onClick={() => removeRow(r.id)}
               disabled={rows.length <= 1}
               className="w-10 h-10 inline-flex items-center justify-center rounded-lg text-[#E11919] hover:bg-[#E11919]/10 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
-              title="Qatorni o'chirish"
-              aria-label="Qatorni o'chirish"
+              title={t('expenses.removeRow')}
+              aria-label={t('expenses.removeRow')}
             >
               <Icon icon="lucide:trash-2" className="w-4 h-4" />
             </button>
@@ -145,12 +147,12 @@ export function GeneralExpenses() {
         onClick={addRow}
         className="w-full py-2.5 border border-dashed border-[#343841] hover:border-[#FF6B1A]/40 text-[#BCC0C7] hover:text-[#FF6B1A] rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors"
       >
-        <Icon icon="lucide:plus" className="w-4 h-4" /> Qator qo'shish
+        <Icon icon="lucide:plus" className="w-4 h-4" /> {t('expenses.addRow')}
       </button>
 
       {/* Avtomatik jami summa */}
       <div className="flex items-center justify-between pt-4 border-t border-[#343841]/40">
-        <span className="text-sm font-bold text-white">Umumiy summa:</span>
+        <span className="text-sm font-bold text-white">{t('expenses.total')}</span>
         <span className="text-2xl font-display font-black text-[#FF6B1A]">{fmtMoney(total, currency)}</span>
       </div>
 
@@ -170,7 +172,7 @@ export function GeneralExpenses() {
         }`}
       >
         <Icon icon={saving ? 'lucide:loader' : saved ? 'lucide:check' : 'lucide:save'} className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} />
-        {saving ? 'Saqlanmoqda...' : saved ? 'Saqlandi ✓' : 'Saqlash'}
+        {saving ? t('common.saving') : saved ? t('common.saved') : t('common.save')}
       </button>
     </div>
   );

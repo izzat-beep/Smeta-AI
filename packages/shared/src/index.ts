@@ -19,6 +19,10 @@ export type Currency = 'UZS' | 'USD';
 
 export type EstimateItemType = 'MATERIAL' | 'LABOR' | 'EQUIPMENT';
 
+export type PaymentType = 'PER_M2' | 'PER_M3' | 'PER_METER' | 'PER_UNIT' | 'FIXED' | 'HOURLY';
+
+export type Language = 'uz' | 'ru';
+
 export type EstimateStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export type InvoiceStatus = 'PAID' | 'PENDING' | 'OVERDUE' | 'CANCELLED';
@@ -34,6 +38,7 @@ export interface Tenant {
   phone: string | null;
   plan: Plan;
   status: TenantStatus;
+  usdRate: number; // 1 USD = X so'm (qo'lda kiritiladigan kurs)
   trialEndsAt: string | null;
   createdAt: string;
 }
@@ -47,6 +52,7 @@ export interface User {
   role: UserRole;
   position: string | null;
   avatarUrl: string | null;
+  language: Language;
   createdAt: string;
 }
 
@@ -96,10 +102,21 @@ export interface EstimateItem {
   materialId: string | null;
   name: string;
   type: EstimateItemType;
+  paymentType: PaymentType | null;
   qty: number;
   unit: string;
   unitPrice: number;
   lineTotal: number;
+}
+
+export interface EstimateStage {
+  id: string;
+  estimateId: string;
+  label: string;
+  date: string | null;
+  amount: number;
+  currency: Currency;
+  order: number;
 }
 
 export interface Estimate {
@@ -114,6 +131,7 @@ export interface Estimate {
   total: number;
   status: EstimateStatus;
   items: EstimateItem[];
+  stages: EstimateStage[];
   createdAt: string;
 }
 

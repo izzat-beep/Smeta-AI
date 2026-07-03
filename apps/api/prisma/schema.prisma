@@ -52,6 +52,17 @@ enum EstimateItemType {
   EQUIPMENT
 }
 
+// Ish haqi to'lash asosi (usta ishi turlari uchun).
+// PER_UNIT — dona bo'yicha (masalan g'isht: dona × dona narxi).
+enum PaymentType {
+  PER_M2
+  PER_M3
+  PER_METER
+  PER_UNIT
+  FIXED
+  HOURLY
+}
+
 enum EstimateStatus {
   DRAFT
   PENDING
@@ -79,6 +90,7 @@ model Tenant {
   plan        Plan         @default(BOSHLANGICH)
   status      TenantStatus @default(TRIAL)
   trialEndsAt DateTime?
+  usdRate     Decimal      @default(12600) @db.Decimal(18, 2) // 1 USD = X so'm (qo'lda kiritiladigan kurs)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -105,6 +117,7 @@ model User {
   role         UserRole @default(OWNER)
   position     String?
   avatarUrl    String?
+  language     String?  @default("uz") // interfeys tili: uz | ru
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -208,21 +221,37 @@ model Estimate {
   updatedAt DateTime       @updatedAt
 
   items     EstimateItem[]
+  stages    EstimateStage[]
 
   @@index([tenantId])
 }
 
 model EstimateItem {
-  id         String           @id @default(cuid())
+  id          String           @id @default(cuid())
+  estimateId  String
+  estimate    Estimate         @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  materialId  String?
+  name        String
+  type        EstimateItemType @default(MATERIAL)
+  paymentType PaymentType? // ish haqi asosi (usta ishi turlari uchun)
+  qty         Decimal          @default(0) @db.Decimal(18, 3)
+  unit        String           @default("dona")
+  unitPrice   Decimal          @default(0) @db.Decimal(18, 2)
+  lineTotal   Decimal          @default(0) @db.Decimal(18, 2)
+
+  @@index([estimateId])
+}
+
+// Smeta muddatlari / bosqichlari (kalkulyator "Muddatlar" bo'limi).
+model EstimateStage {
+  id         String    @id @default(cuid())
   estimateId String
-  estimate   Estimate         @relation(fields: [estimateId], references: [id], onDelete: Cascade)
-  materialId String?
-  name       String
-  type       EstimateItemType @default(MATERIAL)
-  qty        Decimal          @default(0) @db.Decimal(18, 3)
-  unit       String           @default("dona")
-  unitPrice  Decimal          @default(0) @db.Decimal(18, 2)
-  lineTotal  Decimal          @default(0) @db.Decimal(18, 2)
+  estimate   Estimate  @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  label      String
+  date       DateTime?
+  amount     Decimal   @default(0) @db.Decimal(18, 2)
+  currency   Currency  @default(UZS)
+  order      Int       @default(0)
 
   @@index([estimateId])
 }

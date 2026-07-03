@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
+import { useTranslation } from 'react-i18next';
 import { useAdminAuth } from '../lib/auth';
+import { setLanguage, type Lang } from '../i18n';
 
 const NAV = [
-  { to: '/', label: 'Statistika', icon: 'lucide:layout-dashboard', end: true },
-  { to: '/mijozlar', label: 'Mijozlar', icon: 'lucide:building-2' },
-  { to: '/hisob-fakturalar', label: 'Hisob-fakturalar', icon: 'lucide:receipt' },
-  { to: '/foydalanuvchilar', label: 'Foydalanuvchilar', icon: 'lucide:users' },
+  { to: '/', key: 'nav.stats', icon: 'lucide:layout-dashboard', end: true },
+  { to: '/mijozlar', key: 'nav.tenants', icon: 'lucide:building-2' },
+  { to: '/hisob-fakturalar', key: 'nav.invoices', icon: 'lucide:receipt' },
+  { to: '/foydalanuvchilar', key: 'nav.users', icon: 'lucide:users' },
 ];
 
 export function AdminLayout() {
+  const { t } = useTranslation();
   const { admin, logout } = useAdminAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -49,20 +52,41 @@ export function AdminLayout() {
             <button
               onClick={() => setMobileOpen(true)}
               className="w-11 h-11 -ml-1.5 flex items-center justify-center rounded-xl hover:bg-white/5 text-white md:hidden"
-              aria-label="Menyuni ochish"
+              aria-label="Menu"
             >
               <Icon icon="lucide:menu" className="w-6 h-6" />
             </button>
-            <h2 className="font-display text-base md:text-lg font-bold text-white truncate">Boshqaruv markazi</h2>
+            <h2 className="font-display text-base md:text-lg font-bold text-white truncate">{t('header.title')}</h2>
           </div>
-          <span className="shrink-0 px-3 py-1 bg-[#06B6D4]/5 border border-[#06B6D4]/30 rounded-full text-[12px] font-semibold text-[#22D3EE]">
-            {admin?.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
-          </span>
+          <div className="flex items-center gap-3 shrink-0">
+            <LanguageSwitcher />
+            <span className="px-3 py-1 bg-[#06B6D4]/5 border border-[#06B6D4]/30 rounded-full text-[12px] font-semibold text-[#22D3EE]">
+              {admin?.role === 'SUPERADMIN' ? t('header.superAdmin') : t('header.admin')}
+            </span>
+          </div>
         </header>
         <div className="flex-1 p-4 md:p-10 max-w-[1300px] w-full mx-auto">
           <Outlet />
         </div>
       </main>
+    </div>
+  );
+}
+
+function LanguageSwitcher() {
+  const { i18n } = useTranslation();
+  const current = (i18n.language === 'ru' ? 'ru' : 'uz') as Lang;
+  return (
+    <div className="flex bg-[#343841]/50 border border-[#343841]/50 rounded-full p-0.5 text-[11px] font-bold uppercase">
+      {(['uz', 'ru'] as Lang[]).map((l) => (
+        <button
+          key={l}
+          onClick={() => setLanguage(l)}
+          className={`px-2.5 py-1 rounded-full transition-colors ${current === l ? 'bg-[#5555E7] text-white' : 'text-[#BCC0C7] hover:text-white'}`}
+        >
+          {l === 'uz' ? 'UZ' : 'RU'}
+        </button>
+      ))}
     </div>
   );
 }
@@ -76,11 +100,12 @@ function SidebarContent({
   onLogout: () => void;
   onNavigate?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="p-4 flex flex-col h-full">
       <div className="flex items-center gap-2 px-2 mb-2 h-16 overflow-hidden">
         <img src="/logo.svg" alt="Smeta AI" className="h-12 w-auto object-contain shrink-0" />
-        <div className="text-[10px] text-[#BCC0C7] uppercase tracking-widest font-bold">Admin Panel</div>
+        <div className="text-[10px] text-[#BCC0C7] uppercase tracking-widest font-bold">{t('header.adminPanel')}</div>
       </div>
 
       <nav className="flex-1 space-y-1 pt-6">
@@ -101,7 +126,7 @@ function SidebarContent({
             {({ isActive }) => (
               <>
                 <Icon icon={item.icon} className={`w-5 h-5 ${isActive ? 'text-[#FF6B1A]' : 'text-[#22D3EE]'}`} />
-                <span className="text-sm font-medium">{item.label}</span>
+                <span className="text-sm font-medium">{t(item.key)}</span>
               </>
             )}
           </NavLink>
@@ -118,7 +143,7 @@ function SidebarContent({
           className="w-full flex items-center gap-4 px-4 py-3 hover:bg-red-500/10 rounded-xl text-[#E11919]"
         >
           <Icon icon="lucide:log-out" className="w-5 h-5" />
-          <span className="text-sm font-medium">Chiqish</span>
+          <span className="text-sm font-medium">{t('common.logout')}</span>
         </button>
       </div>
     </div>

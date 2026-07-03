@@ -48,10 +48,23 @@ export function estimateItem(i: any) {
     materialId: i.materialId,
     name: i.name,
     type: i.type,
+    paymentType: i.paymentType ?? null,
     qty: toNum(i.qty),
     unit: i.unit,
     unitPrice: toNum(i.unitPrice),
     lineTotal: toNum(i.lineTotal),
+  };
+}
+
+export function estimateStage(x: any) {
+  return {
+    id: x.id,
+    estimateId: x.estimateId,
+    label: x.label,
+    date: iso(x.date),
+    amount: toNum(x.amount),
+    currency: x.currency,
+    order: x.order,
   };
 }
 
@@ -68,6 +81,7 @@ export function estimate(e: any) {
     total: toNum(e.total),
     status: e.status,
     items: (e.items ?? []).map(estimateItem),
+    stages: (e.stages ?? []).map(estimateStage),
     createdAt: iso(e.createdAt),
   };
 }
@@ -96,6 +110,7 @@ export function user(u: any) {
     role: u.role,
     position: u.position,
     avatarUrl: u.avatarUrl,
+    language: u.language ?? 'uz',
     createdAt: iso(u.createdAt),
   };
 }
@@ -108,6 +123,7 @@ export function tenant(t: any) {
     phone: t.phone,
     plan: t.plan,
     status: t.status,
+    usdRate: toNum(t.usdRate ?? 12600),
     trialEndsAt: iso(t.trialEndsAt),
     createdAt: iso(t.createdAt),
   };

@@ -10,9 +10,17 @@ const itemSchema = z.object({
   materialId: z.string().optional().nullable(),
   name: z.string().min(1),
   type: z.enum(['MATERIAL', 'LABOR', 'EQUIPMENT']).optional(),
+  paymentType: z.enum(['PER_M2', 'PER_M3', 'PER_METER', 'PER_UNIT', 'FIXED', 'HOURLY']).optional().nullable(),
   qty: z.number().nonnegative(),
   unit: z.string().optional(),
   unitPrice: z.number().nonnegative(),
+});
+
+const stageSchema = z.object({
+  label: z.string().min(1),
+  date: z.string().optional().nullable(),
+  amount: z.number().nonnegative().optional(),
+  currency: z.enum(['UZS', 'USD']).optional(),
 });
 
 const createSchema = z.object({
@@ -21,6 +29,7 @@ const createSchema = z.object({
   currency: z.enum(['UZS', 'USD']).optional(),
   taxRate: z.number().min(0).max(100).optional(),
   items: z.array(itemSchema).default([]),
+  stages: z.array(stageSchema).default([]),
 });
 
 function totals(items: { qty: number; unitPrice: number }[], taxRate: number) {
@@ -47,7 +56,7 @@ estimatesRouter.get(
   ah(async (req, res) => {
     const estimates = await prisma.estimate.findMany({
       where: { tenantId: req.user!.tenantId },
-      include: { items: true },
+      include: { items: true, stages: { orderBy: { order: 'asc' } } },
       orderBy: { createdAt: 'desc' },
     });
     res.json(estimates.map(s.estimate));
@@ -59,7 +68,7 @@ estimatesRouter.get(
   ah(async (req, res) => {
     const e = await prisma.estimate.findFirst({
       where: { id: req.params.id, tenantId: req.user!.tenantId },
-      include: { items: true },
+      include: { items: true, stages: { orderBy: { order: 'asc' } } },
     });
     if (!e) return res.status(404).json({ error: 'not_found', message: 'Smeta topilmadi' });
     res.json(s.estimate(e));
@@ -89,14 +98,24 @@ estimatesRouter.post(
             materialId: i.materialId ?? null,
             name: i.name,
             type: i.type ?? 'MATERIAL',
+            paymentType: i.paymentType ?? null,
             qty: i.qty,
             unit: i.unit ?? 'dona',
             unitPrice: i.unitPrice,
             lineTotal: i.qty * i.unitPrice,
           })),
         },
+        stages: {
+          create: body.stages.map((st, idx) => ({
+            label: st.label,
+            date: st.date ? new Date(st.date) : null,
+            amount: st.amount ?? 0,
+            currency: st.currency ?? 'UZS',
+            order: idx,
+          })),
+        },
       },
-      include: { items: true },
+      include: { items: true, stages: { orderBy: { order: 'asc' } } },
     });
     await prisma.activity.create({
       data: { tenantId, userId: req.user!.sub, action: 'yangi smeta yaratdi', projectName: body.title },

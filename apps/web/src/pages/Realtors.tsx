@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
+import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../lib/api';
 import { fmtMoney, fmtDate } from '../lib/format';
 
@@ -25,6 +26,7 @@ interface RealtorSale {
 }
 
 export function Realtors() {
+  const { t } = useTranslation();
   const [realtors, setRealtors] = useState<Realtor[]>([]);
   const [sales, setSales] = useState<RealtorSale[]>([]);
   const [cur, setCur] = useState<Currency>('UZS');
@@ -36,12 +38,12 @@ export function Realtors() {
       api.get<{ sales: RealtorSale[] }>('/sales'),
     ]);
     setRealtors(r.realtors);
-    setSales(s.sales.filter((x) => x.realtor)); // faqat makler orqali sotilganlar
+    setSales(s.sales.filter((x) => x.realtor));
   }
   useEffect(() => { load(); }, []);
 
   async function removeRealtor(id: string, name: string) {
-    if (!confirm(`"${name}" makleri o'chirilsinmi? (Sotuvlardagi bog'lanish bekor qilinadi)`)) return;
+    if (!confirm(t('realtors.confirmDelete', { name }))) return;
     await api.delete(`/realtors/${id}`);
     load();
   }
@@ -54,19 +56,18 @@ export function Realtors() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <Icon icon="lucide:user-round-cog" className="w-8 h-8 text-[#FF6B1A]" />
-            <h1 className="font-display text-3xl font-extrabold text-white tracking-tight">Maklerlar</h1>
+            <h1 className="font-display text-3xl font-extrabold text-white tracking-tight">{t('realtors.title')}</h1>
           </div>
-          <p className="text-[#BCC0C7]">Makler/realtorlar orqali sotilgan uylar va komissiyalar.</p>
+          <p className="text-[#BCC0C7]">{t('realtors.subtitle')}</p>
         </div>
         <button onClick={() => setEdit('new')} className="flex items-center gap-2 px-6 py-2.5 bg-[#FF6B1A] hover:bg-[#FF6B1A]/90 text-white rounded-xl font-bold text-sm shadow-[0_0_20px_rgba(255,107,26,0.2)]">
-          <Icon icon="lucide:plus" className="w-5 h-5" /> Makler qo'shish
+          <Icon icon="lucide:plus" className="w-5 h-5" /> {t('realtors.addRealtor')}
         </button>
       </div>
 
-      {/* Statistika + valyuta */}
       <div className="space-y-4">
         <div className="flex items-center justify-end gap-2">
-          <span className="text-xs text-[#BCC0C7]">Valyuta:</span>
+          <span className="text-xs text-[#BCC0C7]">{t('realtors.currency')}</span>
           <div className="flex bg-[#343841]/40 border border-[#343841]/40 rounded-xl p-1">
             {(['UZS', 'USD'] as Currency[]).map((c) => (
               <button key={c} onClick={() => setCur(c)} className={`px-4 py-1 text-xs font-bold rounded-lg ${cur === c ? 'bg-[#191B1F] text-white shadow-sm' : 'text-[#BCC0C7]'}`}>{c}</button>
@@ -74,15 +75,14 @@ export function Realtors() {
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard label="Maklerlar" value={`${realtors.length} ta`} icon="lucide:users" color="text-[#5555E7]" />
-          <StatCard label="Makler orqali sotuvlar" value={`${sales.length} ta`} icon="lucide:home" color="text-[#10B981]" />
-          <StatCard label={`Umumiy komissiya (${cur})`} value={fmtMoney(totalCommission, cur)} icon="lucide:badge-percent" color="text-[#F97316]" />
+          <StatCard label={t('realtors.statRealtors')} value={t('realtors.unitCount', { count: realtors.length })} icon="lucide:users" color="text-[#5555E7]" />
+          <StatCard label={t('realtors.statSales')} value={t('realtors.unitCount', { count: sales.length })} icon="lucide:home" color="text-[#10B981]" />
+          <StatCard label={t('realtors.statCommission', { cur })} value={fmtMoney(totalCommission, cur)} icon="lucide:badge-percent" color="text-[#F97316]" />
         </div>
       </div>
 
-      {/* Maklerlar ro'yxati */}
       <div>
-        <h2 className="text-sm font-bold uppercase tracking-widest text-[#BCC0C7] mb-3">Maklerlar ro'yxati</h2>
+        <h2 className="text-sm font-bold uppercase tracking-widest text-[#BCC0C7] mb-3">{t('realtors.listTitle')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {realtors.map((r) => (
             <div key={r.id} className="glass-panel rounded-2xl p-5 space-y-3">
@@ -92,21 +92,21 @@ export function Realtors() {
                   {r.phone && <p className="text-[12px] text-[#BCC0C7] flex items-center gap-1"><Icon icon="lucide:phone" className="w-3 h-3" />{r.phone}</p>}
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => setEdit(r)} aria-label="Tahrirlash" className="w-10 h-10 inline-flex items-center justify-center rounded-lg text-[#22D3EE] hover:bg-[#22D3EE]/10"><Icon icon="lucide:pencil" className="w-4 h-4" /></button>
-                  <button onClick={() => removeRealtor(r.id, r.name)} aria-label="O'chirish" className="w-10 h-10 inline-flex items-center justify-center rounded-lg text-[#E11919] hover:bg-[#E11919]/10"><Icon icon="lucide:trash-2" className="w-4 h-4" /></button>
+                  <button onClick={() => setEdit(r)} aria-label={t('common.edit')} className="w-10 h-10 inline-flex items-center justify-center rounded-lg text-[#22D3EE] hover:bg-[#22D3EE]/10"><Icon icon="lucide:pencil" className="w-4 h-4" /></button>
+                  <button onClick={() => removeRealtor(r.id, r.name)} aria-label={t('common.delete')} className="w-10 h-10 inline-flex items-center justify-center rounded-lg text-[#E11919] hover:bg-[#E11919]/10"><Icon icon="lucide:trash-2" className="w-4 h-4" /></button>
                 </div>
               </div>
               <div className="flex items-center gap-4 text-sm">
-                <span className="text-[#BCC0C7]"><span className="text-white font-semibold">{r.salesCount}</span> ta sotuv</span>
+                <span className="text-[#BCC0C7]">{t('realtors.salesCount', { count: r.salesCount })}</span>
               </div>
               <div className="pt-2 border-t border-[#343841]/40 space-y-1">
                 {Object.keys(r.totalsByCurrency).length === 0 ? (
-                  <p className="text-[12px] text-[#7A7F8A]">Hozircha komissiya yo'q</p>
+                  <p className="text-[12px] text-[#7A7F8A]">{t('realtors.noCommission')}</p>
                 ) : (
-                  Object.entries(r.totalsByCurrency).map(([c, t]) => (
+                  Object.entries(r.totalsByCurrency).map(([c, tot]) => (
                     <div key={c} className="flex justify-between text-[12px]">
-                      <span className="text-[#BCC0C7]">Komissiya ({c}):</span>
-                      <span className="text-[#F97316] font-semibold">{fmtMoney(t.commission, c as Currency)}</span>
+                      <span className="text-[#BCC0C7]">{t('realtors.commissionCur', { cur: c })}</span>
+                      <span className="text-[#F97316] font-semibold">{fmtMoney(tot.commission, c as Currency)}</span>
                     </div>
                   ))
                 )}
@@ -116,21 +116,20 @@ export function Realtors() {
           {realtors.length === 0 && (
             <div className="col-span-full glass-panel rounded-2xl p-10 text-center text-[#BCC0C7]">
               <Icon icon="lucide:user-round-plus" className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              Hozircha makler qo'shilmagan
+              {t('realtors.noRealtors')}
             </div>
           )}
         </div>
       </div>
 
-      {/* Maklerlar orqali sotuvlar */}
       <div>
-        <h2 className="text-sm font-bold uppercase tracking-widest text-[#BCC0C7] mb-3">Makler orqali sotilgan uylar</h2>
+        <h2 className="text-sm font-bold uppercase tracking-widest text-[#BCC0C7] mb-3">{t('realtors.salesTitle')}</h2>
         <div className="glass-panel rounded-2xl overflow-hidden">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-[#16181D]/30 border-b border-[#343841]/40">
-                  {['Makler', 'Honadon', 'Xaridor', 'Narxi', 'Komissiya', 'Sana'].map((h) => (
+                  {[t('realtors.colRealtor'), t('realtors.colUnit'), t('realtors.colBuyer'), t('realtors.colPrice'), t('realtors.colCommission'), t('realtors.colDate')].map((h) => (
                     <th key={h} className="px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7] whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -147,7 +146,7 @@ export function Realtors() {
                   </tr>
                 ))}
                 {sales.length === 0 && (
-                  <tr><td colSpan={6} className="px-5 py-12 text-center text-[#BCC0C7]"><Icon icon="lucide:home" className="w-8 h-8 mx-auto mb-2 opacity-40" />Makler orqali sotuvlar yo'q</td></tr>
+                  <tr><td colSpan={6} className="px-5 py-12 text-center text-[#BCC0C7]"><Icon icon="lucide:home" className="w-8 h-8 mx-auto mb-2 opacity-40" />{t('realtors.noSales')}</td></tr>
                 )}
               </tbody>
             </table>
@@ -173,6 +172,7 @@ function StatCard({ label, value, icon, color }: { label: string; value: string;
 }
 
 function RealtorModal({ realtor, onClose, onDone }: { realtor: Realtor | null; onClose: () => void; onDone: () => void }) {
+  const { t } = useTranslation();
   const [name, setName] = useState(realtor?.name ?? '');
   const [phone, setPhone] = useState(realtor?.phone ?? '');
   const [err, setErr] = useState<string | null>(null);
@@ -188,7 +188,7 @@ function RealtorModal({ realtor, onClose, onDone }: { realtor: Realtor | null; o
       else await api.post('/realtors', body);
       onDone();
     } catch (e2) {
-      setErr(e2 instanceof ApiError ? e2.message : 'Xatolik');
+      setErr(e2 instanceof ApiError ? e2.message : t('common.error'));
     } finally {
       setSaving(false);
     }
@@ -199,20 +199,20 @@ function RealtorModal({ realtor, onClose, onDone }: { realtor: Realtor | null; o
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#16181D]/70 backdrop-blur-sm" onClick={onClose}>
       <form onClick={(e) => e.stopPropagation()} onSubmit={submit} className="w-full max-w-md bg-[#191B1F] border border-[#343841]/60 rounded-2xl p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white font-display">{realtor ? 'Maklerni tahrirlash' : 'Yangi makler'}</h3>
-          <button type="button" onClick={onClose} aria-label="Yopish" className="w-11 h-11 -mr-2 inline-flex items-center justify-center rounded-lg text-[#BCC0C7] hover:text-white hover:bg-white/5"><Icon icon="lucide:x" className="w-5 h-5" /></button>
+          <h3 className="text-xl font-bold text-white font-display">{realtor ? t('realtors.modal.editTitle') : t('realtors.modal.newTitle')}</h3>
+          <button type="button" onClick={onClose} aria-label={t('common.close')} className="w-11 h-11 -mr-2 inline-flex items-center justify-center rounded-lg text-[#BCC0C7] hover:text-white hover:bg-white/5"><Icon icon="lucide:x" className="w-5 h-5" /></button>
         </div>
         {err && <div className="px-4 py-2.5 bg-[#E11919]/10 border border-[#E11919]/30 rounded-lg text-[#ff6b6b] text-sm">{err}</div>}
         <div className="space-y-1.5">
-          <label className="text-[12px] text-[#BCC0C7]">Ism</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Makler ismi" className={inp} />
+          <label className="text-[12px] text-[#BCC0C7]">{t('realtors.modal.name')}</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} required placeholder={t('realtors.modal.namePh')} className={inp} />
         </div>
         <div className="space-y-1.5">
-          <label className="text-[12px] text-[#BCC0C7]">Telefon</label>
+          <label className="text-[12px] text-[#BCC0C7]">{t('realtors.modal.phone')}</label>
           <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+998 90 123 45 67" className={inp} />
         </div>
         <button disabled={saving} className="w-full py-3 bg-[#FF6B1A] hover:bg-[#FF6B1A]/90 text-white font-bold rounded-xl disabled:opacity-60">
-          {saving ? 'Saqlanmoqda...' : 'Saqlash'}
+          {saving ? t('realtors.modal.saving') : t('realtors.modal.save')}
         </button>
       </form>
     </div>

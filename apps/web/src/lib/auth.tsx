@@ -1,6 +1,14 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { User, Tenant, AuthResponse, LoginRequest, RegisterRequest } from '@smeta/shared';
 import { api, tokenStore } from './api';
+import { setLanguage, LANG_KEY } from '../i18n';
+
+// Foydalanuvchi profilidagi tilni interfeysga qo'llaymiz (localStorage'da til
+// hali tanlanmagan bo'lsa — profildagi til, aks holda localStorage ustuvor).
+function syncLanguage(u: User | null) {
+  if (!u?.language) return;
+  if (!localStorage.getItem(LANG_KEY)) setLanguage(u.language);
+}
 
 interface AuthState {
   user: User | null;
@@ -32,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await api.get<{ user: User; tenant: Tenant }>('/auth/me');
       setUser(data.user);
       setTenant(data.tenant);
+      syncLanguage(data.user);
     } catch {
       tokenStore.clear();
       setUser(null);
@@ -51,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     tokenStore.set(res.tokens.accessToken);
     setUser(res.user);
     setTenant(res.tenant);
+    syncLanguage(res.user);
   }
 
   async function register(data: RegisterRequest) {

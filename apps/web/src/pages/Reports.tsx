@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
+import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../lib/api';
-import { fmtMoney, fmtNumber } from '../lib/format';
+import { useCurrency } from '../lib/currency';
 import type { ReportSummary } from '@smeta/shared';
 
 export function Reports() {
+  const { t } = useTranslation();
+  const { fmt } = useCurrency();
   const [data, setData] = useState<ReportSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +21,7 @@ export function Reports() {
         if (alive) setData(res);
       })
       .catch((err) => {
-        if (alive) setError(err instanceof ApiError ? err.message : 'Hisobotni yuklashda xatolik');
+        if (alive) setError(err instanceof ApiError ? err.message : t('reports.noData'));
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -38,23 +41,13 @@ export function Reports() {
       {/* Page Title & Actions */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div className="space-y-2">
-          <h1 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight font-display">Tahliliy Hisobotlar</h1>
-          <p className="text-[#BCC0C7] max-w-xl">Loyihangizning barcha moliyaviy va resurs ko'rsatkichlari bir joyda.</p>
+          <h1 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight font-display">{t('reports.title')}</h1>
+          <p className="text-[#BCC0C7] max-w-xl">{t('reports.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 bg-[#16181D]/40 border border-[#343841]/50 rounded-xl backdrop-blur-md cursor-pointer hover:bg-white/5 transition-colors">
-            <Icon icon="lucide:calendar" className="w-4 h-4 text-[#22D3EE]" />
-            <span className="text-sm font-medium text-white">Ushbu oy</span>
-            <Icon icon="lucide:chevron-down" className="w-4 h-4 opacity-50" />
-          </div>
-          <div className="h-8 w-px bg-[#343841]/50 hidden sm:block"></div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-[#16181D]/40 border border-[#343841]/50 rounded-xl backdrop-blur-md text-sm font-medium text-white hover:bg-white/5 transition-colors">
-            <Icon icon="lucide:save" className="w-4 h-4 text-[#F97316]" />
-            Shablonni saqlash
-          </button>
           <div className="flex bg-[#343841]/30 border border-[#343841]/50 rounded-xl p-1">
-            <button aria-label="Excel eksport" className="w-10 h-10 inline-flex items-center justify-center hover:bg-white/5 rounded-lg"><Icon icon="lucide:file-spreadsheet" className="w-4 h-4" /></button>
-            <button aria-label="PDF eksport" className="w-10 h-10 inline-flex items-center justify-center hover:bg-white/5 rounded-lg"><Icon icon="lucide:file-text" className="w-4 h-4" /></button>
+            <button aria-label="Excel" className="w-10 h-10 inline-flex items-center justify-center hover:bg-white/5 rounded-lg"><Icon icon="lucide:file-spreadsheet" className="w-4 h-4" /></button>
+            <button aria-label="PDF" className="w-10 h-10 inline-flex items-center justify-center hover:bg-white/5 rounded-lg"><Icon icon="lucide:file-text" className="w-4 h-4" /></button>
           </div>
         </div>
       </div>
@@ -74,29 +67,29 @@ export function Reports() {
             <StatCard
               icon="lucide:dollar-sign"
               iconColor="text-[#F97316]"
-              label="Umumiy Xarajat"
-              value={fmtMoney(data.totalExpense)}
+              label={t('reports.totalExpense')}
+              value={fmt(data.totalExpense)}
               trend={data.trends.totalExpense}
             />
             <StatCard
               icon="lucide:box"
               iconColor="text-[#22D3EE]"
-              label="Material Sarfi"
-              value={fmtMoney(data.materialCost)}
+              label={t('reports.materialCost')}
+              value={fmt(data.materialCost)}
               trend={data.trends.materialCost}
             />
             <StatCard
               icon="lucide:hammer"
               iconColor="text-[#C084FC]"
-              label="Ishchi Kuchi"
-              value={fmtMoney(data.laborCost)}
+              label={t('reports.laborCost')}
+              value={fmt(data.laborCost)}
               trend={data.trends.laborCost}
             />
             <StatCard
               icon="lucide:trending-up"
               iconColor="text-[#34D399]"
-              label="Sof Foyda (Prognoz)"
-              value={fmtMoney(data.netProfit)}
+              label={t('reports.netProfit')}
+              value={fmt(data.netProfit)}
               trend={data.trends.netProfit}
             />
           </div>
@@ -107,15 +100,13 @@ export function Reports() {
             <div className="lg:col-span-2 glass-panel rounded-2xl p-6 flex flex-col">
               <div className="flex items-start justify-between mb-8">
                 <div>
-                  <h3 className="text-xl font-bold text-white font-display">Xarajatlar Dinamikasi</h3>
-                  <p className="text-sm text-[#BCC0C7]">Oxirgi 6 oylik xarajatlar va reja taqqoslamasi</p>
+                  <h3 className="text-xl font-bold text-white font-display">{t('reports.costDynamics')}</h3>
                 </div>
-                <span className="px-3 py-1 border border-[#22D3EE]/30 rounded-full text-[10px] font-bold text-[#22D3EE] uppercase tracking-wider">Jonli tahlil</span>
               </div>
               <div className="flex-1 min-h-[300px] relative flex items-end justify-between gap-2 sm:gap-4 px-1">
                 {data.costDynamics.length === 0 ? (
                   <div className="w-full h-full flex items-center justify-center text-sm text-[#BCC0C7]">
-                    Ma'lumot yo'q
+                    {t('common.noData')}
                   </div>
                 ) : (
                   data.costDynamics.map((d) => (
@@ -124,12 +115,12 @@ export function Reports() {
                         <div
                           className="w-1/2 max-w-[18px] rounded-t-md bg-[#FF8E4D] transition-all duration-500"
                           style={{ height: `${Math.max(2, (d.actual / maxDynamic) * 100)}%` }}
-                          title={`Haqiqiy: ${fmtNumber(d.actual)}`}
+                          title={`${t('reports.actual')}: ${fmt(d.actual)}`}
                         ></div>
                         <div
                           className="w-1/2 max-w-[18px] rounded-t-md bg-[#3DF2FF] transition-all duration-500"
                           style={{ height: `${Math.max(2, (d.planned / maxDynamic) * 100)}%` }}
-                          title={`Reja: ${fmtNumber(d.planned)}`}
+                          title={`${t('reports.planned')}: ${fmt(d.planned)}`}
                         ></div>
                       </div>
                       <span className="text-[10px] sm:text-xs text-[#BCC0C7] truncate w-full text-center">{d.month}</span>
@@ -140,23 +131,23 @@ export function Reports() {
               <div className="flex items-center justify-center gap-8 mt-4">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-sm bg-[#FF8E4D]"></div>
-                  <span className="text-xs text-white">Haqiqiy Xarajat</span>
+                  <span className="text-xs text-white">{t('reports.actual')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-sm bg-[#3DF2FF]"></div>
-                  <span className="text-xs text-white">Rejadagi Prognoz</span>
+                  <span className="text-xs text-white">{t('reports.planned')}</span>
                 </div>
               </div>
             </div>
 
             {/* Resource Usage Chart */}
             <div className="glass-panel rounded-2xl p-6 flex flex-col">
-              <h3 className="text-xl font-bold text-white font-display mb-1">Resurslar Sarfi</h3>
-              <p className="text-sm text-[#BCC0C7] mb-8">Asosiy materiallar foizda</p>
+              <h3 className="text-xl font-bold text-white font-display mb-1">{t('reports.resourceUsage')}</h3>
+              <p className="text-sm text-[#BCC0C7] mb-8">&nbsp;</p>
 
               <div className="flex-1 space-y-6">
                 {data.resourceUsage.length === 0 ? (
-                  <p className="text-sm text-[#BCC0C7]">Ma'lumot yo'q</p>
+                  <p className="text-sm text-[#BCC0C7]">{t('common.noData')}</p>
                 ) : (
                   data.resourceUsage.map((r) => (
                     <ResourceBar key={r.label} label={r.label} percentage={r.percentage} color="bg-[#22D3EE]" />
@@ -166,7 +157,7 @@ export function Reports() {
 
               <div className="mt-8 p-4 bg-[#16181D]/40 border border-[#343841]/50 rounded-xl">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs text-[#BCC0C7]">O'rtacha sarf darajasi</span>
+                  <span className="text-xs text-[#BCC0C7]">{t('reports.resourceUsage')}</span>
                   <span className="text-sm font-bold text-[#F97316]">{avgUsage(data)}%</span>
                 </div>
                 <div className="h-1.5 w-full bg-[#343841]/30 rounded-full overflow-hidden">
@@ -180,27 +171,25 @@ export function Reports() {
           <div className="glass-panel rounded-2xl overflow-hidden">
             <div className="p-6 border-b border-[#343841]/50 flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold text-white font-display">Foyda va Zarar Hisoboti (P&L)</h3>
-                <p className="text-sm text-[#BCC0C7]">Barcha operatsiyalar boyicha moliyaviy oqimlar</p>
+                <h3 className="text-xl font-bold text-white font-display">{t('reports.pnl')}</h3>
               </div>
-              <button className="text-xs font-semibold text-[#22D3EE] hover:underline">Batafsil ko'rish</button>
             </div>
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-separate border-spacing-0">
                 <thead>
                   <tr className="bg-[#16181D]/20">
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7]">Kategoriya</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7]">Tushum (UZS)</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7]">Xarajat (UZS)</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7]">Sof Foyda/Zarar</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-right text-[#BCC0C7]">Holat</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7]">{t('reports.category')}</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7]">{t('reports.revenue')}</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7]">{t('reports.expense')}</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7]">{t('reports.profit')}</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-right text-[#BCC0C7]">{t('reports.status')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#343841]/30">
                   {data.pnl.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-6 py-8 text-center text-sm text-[#BCC0C7]">
-                        Ma'lumot yo'q
+                        {t('common.noData')}
                       </td>
                     </tr>
                   ) : (
@@ -208,9 +197,10 @@ export function Reports() {
                       <TableRow
                         key={row.category}
                         category={row.category}
-                        revenue={fmtNumber(row.revenue)}
-                        expense={fmtNumber(row.expense)}
+                        revenue={fmt(row.revenue)}
+                        expense={fmt(row.expense)}
                         profit={row.profit}
+                        profitStr={fmt(Math.abs(row.profit))}
                         status={row.status}
                       />
                     ))
@@ -320,12 +310,14 @@ function TableRow({
   revenue,
   expense,
   profit,
+  profitStr,
   status,
 }: {
   category: string;
   revenue: string;
   expense: string;
   profit: number;
+  profitStr: string;
   status: string;
 }) {
   const isLoss = profit < 0;
@@ -335,7 +327,7 @@ function TableRow({
       <td className="px-6 py-4 text-sm text-[#BCC0C7] data-value">{revenue}</td>
       <td className="px-6 py-4 text-sm text-[#BCC0C7] data-value">{expense}</td>
       <td className={`px-6 py-4 text-sm font-bold data-value ${isLoss ? 'text-red-400' : 'text-emerald-400'}`}>
-        {isLoss ? '-' : ''}{fmtNumber(Math.abs(profit))}
+        {isLoss ? '-' : ''}{profitStr}
       </td>
       <td className="px-6 py-4 text-right">
         <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold border ${statusColors(status)}`}>

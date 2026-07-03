@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { fmtNumber } from '../lib/format';
+import { useCurrency } from '../lib/currency';
 import type { Material } from '@smeta/shared';
 
 export function Materials() {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<string[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,22 +53,19 @@ export function Materials() {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10">
         <div className="max-w-xl">
           <h1 className="text-4xl lg:text-5xl font-black mb-4 tracking-tight">
-            <span className="text-white">Materiallar </span>
-            <span className="text-[#5555E7] font-sans">Katalogi</span>
+            <span className="text-white">{t('materials.titlePrefix')}</span>
+            <span className="text-[#5555E7] font-sans">{t('materials.titleSuffix')}</span>
           </h1>
-          <p className="text-base leading-relaxed">
-            Loyiha smetasi uchun zarur bo'lgan barcha qurilish materiallarini bir joyda toping. Narxlar real vaqt
-            rejimida yangilanadi.
-          </p>
+          <p className="text-base leading-relaxed">{t('materials.heroDesc')}</p>
         </div>
         <div className="flex gap-px bg-white/5 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-xl">
           <div className="px-6 py-4 border-r border-white/5">
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-1">Jami turlar</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-1">{t('materials.totalTypes')}</p>
             <p className="font-oxanium text-2xl font-black text-[#22D3EE]">{fmtNumber(materials.length)}</p>
           </div>
           <div className="px-6 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-1">Yangilangan</p>
-            <p className="font-oxanium text-2xl font-black text-[#F97316]">Bugun</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-1">{t('materials.updated')}</p>
+            <p className="font-oxanium text-2xl font-black text-[#F97316]">{t('common.today')}</p>
           </div>
         </div>
       </div>
@@ -79,36 +79,36 @@ export function Materials() {
               type="text"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Material nomi yoki yetkazib beruvchi bo'yicha qidirish..."
+              placeholder={t('materials.searchPh')}
               className="w-full bg-[#16181D]/50 border border-white/10 rounded-xl py-4 pl-12 pr-4 focus:outline-none focus:border-[#5555E7]/50 transition-colors"
             />
           </div>
           <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
             <button className="flex items-center justify-center gap-2 px-3 sm:px-6 py-3.5 bg-[#16181D]/30 border border-white/10 rounded-xl hover:bg-white/5 transition-colors min-w-0">
               <Icon icon="lucide:arrow-up-down" className="w-5 h-5 text-[#22D3EE] shrink-0" />
-              <span className="text-sm font-medium text-white truncate">Saralash</span>
+              <span className="text-sm font-medium text-white truncate">{t('materials.sort')}</span>
             </button>
             <button className="flex items-center justify-center gap-2 px-3 sm:px-6 py-3.5 bg-[#00F0FF]/10 border border-[#00F0FF]/20 rounded-xl text-[#00F0FF] hover:bg-[#00F0FF]/20 transition-colors min-w-0">
               <Icon icon="lucide:upload" className="w-5 h-5 shrink-0" />
-              <span className="text-sm font-medium truncate">Import</span>
+              <span className="text-sm font-medium truncate">{t('materials.import')}</span>
             </button>
             <button className="flex items-center justify-center gap-2 px-3 sm:px-6 py-3.5 bg-[#5555E7] rounded-xl text-white shadow-[0_0_20px_rgba(85,85,231,0.4)] hover:bg-[#4444d6] transition-colors min-w-0">
               <Icon icon="lucide:download" className="w-5 h-5 shrink-0" />
-              <span className="text-sm font-bold truncate">Eksport</span>
+              <span className="text-sm font-bold truncate">{t('materials.export')}</span>
             </button>
           </div>
         </div>
 
         <div className="flex items-center gap-4 overflow-x-auto pb-2 no-scrollbar">
           <div className="flex items-center gap-2 shrink-0">
-            <img src="/assets/materials/IMG_18.svg" alt="Filter" className="w-4 h-4" />
-            <span className="text-sm font-medium">Filtr:</span>
+            <img src="/assets/materials/IMG_18.svg" alt="" className="w-4 h-4" />
+            <span className="text-sm font-medium">{t('materials.filter')}</span>
           </div>
           <div className="flex gap-2">
             {filterBadges.map((label) => (
               <FilterBadge
                 key={label}
-                label={label}
+                label={label === 'Barchasi' ? t('common.all') : label}
                 active={activeCategory === label}
                 onClick={() => setActiveCategory(label)}
               />
@@ -135,10 +135,8 @@ export function Materials() {
       ) : materials.length === 0 ? (
         <div className="glass-panel rounded-2xl p-16 mb-16 flex flex-col items-center justify-center text-center">
           <Icon icon="lucide:package-search" className="w-14 h-14 text-[#5555E7]/60 mb-5" />
-          <h4 className="text-lg font-bold text-white mb-2">Material topilmadi</h4>
-          <p className="text-sm max-w-sm">
-            Qidiruv shartlaringizga mos keluvchi material mavjud emas. Boshqa kalit so'z yoki kategoriyani sinab ko'ring.
-          </p>
+          <h4 className="text-lg font-bold text-white mb-2">{t('materials.notFoundTitle')}</h4>
+          <p className="text-sm max-w-sm">{t('materials.notFoundDesc')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
@@ -153,22 +151,18 @@ export function Materials() {
         <div className="lg:col-span-4 p-8 rounded-2xl bg-gradient-to-br from-[#5555E7]/10 to-transparent border border-[#5555E7]/20 flex flex-col justify-between">
           <div>
             <Icon icon="lucide:zap" className="w-10 h-10 text-[#5555E7] mb-6" />
-            <h3 className="text-xl font-black text-white mb-3">Tezkor Hisob-kitob</h3>
-            <p className="text-sm leading-relaxed mb-8">
-              Tanlangan materiallarni darhol Kalkulyatorga o'tkazish imkoniyati.
-            </p>
+            <h3 className="text-xl font-black text-white mb-3">{t('materials.quickCalcTitle')}</h3>
+            <p className="text-sm leading-relaxed mb-8">{t('materials.quickCalcDesc')}</p>
           </div>
           <button className="w-full py-3 bg-[#16181D] border border-[#5555E7]/50 rounded-xl text-[#5555E7] font-medium hover:bg-[#5555E7]/5 transition-colors">
-            Kalkulyatorga o'tish
+            {t('materials.goToCalc')}
           </button>
         </div>
 
         <div className="lg:col-span-8 p-8 rounded-2xl bg-[#191B1F]/40 border border-white/10 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-8">
           <div className="relative z-10 max-w-md">
-            <h3 className="text-2xl font-black text-white mb-4">Hamkor Yetkazib Beruvchi Bo'ling</h3>
-            <p className="text-base leading-relaxed mb-8">
-              O'z mahsulotlaringizni Smeta AI katalogiga qo'shing va minglab quruvchilar e'tiborini torting.
-            </p>
+            <h3 className="text-2xl font-black text-white mb-4">{t('materials.partnerTitle')}</h3>
+            <p className="text-base leading-relaxed mb-8">{t('materials.partnerDesc')}</p>
             <div className="flex items-center gap-4">
               <div className="flex -space-x-3">
                 {[34, 35, 36, 37].map((n) => (
@@ -184,7 +178,7 @@ export function Materials() {
                 </div>
               </div>
               <button className="px-6 py-3 bg-[#06B6D4] rounded-xl text-white font-bold hover:bg-[#05a1bc] transition-colors">
-                Ariza yuborish
+                {t('materials.apply')}
               </button>
             </div>
           </div>
@@ -296,7 +290,9 @@ function FilterBadge({ label, active = false, onClick }: { label: string; active
 }
 
 function MaterialCard({ material }: { material: Material }) {
-  const { name, provider, priceUzs, priceUsd, stock, unit, rating, imageUrl } = material;
+  const { t } = useTranslation();
+  const { fmt } = useCurrency();
+  const { name, provider, priceUzs, stock, unit, rating, imageUrl } = material;
   return (
     <div className="glass-panel rounded-xl overflow-hidden hover-card-glow flex flex-col h-full">
       <div className="relative h-48 overflow-hidden">
@@ -326,14 +322,13 @@ function MaterialCard({ material }: { material: Material }) {
 
         <div className="flex justify-between items-end mb-6">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-1">Narxi (Birlik)</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-1">{t('materials.priceUnit')}</p>
             <p className="font-oxanium text-xl font-black text-[#F97316] drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]">
-              {fmtNumber(priceUzs)} <span className="text-xs font-sans">UZS</span>
+              {fmt(priceUzs)}
             </p>
-            <p className="text-xs text-[#22D3EE]/80 font-medium mt-0.5">${priceUsd.toFixed(2)} USD</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-1">Omborda</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-1">{t('materials.inStock')}</p>
             <div className="flex items-center justify-end gap-1.5">
               <Icon icon="lucide:circle-check" className="w-3 h-3 text-white" />
               <span className="text-sm font-bold text-white">
@@ -349,7 +344,7 @@ function MaterialCard({ material }: { material: Material }) {
           </button>
           <button className="flex-1 flex items-center justify-center gap-2 bg-[#5555E7] text-white text-sm font-bold rounded-lg hover:bg-[#4444d6] transition-colors">
             <Icon icon="lucide:plus" className="w-3 h-3" />
-            Loyihaga qo'shish
+            {t('materials.addToProject')}
           </button>
         </div>
       </div>
