@@ -4,6 +4,7 @@ import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../lib/auth';
 import { useCurrency } from '../lib/currency';
+import { useCart } from '../lib/cart';
 import { setLanguage, type Lang } from '../i18n';
 import { api } from '../lib/api';
 
@@ -22,6 +23,7 @@ export function Layout() {
   const [open, setOpen] = useState(true); // desktop sidebar yig'ish/yoyish
   const [mobileOpen, setMobileOpen] = useState(false); // mobil drawer
   const { user, tenant, logout } = useAuth();
+  const { count } = useCart();
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -82,6 +84,12 @@ export function Layout() {
           <div className="flex items-center gap-2 md:gap-3">
             <LanguageSwitcher />
             <CurrencySwitcher />
+            <NavLink to="/app/savat" className="relative w-10 h-10 flex items-center justify-center hover:bg-white/5 rounded-lg" aria-label="Savat">
+              <Icon icon="lucide:shopping-cart" className="w-5 h-5" />
+              {count > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-[#FF6B1A] text-white text-[10px] font-bold rounded-full flex items-center justify-center">{count}</span>
+              )}
+            </NavLink>
             <NavLink to="/app/ai" className="w-10 h-10 hidden sm:flex items-center justify-center hover:bg-white/5 rounded-lg">
               <Icon icon="lucide:message-square" className="w-5 h-5" />
             </NavLink>

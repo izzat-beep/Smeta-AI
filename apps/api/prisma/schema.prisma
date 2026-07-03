@@ -82,6 +82,14 @@ enum ChatRole {
   assistant
 }
 
+// Buyurtma holati. To'lov integratsiyasi keyin: PENDING_PAYMENT -> PAID -> DELIVERED.
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  DELIVERED
+  CANCELLED
+}
+
 model Tenant {
   id          String       @id @default(cuid())
   name        String
@@ -104,6 +112,7 @@ model Tenant {
   sales       Sale[]
   realtors    Realtor[]
   generalExpenses generalExpenses[]
+  orders      Order[]
 }
 
 model User {
@@ -193,17 +202,18 @@ model Material {
   id        String   @id @default(cuid())
   tenantId  String? // null = global katalog
   tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name      String
-  category  String   @default("Umumiy")
-  provider  String?
-  unit      String   @default("dona")
-  priceUzs  Decimal  @default(0) @db.Decimal(18, 2)
-  priceUsd  Decimal  @default(0) @db.Decimal(18, 2)
-  stock     Decimal  @default(0) @db.Decimal(18, 2)
-  rating    Float    @default(0)
-  imageUrl  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  name        String
+  category    String   @default("Umumiy")
+  provider    String?
+  description String?  @db.Text
+  unit        String   @default("dona")
+  priceUzs    Decimal  @default(0) @db.Decimal(18, 2)
+  priceUsd    Decimal  @default(0) @db.Decimal(18, 2)
+  stock       Decimal  @default(0) @db.Decimal(18, 2)
+  rating      Float    @default(0)
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([tenantId])
   @@index([category])
@@ -386,4 +396,39 @@ model generalExpenses {
 
   @@index([tenantId])
   @@index([projectId])
+}
+
+// Materiallar buyurtmasi (Vazifa 4). To'lov keyin ulanadi (status oqimi).
+model Order {
+  id            String      @id @default(cuid())
+  tenantId      String
+  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customerName  String
+  customerPhone String
+  address       String?
+  note          String?
+  currency      Currency    @default(UZS)
+  total         Decimal     @default(0) @db.Decimal(18, 2)
+  status        OrderStatus @default(PENDING_PAYMENT)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  items OrderItem[]
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  materialId String?
+  name       String
+  unit       String  @default("dona")
+  unitPrice  Decimal @default(0) @db.Decimal(18, 2)
+  qty        Decimal @default(1) @db.Decimal(18, 3)
+  lineTotal  Decimal @default(0) @db.Decimal(18, 2)
+
+  @@index([orderId])
 }

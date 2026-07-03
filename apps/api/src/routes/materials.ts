@@ -37,10 +37,24 @@ materialsRouter.get(
   }),
 );
 
+// Bitta material tafsiloti (global katalog yoki tenant materiali).
+materialsRouter.get(
+  '/:id',
+  ah(async (req, res) => {
+    const tenantId = req.user!.tenantId;
+    const m = await prisma.material.findFirst({
+      where: { id: req.params.id, OR: [{ tenantId: null }, { tenantId }] },
+    });
+    if (!m) return res.status(404).json({ error: 'not_found', message: 'Material topilmadi' });
+    res.json(s.material(m));
+  }),
+);
+
 const upsertSchema = z.object({
   name: z.string().min(1),
   category: z.string().optional(),
   provider: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
   unit: z.string().optional(),
   priceUzs: z.number().nonnegative().optional(),
   priceUsd: z.number().nonnegative().optional(),
@@ -60,6 +74,7 @@ materialsRouter.post(
         name: body.name,
         category: body.category ?? 'Umumiy',
         provider: body.provider ?? null,
+        description: body.description ?? null,
         unit: body.unit ?? 'dona',
         priceUzs: body.priceUzs ?? 0,
         priceUsd: body.priceUsd ?? 0,

@@ -7,6 +7,10 @@ import { Dashboard } from './pages/Dashboard';
 import { Projects } from './pages/Projects';
 import { Calculator } from './pages/Calculator';
 import { Materials } from './pages/Materials';
+import { MaterialDetail } from './pages/MaterialDetail';
+import { Cart } from './pages/Cart';
+import { Checkout } from './pages/Checkout';
+import { Payment } from './pages/Payment';
 import { Reports } from './pages/Reports';
 import { Sales } from './pages/Sales';
 import { Realtors } from './pages/Realtors';
@@ -33,6 +37,10 @@ export function App() {
         <Route path="loyihalar" element={<Projects />} />
         <Route path="kalkulyator" element={<Calculator />} />
         <Route path="materiallar" element={<Materials />} />
+        <Route path="materiallar/:id" element={<MaterialDetail />} />
+        <Route path="savat" element={<Cart />} />
+        <Route path="checkout" element={<Checkout />} />
+        <Route path="tolov/:orderId" element={<Payment />} />
         <Route path="hisobotlar" element={<Reports />} />
         <Route path="sotuvlar" element={<Sales />} />
         <Route path="maklerlar" element={<Realtors />} />

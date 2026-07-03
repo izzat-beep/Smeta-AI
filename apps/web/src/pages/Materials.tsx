@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { fmtNumber } from '../lib/format';
 import { useCurrency } from '../lib/currency';
+import { useCart } from '../lib/cart';
 import type { Material } from '@smeta/shared';
 
 export function Materials() {
@@ -292,7 +294,16 @@ function FilterBadge({ label, active = false, onClick }: { label: string; active
 function MaterialCard({ material }: { material: Material }) {
   const { t } = useTranslation();
   const { fmt } = useCurrency();
-  const { name, provider, priceUzs, stock, unit, rating, imageUrl } = material;
+  const { add } = useCart();
+  const [added, setAdded] = useState(false);
+  const { id, name, provider, priceUzs, stock, unit, rating, imageUrl } = material;
+
+  function addToCart() {
+    add({ materialId: id, name, unit, priceUzs, imageUrl });
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 1500);
+  }
+
   return (
     <div className="glass-panel rounded-xl overflow-hidden hover-card-glow flex flex-col h-full">
       <div className="relative h-48 overflow-hidden">
@@ -339,12 +350,15 @@ function MaterialCard({ material }: { material: Material }) {
         </div>
 
         <div className="pt-4 border-t border-white/5 flex gap-2">
-          <button className="w-10 h-10 flex items-center justify-center bg-[#16181D] border border-white/10 rounded-lg hover:bg-white/5 transition-colors">
+          <Link to={`/app/materiallar/${id}`} title={t('materials.detail')} className="w-10 h-10 flex items-center justify-center bg-[#16181D] border border-white/10 rounded-lg hover:bg-white/5 transition-colors">
             <Icon icon="lucide:info" className="w-4 h-4" />
-          </button>
-          <button className="flex-1 flex items-center justify-center gap-2 bg-[#5555E7] text-white text-sm font-bold rounded-lg hover:bg-[#4444d6] transition-colors">
-            <Icon icon="lucide:plus" className="w-3 h-3" />
-            {t('materials.addToProject')}
+          </Link>
+          <button
+            onClick={addToCart}
+            className={`flex-1 flex items-center justify-center gap-2 text-sm font-bold rounded-lg transition-colors ${added ? 'bg-[#10B981] text-white' : 'bg-[#5555E7] text-white hover:bg-[#4444d6]'}`}
+          >
+            <Icon icon={added ? 'lucide:check' : 'lucide:shopping-cart'} className="w-3.5 h-3.5" />
+            {added ? t('materials.added') : t('materials.addToCart')}
           </button>
         </div>
       </div>

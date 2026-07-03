@@ -27,6 +27,8 @@ export type EstimateStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export type InvoiceStatus = 'PAID' | 'PENDING' | 'OVERDUE' | 'CANCELLED';
 
+export type OrderStatus = 'PENDING_PAYMENT' | 'PAID' | 'DELIVERED' | 'CANCELLED';
+
 export type ChatRole = 'user' | 'assistant';
 
 // ─── Asosiy modellar (API javoblari) ────────────────────────────────────
@@ -103,6 +105,7 @@ export interface Material {
   name: string;
   category: string;
   provider: string | null;
+  description: string | null;
   unit: string;
   priceUzs: number;
   priceUsd: number;
@@ -110,6 +113,31 @@ export interface Material {
   rating: number;
   imageUrl: string | null;
   tenantId: string | null; // null = global katalog
+  createdAt: string;
+}
+
+export interface OrderItem {
+  id: string;
+  orderId: string;
+  materialId: string | null;
+  name: string;
+  unit: string;
+  unitPrice: number;
+  qty: number;
+  lineTotal: number;
+}
+
+export interface Order {
+  id: string;
+  tenantId: string;
+  customerName: string;
+  customerPhone: string;
+  address: string | null;
+  note: string | null;
+  currency: Currency;
+  total: number;
+  status: OrderStatus;
+  items: OrderItem[];
   createdAt: string;
 }
 

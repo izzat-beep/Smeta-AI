@@ -19,6 +19,7 @@ import { salesRouter } from './routes/sales.js';
 import { realtorsRouter } from './routes/realtors.js';
 import { expensesRouter } from './routes/expenses.js';
 import { voiceRouter } from './routes/voice.js';
+import { ordersRouter } from './routes/orders.js';
 import { adminRouter } from './routes/admin.js';
 const app = express();
 
@@ -79,6 +80,7 @@ app.use('/api/sales', requireAuth, salesRouter);
 app.use('/api/realtors', requireAuth, realtorsRouter);
 app.use('/api/expenses', requireAuth, expensesRouter);
 app.use('/api/voice', requireAuth, voiceRouter);
+app.use('/api/orders', requireAuth, ordersRouter);
 
 // Admin panel route'lari (o'z auth'i ichida)
 app.use('/api/admin', adminRouter);

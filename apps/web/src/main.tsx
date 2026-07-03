@@ -6,13 +6,16 @@ import './i18n'; // i18next init (til resurslari)
 import { App } from './App';
 import { AuthProvider } from './lib/auth';
 import { CurrencyProvider } from './lib/currency';
+import { CartProvider } from './lib/cart';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <CurrencyProvider>
-          <App />
+          <CartProvider>
+            <App />
+          </CartProvider>
         </CurrencyProvider>
       </AuthProvider>
     </BrowserRouter>

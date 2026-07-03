@@ -32,6 +32,7 @@ export function material(m: any) {
     name: m.name,
     category: m.category,
     provider: m.provider,
+    description: m.description ?? null,
     unit: m.unit,
     priceUzs: toNum(m.priceUzs),
     priceUsd: toNum(m.priceUsd),
@@ -40,6 +41,35 @@ export function material(m: any) {
     imageUrl: m.imageUrl,
     tenantId: m.tenantId,
     createdAt: iso(m.createdAt),
+  };
+}
+
+export function orderItem(i: any) {
+  return {
+    id: i.id,
+    orderId: i.orderId,
+    materialId: i.materialId ?? null,
+    name: i.name,
+    unit: i.unit,
+    unitPrice: toNum(i.unitPrice),
+    qty: toNum(i.qty),
+    lineTotal: toNum(i.lineTotal),
+  };
+}
+
+export function order(o: any) {
+  return {
+    id: o.id,
+    tenantId: o.tenantId,
+    customerName: o.customerName,
+    customerPhone: o.customerPhone,
+    address: o.address ?? null,
+    note: o.note ?? null,
+    currency: o.currency,
+    total: toNum(o.total),
+    status: o.status,
+    items: (o.items ?? []).map(orderItem),
+    createdAt: iso(o.createdAt),
   };
 }
 
