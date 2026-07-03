@@ -20,9 +20,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   async function refreshMe() {
+    // Access token bo'lmasa ham refresh cookie orqali sessiyani tiklashga urinamiz.
     if (!tokenStore.access) {
-      setLoading(false);
-      return;
+      const ok = await api.tryRefresh();
+      if (!ok) {
+        setLoading(false);
+        return;
+      }
     }
     try {
       const data = await api.get<{ user: User; tenant: Tenant }>('/auth/me');
@@ -44,19 +48,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function login(data: LoginRequest) {
     const res = await api.post<AuthResponse>('/auth/login', data);
-    tokenStore.set(res.tokens.accessToken, res.tokens.refreshToken);
+    tokenStore.set(res.tokens.accessToken);
     setUser(res.user);
     setTenant(res.tenant);
   }
 
   async function register(data: RegisterRequest) {
     const res = await api.post<AuthResponse>('/auth/register', data);
-    tokenStore.set(res.tokens.accessToken, res.tokens.refreshToken);
+    tokenStore.set(res.tokens.accessToken);
     setUser(res.user);
     setTenant(res.tenant);
   }
 
   function logout() {
+    // Serverda refresh cookie'ni bekor qilamiz (xatolikni e'tiborsiz qoldiramiz).
+    api.post('/auth/logout').catch(() => {});
     tokenStore.clear();
     setUser(null);
     setTenant(null);

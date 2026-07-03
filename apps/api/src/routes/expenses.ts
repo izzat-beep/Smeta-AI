@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../prisma.js';
 import { ah } from '../util.js';
+import { requireRole } from '../auth.js';
 
 export const expensesRouter = Router();
 
@@ -34,6 +35,7 @@ const saveSchema = z.object({
 
 expensesRouter.post(
   '/',
+  requireRole('OWNER', 'MANAGER'),
   ah(async (req, res) => {
     const b = saveSchema.parse(req.body);
     const currency = b.currency ?? 'UZS';

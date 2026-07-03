@@ -2,9 +2,13 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma, toNum } from '../prisma.js';
 import { ah } from '../util.js';
+import { requireRole } from '../auth.js';
 import * as s from '../serialize.js';
 
 export const salesRouter = Router();
+
+// Moliyaviy amallar (sotuv/to'lov yaratish-o'zgartirish) faqat OWNER/MANAGER uchun.
+const canWrite = requireRole('OWNER', 'MANAGER');
 
 // GET /api/sales — Barcha sotuvlar ro'yxati (to'lovlar tarixi + makler bilan)
 // Query: ?unit=<filtr>  &  ?sort=lastPayment (oxirgi to'lov bo'yicha)
@@ -63,6 +67,7 @@ const upsert = z.object({
 // POST /api/sales — Yangi sotuv qo'shish
 salesRouter.post(
   '/',
+  canWrite,
   ah(async (req, res) => {
     const b = upsert.parse(req.body);
     const currency = b.currency ?? 'UZS';
@@ -136,6 +141,7 @@ salesRouter.get(
 // POST /api/sales/:saleId/payments — yangi to'lov qo'shish
 salesRouter.post(
   '/:saleId/payments',
+  canWrite,
   ah(async (req, res) => {
     const b = paymentInput.parse(req.body);
     const sale = await prisma.sale.findFirst({
@@ -172,6 +178,7 @@ salesRouter.post(
 // DELETE /api/sales/payments/:id — to'lovni o'chirish
 salesRouter.delete(
   '/payments/:id',
+  canWrite,
   ah(async (req, res) => {
     const payment = await prisma.payment.findFirst({
       where: { id: req.params.id, sale: { tenantId: req.user!.tenantId } },
@@ -209,6 +216,7 @@ const patchInput = z.object({
 
 salesRouter.patch(
   '/:id',
+  canWrite,
   ah(async (req, res) => {
     const b = patchInput.parse(req.body);
     const ex = await prisma.sale.findFirst({ where: { id: req.params.id, tenantId: req.user!.tenantId } });
@@ -231,6 +239,7 @@ salesRouter.patch(
 // DELETE /api/sales/:id — Sotuvni butunlay o'chirish (to'lovlar cascade o'chadi)
 salesRouter.delete(
   '/:id',
+  canWrite,
   ah(async (req, res) => {
     const ex = await prisma.sale.findFirst({ where: { id: req.params.id, tenantId: req.user!.tenantId } });
     if (!ex) return res.status(404).json({ error: 'not_found', message: 'Sotuv topilmadi' });

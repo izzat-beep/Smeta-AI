@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../prisma.js';
 import { ah } from '../util.js';
+import { requireRole } from '../auth.js';
 import * as s from '../serialize.js';
 
 export const projectsRouter = Router();
@@ -99,6 +100,7 @@ projectsRouter.patch(
 
 projectsRouter.delete(
   '/:id',
+  requireRole('OWNER', 'MANAGER'),
   ah(async (req, res) => {
     const tenantId = req.user!.tenantId;
     const existing = await prisma.project.findFirst({ where: { id: req.params.id, tenantId } });

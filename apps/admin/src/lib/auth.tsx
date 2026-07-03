@@ -17,7 +17,11 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      if (!tokenStore.access) { setLoading(false); return; }
+      // Access token bo'lmasa refresh cookie orqali sessiyani tiklashga urinamiz.
+      if (!tokenStore.access) {
+        const ok = await api.tryRefresh();
+        if (!ok) { setLoading(false); return; }
+      }
       try {
         const data = await api.get<{ admin: AdminUser }>('/me');
         setAdmin(data.admin);
@@ -31,11 +35,12 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
 
   async function login(email: string, password: string) {
     const res = await api.post<AdminAuthResponse>('/auth/login', { email, password });
-    tokenStore.set(res.tokens.accessToken, res.tokens.refreshToken);
+    tokenStore.set(res.tokens.accessToken);
     setAdmin(res.admin);
   }
 
   function logout() {
+    api.post('/auth/logout').catch(() => {});
     tokenStore.clear();
     setAdmin(null);
   }

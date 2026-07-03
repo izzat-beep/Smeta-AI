@@ -1,57 +1,99 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
+import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { prisma, toNum } from '../prisma.js';
 import { ah } from '../util.js';
-import { signAdminTokens, requireAdmin, verifyRefresh } from '../auth.js';
+import {
+  signAdminAccess,
+  issueRefreshToken,
+  rotateRefreshToken,
+  revokeRefreshToken,
+  setRefreshCookie,
+  clearRefreshCookie,
+  REFRESH_COOKIE,
+  requireAdmin,
+  requireAdminRole,
+} from '../auth.js';
 import * as s from '../serialize.js';
 import { PLAN_PRICES } from '@smeta/shared';
 
 export const adminRouter = Router();
 
+// Admin login rate-limit: IP bo'yicha 15 daqiqada 5 urinish.
+const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { error: 'too_many_requests', message: 'Juda ko\'p urinish. 15 daqiqadan so\'ng qayta urinib ko\'ring.' },
+});
+
 // ─── Auth (ochiq) ────────────────────────────────────────────────────────
 adminRouter.post(
   '/auth/login',
+  adminLoginLimiter,
   ah(async (req, res) => {
     const body = z.object({ email: z.string().email(), password: z.string() }).parse(req.body);
     const admin = await prisma.adminUser.findUnique({ where: { email: body.email } });
-    if (!admin) return res.status(401).json({ error: 'unauthorized', message: 'Email yoki parol noto\'g\'ri' });
+    if (!admin) {
+      // eslint-disable-next-line no-console
+      console.warn(`[admin-auth] Muvaffaqiyatsiz login — email=${body.email} ip=${req.ip} reason=not_found time=${new Date().toISOString()}`);
+      return res.status(401).json({ error: 'unauthorized', message: 'Email yoki parol noto\'g\'ri' });
+    }
     const ok = await bcrypt.compare(body.password, admin.passwordHash);
-    if (!ok) return res.status(401).json({ error: 'unauthorized', message: 'Email yoki parol noto\'g\'ri' });
-    const tokens = signAdminTokens({ sub: admin.id, role: admin.role });
-    res.json({ admin: s.adminUser(admin), tokens });
+    if (!ok) {
+      // eslint-disable-next-line no-console
+      console.warn(`[admin-auth] Muvaffaqiyatsiz login — email=${body.email} ip=${req.ip} reason=bad_password time=${new Date().toISOString()}`);
+      return res.status(401).json({ error: 'unauthorized', message: 'Email yoki parol noto\'g\'ri' });
+    }
+    const accessToken = signAdminAccess({ sub: admin.id, role: admin.role });
+    const refresh = await issueRefreshToken({ kind: 'admin', subjectId: admin.id, role: admin.role });
+    setRefreshCookie(res, 'admin', refresh);
+    res.json({ admin: s.adminUser(admin), tokens: { accessToken } });
   }),
 );
 
 adminRouter.post(
   '/auth/refresh',
   ah(async (req, res) => {
-    const token = req.body?.refreshToken as string | undefined;
-    if (!token) return res.status(400).json({ error: 'bad_request', message: 'refreshToken kerak' });
-    try {
-      const payload = verifyRefresh(token);
-      if (payload.kind !== 'admin') throw new Error('wrong');
-      const tokens = signAdminTokens({ sub: payload.sub, role: payload.role });
-      res.json({ tokens });
-    } catch {
-      res.status(401).json({ error: 'unauthorized', message: 'Refresh token yaroqsiz' });
+    const raw = req.cookies?.[REFRESH_COOKIE.admin] as string | undefined;
+    const result = await rotateRefreshToken(raw ?? '');
+    if (result.status !== 'ok' || result.record?.kind !== 'admin') {
+      clearRefreshCookie(res, 'admin');
+      const msg =
+        result.status === 'reuse'
+          ? 'Sessiya bekor qilindi (xavfsizlik). Qaytadan kiring.'
+          : 'Refresh token yaroqsiz';
+      return res.status(401).json({ error: 'unauthorized', message: msg });
     }
+    setRefreshCookie(res, 'admin', result.token!);
+    const accessToken = signAdminAccess({ sub: result.record.subjectId, role: result.record.role });
+    res.json({ tokens: { accessToken } });
   }),
 );
 
-// ─── Quyidagilar uchun admin token kerak ──────────────────────────────────
+adminRouter.post(
+  '/auth/logout',
+  ah(async (req, res) => {
+    const raw = req.cookies?.[REFRESH_COOKIE.admin] as string | undefined;
+    await revokeRefreshToken(raw);
+    clearRefreshCookie(res, 'admin');
+    res.json({ ok: true });
+  }),
+);
+
+// ─── Bundan keyingi BARCHA route'lar admin tokenini talab qiladi ───────────
+adminRouter.use(requireAdmin);
+
 // — Admin users (faqat SUPERADMIN uchun) —
-function requireSuperadmin(req: any, res: any, next: any) {
-  if (req.admin?.role !== 'SUPERADMIN') {
-    return res.status(403).json({ error: 'forbidden', message: 'Faqat superadmin uchun ruxsat' });
-  }
-  next();
-}
+const requireSuperadmin = requireAdminRole('SUPERADMIN');
 
 adminRouter.get(
   '/admin-users',
   requireSuperadmin,
-  ah(async (req, res) => {
+  ah(async (_req, res) => {
     const admins = await prisma.adminUser.findMany({
       orderBy: { createdAt: 'desc' },
     });

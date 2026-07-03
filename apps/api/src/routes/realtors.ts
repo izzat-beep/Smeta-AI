@@ -2,9 +2,12 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma, toNum } from '../prisma.js';
 import { ah } from '../util.js';
+import { requireRole } from '../auth.js';
 import * as s from '../serialize.js';
 
 export const realtorsRouter = Router();
+
+const canWrite = requireRole('OWNER', 'MANAGER');
 
 // GET /api/realtors — maklerlar ro'yxati + har biri bo'yicha sotuv/komissiya statistikasi
 realtorsRouter.get(
@@ -50,6 +53,7 @@ const input = z.object({
 // POST /api/realtors — yangi makler
 realtorsRouter.post(
   '/',
+  canWrite,
   ah(async (req, res) => {
     const b = input.parse(req.body);
     const r = await prisma.realtor.create({
@@ -62,6 +66,7 @@ realtorsRouter.post(
 // PATCH /api/realtors/:id — tahrirlash
 realtorsRouter.patch(
   '/:id',
+  canWrite,
   ah(async (req, res) => {
     const b = input.partial().parse(req.body);
     const ex = await prisma.realtor.findFirst({ where: { id: req.params.id, tenantId: req.user!.tenantId } });
@@ -74,6 +79,7 @@ realtorsRouter.patch(
 // DELETE /api/realtors/:id — o'chirish (bog'liq sotuvlarda realtorId null bo'ladi)
 realtorsRouter.delete(
   '/:id',
+  canWrite,
   ah(async (req, res) => {
     const ex = await prisma.realtor.findFirst({ where: { id: req.params.id, tenantId: req.user!.tenantId } });
     if (!ex) return res.status(404).json({ error: 'not_found', message: 'Makler topilmadi' });

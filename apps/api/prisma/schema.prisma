@@ -111,6 +111,7 @@ model User {
   managedProjects Project[]    @relation("ProjectManager")
   activities      Activity[]
   chatSessions    ChatSession[]
+  refreshTokens   RefreshToken[]
 
   @@index([tenantId])
 }
@@ -122,6 +123,29 @@ model AdminUser {
   passwordHash String
   role         AdminRole @default(SUPPORT)
   createdAt    DateTime  @default(now())
+}
+
+// Refresh token rotatsiyasi + reuse-detection uchun.
+// Opaque token (random) — DB'da faqat SHA-256 hash saqlanadi. Har refresh'da
+// eski token bekor qilinib yangisi beriladi; bekor qilingan token qayta
+// ishlatilsa — butun "family" (bir login sessiyasi) bekor qilinadi.
+model RefreshToken {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  familyId   String
+  kind       String // 'tenant' | 'admin'
+  userId     String? // tenant foydalanuvchi (cascade)
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminId    String? // admin foydalanuvchi
+  tenantId   String?
+  role       String
+  revokedAt  DateTime?
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+
+  @@index([familyId])
+  @@index([userId])
+  @@index([adminId])
 }
 
 model Project {

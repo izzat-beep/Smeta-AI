@@ -44,6 +44,10 @@ settingsRouter.patch(
       include: { tenant: true },
     });
     if (body.company) {
+      // Kompaniya ma'lumotlarini faqat OWNER o'zgartira oladi.
+      if (req.user!.role !== 'OWNER') {
+        return res.status(403).json({ error: 'forbidden', message: 'Kompaniya ma\'lumotlarini faqat rahbar (OWNER) o\'zgartira oladi' });
+      }
       await prisma.tenant.update({
         where: { id: req.user!.tenantId },
         data: { name: body.company.name, inn: body.company.inn, phone: body.company.phone },

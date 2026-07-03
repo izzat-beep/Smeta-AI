@@ -1,16 +1,16 @@
+// Admin API klienti — access token localStorage'da, refresh token httpOnly
+// cookie'da (JS ko'ra olmaydi). So'rovlar `credentials: 'include'` bilan.
 const BASE = import.meta.env.VITE_API_URL ?? '';
 
 const ACCESS = 'smeta_admin_access';
-const REFRESH = 'smeta_admin_refresh';
 
 export const tokenStore = {
   get access() { return localStorage.getItem(ACCESS); },
-  get refresh() { return localStorage.getItem(REFRESH); },
-  set(access: string, refresh?: string) {
-    localStorage.setItem(ACCESS, access);
-    if (refresh) localStorage.setItem(REFRESH, refresh);
+  set(access: string) { localStorage.setItem(ACCESS, access); },
+  clear() {
+    localStorage.removeItem(ACCESS);
+    localStorage.removeItem('smeta_admin_refresh'); // eski versiyadan qolgan
   },
-  clear() { localStorage.removeItem(ACCESS); localStorage.removeItem(REFRESH); },
 };
 
 export class ApiError extends Error {
@@ -21,6 +21,8 @@ export class ApiError extends Error {
   }
 }
 
+const NO_REFRESH_PATHS = ['/auth/login', '/auth/refresh', '/auth/logout'];
+
 async function request<T>(method: string, path: string, body?: unknown, retry = true): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (tokenStore.access) headers.Authorization = `Bearer ${tokenStore.access}`;
@@ -29,9 +31,10 @@ async function request<T>(method: string, path: string, body?: unknown, retry = 
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
+    credentials: 'include',
   });
 
-  if (res.status === 401 && retry && tokenStore.refresh && path !== '/auth/refresh') {
+  if (res.status === 401 && retry && !NO_REFRESH_PATHS.includes(path)) {
     const ok = await tryRefresh();
     if (ok) return request<T>(method, path, body, false);
   }
@@ -53,11 +56,11 @@ async function tryRefresh(): Promise<boolean> {
     const res = await fetch(`${BASE}/api/admin/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: tokenStore.refresh }),
+      credentials: 'include',
     });
     if (!res.ok) return false;
     const data = await res.json();
-    tokenStore.set(data.tokens.accessToken, data.tokens.refreshToken);
+    tokenStore.set(data.tokens.accessToken);
     return true;
   } catch {
     return false;
@@ -69,4 +72,5 @@ export const api = {
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
   patch: <T>(path: string, body?: unknown) => request<T>('PATCH', path, body),
   delete: <T>(path: string) => request<T>('DELETE', path),
+  tryRefresh,
 };
