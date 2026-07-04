@@ -46,6 +46,10 @@ app.use(
       // origin yo'q (curl/Postman/same-origin) yoki ruxsat etilgan ro'yxatda — ruxsat.
       if (!origin || config.cors.origins.includes(origin)) return cb(null, true);
       // Boshqa originlarga ruxsat berilmaydi (xatolik bilan rad etamiz).
+      // Aynan qaysi origin bloklangani va ruxsat ro'yxati logga yoziladi — sozlashni osonlashtiradi.
+      console.warn(
+        `[CORS] Rad etildi — origin="${origin}" | ruxsat etilgan: ${config.cors.origins.join(', ') || '(BO\'SH — DOMAIN/WEB_ORIGIN o\'rnatilmagan!)'}`,
+      );
       cb(new Error('CORS: bu origin uchun ruxsat yo\'q'));
     },
     credentials: true,
@@ -117,5 +121,8 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 
 app.listen(config.port, () => {
   console.log(`\n  🏗️  Smeta AI API → http://localhost:${config.port}`);
-  console.log(`  📦  Model: ${config.ai.model}  |  AI: ${config.ai.apiKey ? 'real (Claude)' : 'demo (mock)'}\n`);
+  console.log(`  📦  Model: ${config.ai.model}  |  AI: ${config.ai.apiKey ? 'real (Claude)' : 'demo (mock)'}`);
+  console.log(
+    `  🌐  CORS ruxsat: ${config.cors.origins.join(', ') || '(BO\'SH! productionda DOMAIN yoki WEB_ORIGIN o\'rnating — aks holda brauzer so\'rovlari 403 bo\'ladi)'}\n`,
+  );
 });
