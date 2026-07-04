@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
+import { useTranslation } from 'react-i18next';
 import type { User, Tenant, UserRole } from '@smeta/shared';
 import { api, ApiError } from '../lib/api';
 import { fmtDate } from '../lib/format';
@@ -10,6 +11,7 @@ const ROLES: UserRole[] = ['OWNER', 'MANAGER', 'ENGINEER'];
 const ROLE_LABEL: Record<UserRole, string> = { OWNER: 'Rahbar', MANAGER: 'Menejer', ENGINEER: 'Muhandis' };
 
 export function Users() {
+  const { t: tr } = useTranslation();
   const [rows, setRows] = useState<Row[] | null>(null);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [showAdd, setShowAdd] = useState(false);
@@ -27,7 +29,7 @@ export function Users() {
   }
 
   async function remove(id: string, name: string) {
-    if (!confirm(`"${name}" foydalanuvchisini o'chirilsinmi?`)) return;
+    if (!confirm(`${name} — ${tr('common.delete')}?`)) return;
     await api.delete(`/users/${id}`);
     setRows((r) => r!.filter((x) => x.id !== id));
   }
@@ -38,11 +40,11 @@ export function Users() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-white font-display tracking-tight">Foydalanuvchilar</h1>
-          <p className="text-[#BCC0C7] mt-1">Jami {rows.length} ta. Rol tanlang, qo'shing yoki o'chiring.</p>
+          <h1 className="text-3xl font-extrabold text-white font-display tracking-tight">{tr('users.title')}</h1>
+          <p className="text-[#BCC0C7] mt-1">{tr('users.subtitle')}</p>
         </div>
         <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 px-5 py-2.5 bg-[#5555E7] hover:bg-[#4444d6] text-white rounded-xl font-bold text-sm">
-          <Icon icon="lucide:user-plus" className="w-5 h-5" /> Foydalanuvchi qo'shish
+          <Icon icon="lucide:user-plus" className="w-5 h-5" /> {tr('common.add')}
         </button>
       </div>
 
@@ -51,7 +53,7 @@ export function Users() {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-[#16181D]/30 border-b border-[#343841]/40">
-                {['Foydalanuvchi', 'Email', 'Kompaniya', 'Rol', "Ro'yxatdan", ''].map((h) => (
+                {[tr('users.name'), tr('users.email'), tr('users.tenant'), tr('users.role'), tr('users.created'), ''].map((h) => (
                   <th key={h} className="px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7]">{h}</th>
                 ))}
               </tr>

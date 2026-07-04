@@ -18,8 +18,11 @@ materialsRouter.get(
     const and: any[] = [];
     if (q) and.push({ OR: [{ name: { contains: q, mode: 'insensitive' } }, { provider: { contains: q, mode: 'insensitive' } }] });
     if (category && category !== 'Barchasi') and.push({ category });
-    if (and.length) where.AND = and;
-    const materials = await prisma.material.findMany({ where, orderBy: { name: 'asc' } });
+    // Vendor mahsulotlari faqat faol va sotuvchi bloklanmagan bo'lsa ko'rinadi;
+    // oddiy (vendorsiz) global materiallar doim ko'rinadi.
+    and.push({ OR: [{ vendorId: null }, { AND: [{ isActive: true }, { vendor: { status: 'ACTIVE' } }] }] });
+    where.AND = and;
+    const materials = await prisma.material.findMany({ where, orderBy: { name: 'asc' }, include: { vendor: true } });
     res.json(materials.map(s.material));
   }),
 );
@@ -44,6 +47,7 @@ materialsRouter.get(
     const tenantId = req.user!.tenantId;
     const m = await prisma.material.findFirst({
       where: { id: req.params.id, OR: [{ tenantId: null }, { tenantId }] },
+      include: { vendor: true },
     });
     if (!m) return res.status(404).json({ error: 'not_found', message: 'Material topilmadi' });
     res.json(s.material(m));

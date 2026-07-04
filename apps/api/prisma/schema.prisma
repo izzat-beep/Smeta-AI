@@ -34,6 +34,11 @@ enum AdminRole {
   SUPPORT
 }
 
+enum VendorStatus {
+  ACTIVE
+  BLOCKED
+}
+
 enum ProjectStatus {
   PLANNED
   IN_PROGRESS
@@ -202,6 +207,9 @@ model Material {
   id        String   @id @default(cuid())
   tenantId  String? // null = global katalog
   tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  vendorId  String? // material sotuvchi (bo'lsa katalogda ko'rinadi)
+  vendor    Vendor?  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  isActive  Boolean  @default(true) // vendor faol/nofaol qiladi
   name        String
   category    String   @default("Umumiy")
   provider    String?
@@ -217,6 +225,24 @@ model Material {
 
   @@index([tenantId])
   @@index([category])
+  @@index([vendorId])
+}
+
+// Material sotuvchi (vendor). Super admin ochadi, vendor o'z mahsulotlarini boshqaradi.
+model Vendor {
+  id                 String       @id @default(cuid())
+  name               String
+  phone              String?
+  login              String       @unique
+  passwordHash       String
+  shopName           String?
+  logoUrl            String?
+  status             VendorStatus @default(ACTIVE)
+  mustChangePassword Boolean      @default(true)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  materials Material[]
 }
 
 model Estimate {

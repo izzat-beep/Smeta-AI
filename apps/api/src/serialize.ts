@@ -40,7 +40,25 @@ export function material(m: any) {
     rating: m.rating,
     imageUrl: m.imageUrl,
     tenantId: m.tenantId,
+    vendorId: m.vendorId ?? null,
+    isActive: m.isActive ?? true,
+    vendor: m.vendor ? { id: m.vendor.id, name: m.vendor.name, shopName: m.vendor.shopName ?? null } : undefined,
     createdAt: iso(m.createdAt),
+  };
+}
+
+export function vendor(v: any) {
+  return {
+    id: v.id,
+    name: v.name,
+    phone: v.phone ?? null,
+    login: v.login,
+    shopName: v.shopName ?? null,
+    logoUrl: v.logoUrl ?? null,
+    status: v.status,
+    mustChangePassword: v.mustChangePassword,
+    productCount: v._count?.materials,
+    createdAt: iso(v.createdAt),
   };
 }
 

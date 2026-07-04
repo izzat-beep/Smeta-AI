@@ -1,9 +1,10 @@
 import { Navigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { useAdminAuth } from '../lib/auth';
+import { ChangePassword } from '../pages/ChangePassword';
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { admin, loading } = useAdminAuth();
+  const { role, mustChangePassword, loading } = useAdminAuth();
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#16181D]">
@@ -11,6 +12,8 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
       </div>
     );
   }
-  if (!admin) return <Navigate to="/kirish" replace />;
+  if (!role) return <Navigate to="/kirish" replace />;
+  // Vendor birinchi kirishda parolni o'zgartirishi shart.
+  if (mustChangePassword) return <ChangePassword />;
   return <>{children}</>;
 }

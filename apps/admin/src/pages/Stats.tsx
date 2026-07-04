@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '@iconify/react';
+import { useTranslation } from 'react-i18next';
 import type { AdminStats } from '@smeta/shared';
 import { api } from '../lib/api';
 import { fmtMoney, fmtNumber, planLabel, statusLabel, statusCls } from '../lib/format';
 
 export function Stats() {
+  const { t } = useTranslation();
   const [data, setData] = useState<AdminStats | null>(null);
 
   useEffect(() => {
@@ -15,10 +17,10 @@ export function Stats() {
   if (!data) return <Spinner />;
 
   const cards = [
-    { label: 'Jami mijozlar', value: fmtNumber(data.totalTenants), icon: 'lucide:building-2', color: 'text-[#5555E7]', sub: `${data.activeTenants} faol` },
-    { label: 'Oylik daromad (MRR)', value: fmtMoney(data.mrr), icon: 'lucide:trending-up', color: 'text-[#FF6B1A]', sub: 'Faol obunalardan' },
-    { label: 'Foydalanuvchilar', value: fmtNumber(data.totalUsers), icon: 'lucide:users', color: 'text-[#22D3EE]', sub: 'Barcha mijozlarda' },
-    { label: 'Loyihalar', value: fmtNumber(data.totalProjects), icon: 'lucide:briefcase', color: 'text-[#10B981]', sub: 'Tizimda jami' },
+    { label: t('stats.totalTenants'), value: fmtNumber(data.totalTenants), icon: 'lucide:building-2', color: 'text-[#5555E7]', sub: `${data.activeTenants} ${t('stats.activeSuffix')}` },
+    { label: t('stats.mrr'), value: fmtMoney(data.mrr), icon: 'lucide:trending-up', color: 'text-[#FF6B1A]', sub: t('stats.mrrSub') },
+    { label: t('stats.users'), value: fmtNumber(data.totalUsers), icon: 'lucide:users', color: 'text-[#22D3EE]', sub: t('stats.usersSub') },
+    { label: t('stats.projects'), value: fmtNumber(data.totalProjects), icon: 'lucide:briefcase', color: 'text-[#10B981]', sub: t('stats.projectsSub') },
   ];
 
   const maxSignup = Math.max(1, ...data.signupsTrend.map((s) => s.count));
@@ -26,8 +28,8 @@ export function Stats() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-extrabold text-white font-display tracking-tight">Statistika</h1>
-        <p className="text-[#BCC0C7] mt-1">Platforma ko'rsatkichlari va mijozlar holati.</p>
+        <h1 className="text-3xl font-extrabold text-white font-display tracking-tight">{t('stats.title')}</h1>
+        <p className="text-[#BCC0C7] mt-1">{t('stats.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -46,8 +48,8 @@ export function Stats() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Signups trend */}
         <div className="lg:col-span-2 glass-panel rounded-2xl p-6">
-          <h3 className="text-lg font-bold text-white font-display mb-1">Ro'yxatdan o'tishlar</h3>
-          <p className="text-sm text-[#BCC0C7] mb-8">So'nggi 6 oy</p>
+          <h3 className="text-lg font-bold text-white font-display mb-1">{t('stats.signups')}</h3>
+          <p className="text-sm text-[#BCC0C7] mb-8">{t('stats.signupsSub')}</p>
           <div className="h-48 flex items-end justify-between gap-3">
             {data.signupsTrend.map((s, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-2">
@@ -62,7 +64,7 @@ export function Stats() {
 
         {/* Plan breakdown */}
         <div className="glass-panel rounded-2xl p-6">
-          <h3 className="text-lg font-bold text-white font-display mb-6">Tariflar bo'yicha</h3>
+          <h3 className="text-lg font-bold text-white font-display mb-6">{t('stats.byPlan')}</h3>
           <div className="space-y-4">
             {data.planBreakdown.map((p) => {
               const pct = data.totalTenants ? Math.round((p.count / data.totalTenants) * 100) : 0;
@@ -70,7 +72,7 @@ export function Stats() {
                 <div key={p.plan}>
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-white font-medium">{planLabel(p.plan)}</span>
-                    <span className="text-[#BCC0C7]">{p.count} ta</span>
+                    <span className="text-[#BCC0C7]">{t('stats.unitCount', { count: p.count })}</span>
                   </div>
                   <div className="h-2 bg-[#343841]/40 rounded-full overflow-hidden">
                     <div className="h-full bg-[#5555E7] rounded-full" style={{ width: `${pct}%` }} />
@@ -80,9 +82,9 @@ export function Stats() {
             })}
           </div>
           <div className="mt-6 pt-6 border-t border-[#343841]/40 grid grid-cols-3 gap-2 text-center">
-            <Mini label="Faol" value={data.activeTenants} color="text-[#10B981]" />
-            <Mini label="Sinov" value={data.trialTenants} color="text-[#22D3EE]" />
-            <Mini label="To'xtatilgan" value={data.suspendedTenants} color="text-[#F97316]" />
+            <Mini label={t('stats.active')} value={data.activeTenants} color="text-[#10B981]" />
+            <Mini label={t('stats.trial')} value={data.trialTenants} color="text-[#22D3EE]" />
+            <Mini label={t('stats.suspended')} value={data.suspendedTenants} color="text-[#F97316]" />
           </div>
         </div>
       </div>
@@ -90,8 +92,8 @@ export function Stats() {
       {/* Recent tenants */}
       <div className="glass-panel rounded-2xl overflow-hidden">
         <div className="p-6 border-b border-[#343841]/40 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white font-display">So'nggi mijozlar</h3>
-          <Link to="/mijozlar" className="text-sm text-[#22D3EE] hover:underline">Barchasini ko'rish</Link>
+          <h3 className="text-lg font-bold text-white font-display">{t('stats.recentTenants')}</h3>
+          <Link to="/mijozlar" className="text-sm text-[#22D3EE] hover:underline">{t('stats.viewAll')}</Link>
         </div>
         <div className="divide-y divide-[#343841]/30">
           {data.recentTenants.map((t) => (

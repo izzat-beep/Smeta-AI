@@ -30,28 +30,44 @@ const adminLoginLimiter = rateLimit({
   message: { error: 'too_many_requests', message: 'Juda ko\'p urinish. 15 daqiqadan so\'ng qayta urinib ko\'ring.' },
 });
 
-// ─── Auth (ochiq) ────────────────────────────────────────────────────────
+// ─── Auth (ochiq) — birlashtirilgan: super admin YOKI vendor ───────────────
 adminRouter.post(
   '/auth/login',
   adminLoginLimiter,
   ah(async (req, res) => {
-    const body = z.object({ email: z.string().email(), password: z.string() }).parse(req.body);
-    const admin = await prisma.adminUser.findUnique({ where: { email: body.email } });
-    if (!admin) {
+    const body = z.object({ email: z.string().optional(), login: z.string().optional(), password: z.string() }).parse(req.body);
+    const identifier = (body.email ?? body.login ?? '').trim();
+    const fail = (reason: string) => {
       // eslint-disable-next-line no-console
-      console.warn(`[admin-auth] Muvaffaqiyatsiz login — email=${body.email} ip=${req.ip} reason=not_found time=${new Date().toISOString()}`);
-      return res.status(401).json({ error: 'unauthorized', message: 'Email yoki parol noto\'g\'ri' });
+      console.warn(`[admin-auth] Muvaffaqiyatsiz login — id=${identifier} ip=${req.ip} reason=${reason} time=${new Date().toISOString()}`);
+      return res.status(401).json({ error: 'unauthorized', message: 'Login yoki parol noto\'g\'ri' });
+    };
+    if (!identifier) return fail('empty');
+
+    // 1) Platforma admini (AdminUser)
+    const admin = await prisma.adminUser.findUnique({ where: { email: identifier } });
+    if (admin) {
+      const ok = await bcrypt.compare(body.password, admin.passwordHash);
+      if (!ok) return fail('bad_password');
+      const accessToken = signAdminAccess({ sub: admin.id, role: admin.role });
+      const refresh = await issueRefreshToken({ kind: 'admin', subjectId: admin.id, role: admin.role });
+      setRefreshCookie(res, 'admin', refresh);
+      return res.json({ role: admin.role, admin: s.adminUser(admin), tokens: { accessToken } });
     }
-    const ok = await bcrypt.compare(body.password, admin.passwordHash);
-    if (!ok) {
-      // eslint-disable-next-line no-console
-      console.warn(`[admin-auth] Muvaffaqiyatsiz login — email=${body.email} ip=${req.ip} reason=bad_password time=${new Date().toISOString()}`);
-      return res.status(401).json({ error: 'unauthorized', message: 'Email yoki parol noto\'g\'ri' });
+
+    // 2) Vendor (material sotuvchi)
+    const v = await prisma.vendor.findUnique({ where: { login: identifier } });
+    if (v) {
+      const ok = await bcrypt.compare(body.password, v.passwordHash);
+      if (!ok) return fail('bad_password');
+      if (v.status === 'BLOCKED') return res.status(403).json({ error: 'forbidden', message: 'Hisobingiz bloklangan. Administrator bilan bog\'laning.' });
+      const accessToken = signAdminAccess({ sub: v.id, role: 'VENDOR' });
+      const refresh = await issueRefreshToken({ kind: 'admin', subjectId: v.id, role: 'VENDOR' });
+      setRefreshCookie(res, 'admin', refresh);
+      return res.json({ role: 'VENDOR', vendor: s.vendor(v), mustChangePassword: v.mustChangePassword, tokens: { accessToken } });
     }
-    const accessToken = signAdminAccess({ sub: admin.id, role: admin.role });
-    const refresh = await issueRefreshToken({ kind: 'admin', subjectId: admin.id, role: admin.role });
-    setRefreshCookie(res, 'admin', refresh);
-    res.json({ admin: s.adminUser(admin), tokens: { accessToken } });
+
+    return fail('not_found');
   }),
 );
 
@@ -87,8 +103,10 @@ adminRouter.post(
 // ─── Bundan keyingi BARCHA route'lar admin tokenini talab qiladi ───────────
 adminRouter.use(requireAdmin);
 
-// — Admin users (faqat SUPERADMIN uchun) —
+// Rol guardlari
 const requireSuperadmin = requireAdminRole('SUPERADMIN');
+const requireStaff = requireAdminRole('SUPERADMIN', 'SUPPORT'); // platforma bo'limlari (vendorlar kira olmaydi)
+const requireVendor = requireAdminRole('VENDOR');
 
 adminRouter.get(
   '/admin-users',
@@ -148,14 +166,20 @@ adminRouter.delete(
 adminRouter.get(
   '/me',
   ah(async (req, res) => {
+    if (req.admin!.role === 'VENDOR') {
+      const v = await prisma.vendor.findUnique({ where: { id: req.admin!.sub } });
+      if (!v) return res.status(404).json({ error: 'not_found', message: 'Topilmadi' });
+      return res.json({ role: 'VENDOR', vendor: s.vendor(v), mustChangePassword: v.mustChangePassword });
+    }
     const admin = await prisma.adminUser.findUnique({ where: { id: req.admin!.sub } });
     if (!admin) return res.status(404).json({ error: 'not_found', message: 'Topilmadi' });
-    res.json({ admin: s.adminUser(admin) });
+    res.json({ role: admin.role, admin: s.adminUser(admin) });
   }),
 );
 
 adminRouter.get(
   '/stats',
+  requireStaff,
   ah(async (_req, res) => {
     const [tenants, totalUsers, totalProjects] = await Promise.all([
       prisma.tenant.findMany({ orderBy: { createdAt: 'desc' } }),
@@ -199,6 +223,7 @@ adminRouter.get(
 
 adminRouter.get(
   '/tenants',
+  requireStaff,
   ah(async (req, res) => {
     const q = (req.query.q as string | undefined)?.trim();
     const status = req.query.status as string | undefined;
@@ -218,6 +243,7 @@ adminRouter.get(
 
 adminRouter.get(
   '/tenants/:id',
+  requireStaff,
   ah(async (req, res) => {
     const t = await prisma.tenant.findUnique({
       where: { id: req.params.id },
@@ -241,6 +267,7 @@ adminRouter.get(
 
 adminRouter.patch(
   '/tenants/:id',
+  requireStaff,
   ah(async (req, res) => {
     const body = z
       .object({
@@ -257,6 +284,7 @@ adminRouter.patch(
 
 adminRouter.get(
   '/invoices',
+  requireStaff,
   ah(async (_req, res) => {
     const invoices = await prisma.invoice.findMany({
       include: { tenant: true },
@@ -269,6 +297,7 @@ adminRouter.get(
 
 adminRouter.get(
   '/users',
+  requireStaff,
   ah(async (_req, res) => {
     const users = await prisma.user.findMany({
       include: { tenant: true },
@@ -282,6 +311,7 @@ adminRouter.get(
 // Yangi foydalanuvchi qo'shish (super admin)
 adminRouter.post(
   '/users',
+  requireStaff,
   ah(async (req, res) => {
     const body = z
       .object({
@@ -315,6 +345,7 @@ adminRouter.post(
 // Rol yoki ismni o'zgartirish
 adminRouter.patch(
   '/users/:id',
+  requireStaff,
   ah(async (req, res) => {
     const body = z
       .object({
@@ -332,10 +363,220 @@ adminRouter.patch(
 // Foydalanuvchini o'chirish
 adminRouter.delete(
   '/users/:id',
+  requireStaff,
   ah(async (req, res) => {
     const ex = await prisma.user.findUnique({ where: { id: req.params.id } });
     if (!ex) return res.status(404).json({ error: 'not_found', message: 'Foydalanuvchi topilmadi' });
     await prisma.user.delete({ where: { id: req.params.id } });
     res.status(204).end();
+  }),
+);
+
+// ═══════════════════════════════════════════════════════════════════════
+//  VENDORLAR — Super admin boshqaruvi (Vazifa 5.2)
+// ═══════════════════════════════════════════════════════════════════════
+
+adminRouter.get(
+  '/vendors',
+  requireSuperadmin,
+  ah(async (_req, res) => {
+    const vendors = await prisma.vendor.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { materials: true } } },
+    });
+    res.json(vendors.map(s.vendor));
+  }),
+);
+
+adminRouter.post(
+  '/vendors',
+  requireSuperadmin,
+  ah(async (req, res) => {
+    const body = z
+      .object({
+        name: z.string().min(2),
+        phone: z.string().optional().nullable(),
+        login: z.string().min(3),
+        password: z.string().min(6),
+        shopName: z.string().optional().nullable(),
+        logoUrl: z.string().optional().nullable(),
+      })
+      .parse(req.body);
+    const existing = await prisma.vendor.findUnique({ where: { login: body.login } });
+    if (existing) return res.status(409).json({ error: 'conflict', message: 'Bu login allaqachon band' });
+    const v = await prisma.vendor.create({
+      data: {
+        name: body.name,
+        phone: body.phone ?? null,
+        login: body.login,
+        passwordHash: await bcrypt.hash(body.password, 12),
+        shopName: body.shopName ?? null,
+        logoUrl: body.logoUrl ?? null,
+        mustChangePassword: true,
+      },
+    });
+    res.status(201).json(s.vendor(v));
+  }),
+);
+
+adminRouter.patch(
+  '/vendors/:id',
+  requireSuperadmin,
+  ah(async (req, res) => {
+    const body = z
+      .object({
+        name: z.string().min(2).optional(),
+        phone: z.string().optional().nullable(),
+        shopName: z.string().optional().nullable(),
+        logoUrl: z.string().optional().nullable(),
+        status: z.enum(['ACTIVE', 'BLOCKED']).optional(),
+        password: z.string().min(6).optional(), // parolni tiklash
+      })
+      .parse(req.body);
+    const ex = await prisma.vendor.findUnique({ where: { id: req.params.id } });
+    if (!ex) return res.status(404).json({ error: 'not_found', message: 'Sotuvchi topilmadi' });
+    const data: any = { name: body.name, phone: body.phone, shopName: body.shopName, logoUrl: body.logoUrl, status: body.status };
+    if (body.password) {
+      data.passwordHash = await bcrypt.hash(body.password, 12);
+      data.mustChangePassword = true;
+    }
+    // Sotuvchi bloklansa — barcha eski sessiyalarini bekor qilamiz.
+    if (body.status === 'BLOCKED') {
+      await prisma.refreshToken.updateMany({ where: { adminId: req.params.id, revokedAt: null }, data: { revokedAt: new Date() } });
+    }
+    const v = await prisma.vendor.update({ where: { id: req.params.id }, data });
+    res.json(s.vendor(v));
+  }),
+);
+
+adminRouter.delete(
+  '/vendors/:id',
+  requireSuperadmin,
+  ah(async (req, res) => {
+    const ex = await prisma.vendor.findUnique({ where: { id: req.params.id } });
+    if (!ex) return res.status(404).json({ error: 'not_found', message: 'Sotuvchi topilmadi' });
+    await prisma.vendor.delete({ where: { id: req.params.id } }); // materiallari cascade o'chadi
+    res.status(204).end();
+  }),
+);
+
+// Super admin: bitta sotuvchining mahsulotlari
+adminRouter.get(
+  '/vendors/:id/products',
+  requireSuperadmin,
+  ah(async (req, res) => {
+    const materials = await prisma.material.findMany({ where: { vendorId: req.params.id }, orderBy: { createdAt: 'desc' } });
+    res.json(materials.map(s.material));
+  }),
+);
+
+// ═══════════════════════════════════════════════════════════════════════
+//  VENDOR KABINETI (Vazifa 5.3) — faqat o'z ma'lumotlari
+// ═══════════════════════════════════════════════════════════════════════
+
+// Parolni o'zgartirish (birinchi kirishda majburiy)
+adminRouter.post(
+  '/vendor/change-password',
+  requireVendor,
+  ah(async (req, res) => {
+    const body = z.object({ newPassword: z.string().min(6) }).parse(req.body);
+    await prisma.vendor.update({
+      where: { id: req.admin!.sub },
+      data: { passwordHash: await bcrypt.hash(body.newPassword, 12), mustChangePassword: false },
+    });
+    res.json({ ok: true });
+  }),
+);
+
+const vendorProductSchema = z.object({
+  name: z.string().min(1),
+  category: z.string().optional(),
+  description: z.string().optional().nullable(),
+  unit: z.string().optional(),
+  priceUzs: z.number().nonnegative().optional(),
+  priceUsd: z.number().nonnegative().optional(),
+  stock: z.number().nonnegative().optional(),
+  imageUrl: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+});
+
+// O'z mahsulotlari
+adminRouter.get(
+  '/vendor/products',
+  requireVendor,
+  ah(async (req, res) => {
+    const materials = await prisma.material.findMany({ where: { vendorId: req.admin!.sub }, orderBy: { createdAt: 'desc' } });
+    res.json(materials.map(s.material));
+  }),
+);
+
+adminRouter.post(
+  '/vendor/products',
+  requireVendor,
+  ah(async (req, res) => {
+    const b = vendorProductSchema.parse(req.body);
+    const m = await prisma.material.create({
+      data: {
+        vendorId: req.admin!.sub,
+        tenantId: null, // katalogda global ko'rinadi
+        name: b.name,
+        category: b.category ?? 'Umumiy',
+        description: b.description ?? null,
+        unit: b.unit ?? 'dona',
+        priceUzs: b.priceUzs ?? 0,
+        priceUsd: b.priceUsd ?? 0,
+        stock: b.stock ?? 0,
+        imageUrl: b.imageUrl ?? null,
+        isActive: b.isActive ?? true,
+      },
+    });
+    res.status(201).json(s.material(m));
+  }),
+);
+
+// O'z mahsulotini yangilash — vendorId serverda tekshiriladi (frontend'ga ishonmaymiz)
+adminRouter.patch(
+  '/vendor/products/:id',
+  requireVendor,
+  ah(async (req, res) => {
+    const ex = await prisma.material.findFirst({ where: { id: req.params.id, vendorId: req.admin!.sub } });
+    if (!ex) return res.status(404).json({ error: 'not_found', message: 'Mahsulot topilmadi' });
+    const b = vendorProductSchema.partial().parse(req.body);
+    const m = await prisma.material.update({ where: { id: req.params.id }, data: b });
+    res.json(s.material(m));
+  }),
+);
+
+adminRouter.delete(
+  '/vendor/products/:id',
+  requireVendor,
+  ah(async (req, res) => {
+    const ex = await prisma.material.findFirst({ where: { id: req.params.id, vendorId: req.admin!.sub } });
+    if (!ex) return res.status(404).json({ error: 'not_found', message: 'Mahsulot topilmadi' });
+    await prisma.material.delete({ where: { id: req.params.id } });
+    res.status(204).end();
+  }),
+);
+
+// O'z mahsulotlariga kelgan buyurtmalar
+adminRouter.get(
+  '/vendor/orders',
+  requireVendor,
+  ah(async (req, res) => {
+    const myMaterials = await prisma.material.findMany({ where: { vendorId: req.admin!.sub }, select: { id: true } });
+    const ids = myMaterials.map((m) => m.id);
+    if (ids.length === 0) return res.json([]);
+    const orders = await prisma.order.findMany({
+      where: { items: { some: { materialId: { in: ids } } } },
+      include: { items: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    // Faqat shu vendorning pozitsiyalarini qoldiramiz.
+    const out = orders.map((o) => {
+      const items = o.items.filter((it) => it.materialId && ids.includes(it.materialId));
+      const total = items.reduce((sum, it) => sum + toNum(it.lineTotal), 0);
+      return { ...s.order({ ...o, items }), total };
+    });
+    res.json(out);
   }),
 );

@@ -29,6 +29,8 @@ export type InvoiceStatus = 'PAID' | 'PENDING' | 'OVERDUE' | 'CANCELLED';
 
 export type OrderStatus = 'PENDING_PAYMENT' | 'PAID' | 'DELIVERED' | 'CANCELLED';
 
+export type VendorStatus = 'ACTIVE' | 'BLOCKED';
+
 export type ChatRole = 'user' | 'assistant';
 
 // ─── Asosiy modellar (API javoblari) ────────────────────────────────────
@@ -113,6 +115,22 @@ export interface Material {
   rating: number;
   imageUrl: string | null;
   tenantId: string | null; // null = global katalog
+  vendorId: string | null;
+  isActive: boolean;
+  vendor?: { id: string; name: string; shopName: string | null };
+  createdAt: string;
+}
+
+export interface Vendor {
+  id: string;
+  name: string;
+  phone: string | null;
+  login: string;
+  shopName: string | null;
+  logoUrl: string | null;
+  status: VendorStatus;
+  mustChangePassword: boolean;
+  productCount?: number;
   createdAt: string;
 }
 

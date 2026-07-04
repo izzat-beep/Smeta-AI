@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
+import { useTranslation } from 'react-i18next';
 import type { Invoice } from '@smeta/shared';
 import { api } from '../lib/api';
 import { fmtMoney, fmtDate, invoiceLabel } from '../lib/format';
@@ -13,6 +14,7 @@ const STATUS_CLS: Record<string, string> = {
 };
 
 export function Invoices() {
+  const { t } = useTranslation();
   const [data, setData] = useState<{ invoices: Invoice[]; totalPaid: number } | null>(null);
 
   useEffect(() => {
@@ -25,11 +27,11 @@ export function Invoices() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-white font-display tracking-tight">Hisob-fakturalar</h1>
-          <p className="text-[#BCC0C7] mt-1">Barcha to'lovlar va obuna hisob-kitoblari.</p>
+          <h1 className="text-3xl font-extrabold text-white font-display tracking-tight">{t('invoices.title')}</h1>
+          <p className="text-[#BCC0C7] mt-1">{t('invoices.subtitle')}</p>
         </div>
         <div className="glass-panel rounded-2xl px-6 py-4">
-          <p className="text-[10px] uppercase tracking-widest text-[#BCC0C7]">Jami to'langan</p>
+          <p className="text-[10px] uppercase tracking-widest text-[#BCC0C7]">{t('invoices.totalPaid')}</p>
           <p className="text-2xl font-bold font-display text-[#10B981]">{fmtMoney(data.totalPaid)}</p>
         </div>
       </div>
@@ -39,7 +41,7 @@ export function Invoices() {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-[#16181D]/30 border-b border-[#343841]/40">
-                {['Mijoz', 'Davr', 'Summa', 'Holat', 'Sana'].map((h) => (
+                {[t('invoices.client'), t('invoices.period'), t('invoices.amount'), t('invoices.status'), t('invoices.date')].map((h) => (
                   <th key={h} className="px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7]">{h}</th>
                 ))}
               </tr>
@@ -55,7 +57,7 @@ export function Invoices() {
                 </tr>
               ))}
               {data.invoices.length === 0 && (
-                <tr><td colSpan={5} className="px-5 py-10 text-center text-[#BCC0C7]"><Icon icon="lucide:receipt" className="w-8 h-8 mx-auto mb-2 opacity-40" />Hisob-fakturalar yo'q</td></tr>
+                <tr><td colSpan={5} className="px-5 py-10 text-center text-[#BCC0C7]"><Icon icon="lucide:receipt" className="w-8 h-8 mx-auto mb-2 opacity-40" />{t('invoices.none')}</td></tr>
               )}
             </tbody>
           </table>
