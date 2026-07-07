@@ -87,12 +87,25 @@ enum ChatRole {
   assistant
 }
 
-// Buyurtma holati. To'lov integratsiyasi keyin: PENDING_PAYMENT -> PAID -> DELIVERED.
+// Buyurtma holati — sotuvchi bosqichma-bosqich o'zgartiradi:
+// NEW -> ACCEPTED -> PREPARING -> IN_TRANSIT -> DELIVERED (+ CANCELLED).
+// PENDING_PAYMENT/PAID — kelajakdagi Payme/Click integratsiyasi uchun saqlanadi.
 enum OrderStatus {
+  NEW
+  ACCEPTED
+  PREPARING
+  IN_TRANSIT
   PENDING_PAYMENT
   PAID
   DELIVERED
   CANCELLED
+}
+
+// Bildirishnoma turi (Vazifa 1).
+enum NotificationType {
+  NEW_ORDER // sotuvchiga: yangi buyurtma keldi
+  ORDER_STATUS // mijozga: buyurtma holati o'zgardi
+  MESSAGE // sotuvchidan mijozga matnli xabar
 }
 
 model Tenant {
@@ -139,6 +152,7 @@ model User {
   activities      Activity[]
   chatSessions    ChatSession[]
   refreshTokens   RefreshToken[]
+  notifications   Notification[]
 
   @@index([tenantId])
 }
@@ -242,7 +256,8 @@ model Vendor {
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
-  materials Material[]
+  materials     Material[]
+  notifications Notification[]
 }
 
 model Estimate {
@@ -424,25 +439,51 @@ model generalExpenses {
   @@index([projectId])
 }
 
-// Materiallar buyurtmasi (Vazifa 4). To'lov keyin ulanadi (status oqimi).
+// Materiallar buyurtmasi (Vazifa 4). Status oqimi sotuvchi tomonidan boshqariladi.
 model Order {
   id            String      @id @default(cuid())
+  no            Int         @unique @default(autoincrement()) // inson o'qiydigan raqam: "#123"
   tenantId      String
   tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId        String? // buyurtmani bergan foydalanuvchi (bildirishnoma qabul qiluvchi)
   customerName  String
   customerPhone String
   address       String?
   note          String?
   currency      Currency    @default(UZS)
   total         Decimal     @default(0) @db.Decimal(18, 2)
-  status        OrderStatus @default(PENDING_PAYMENT)
+  status        OrderStatus @default(NEW)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
-  items OrderItem[]
+  items         OrderItem[]
+  notifications Notification[]
 
   @@index([tenantId])
   @@index([status])
+}
+
+// Bildirishnomalar (Vazifa 1). Qabul qiluvchi — tenant foydalanuvchisi (userId)
+// YOKI sotuvchi (vendorId); ikkalasidan bittasi to'ldiriladi.
+// title/body — uz fallback matn; data JSON (orderNo, status) — clientda UZ/RU render uchun.
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String?
+  user      User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vendorId  String?
+  vendor    Vendor?          @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String           @db.Text
+  data      Json?
+  orderId   String?
+  order     Order?           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead])
+  @@index([vendorId, isRead])
+  @@index([createdAt])
 }
 
 model OrderItem {

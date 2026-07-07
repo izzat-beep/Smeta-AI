@@ -78,7 +78,9 @@ export function orderItem(i: any) {
 export function order(o: any) {
   return {
     id: o.id,
+    no: o.no ?? 0,
     tenantId: o.tenantId,
+    userId: o.userId ?? null,
     customerName: o.customerName,
     customerPhone: o.customerPhone,
     address: o.address ?? null,
@@ -88,6 +90,19 @@ export function order(o: any) {
     status: o.status,
     items: (o.items ?? []).map(orderItem),
     createdAt: iso(o.createdAt),
+  };
+}
+
+export function notification(n: any) {
+  return {
+    id: n.id,
+    type: n.type,
+    title: n.title,
+    body: n.body,
+    data: n.data ?? null,
+    orderId: n.orderId ?? null,
+    isRead: n.isRead,
+    createdAt: iso(n.createdAt),
   };
 }
 

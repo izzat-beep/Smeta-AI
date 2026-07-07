@@ -4,6 +4,7 @@ import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 import { useAdminAuth } from '../lib/auth';
 import { setLanguage, type Lang } from '../i18n';
+import { NotificationBell } from './NotificationBell';
 
 const STAFF_NAV = [
   { to: '/', key: 'nav.stats', icon: 'lucide:layout-dashboard', end: true },
@@ -61,6 +62,7 @@ export function AdminLayout() {
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <LanguageSwitcher />
+            {isVendor && <NotificationBell />}
             <span className="px-3 py-1 bg-[#06B6D4]/5 border border-[#06B6D4]/30 rounded-full text-[12px] font-semibold text-[#22D3EE]">{roleLabel}</span>
           </div>
         </header>

@@ -16,6 +16,20 @@ export function fmtDate(iso: string | null | undefined): string {
   return new Date(iso).toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
+// Nisbiy vaqt: "5 daqiqa oldin" (bildirishnomalar uchun)
+export function fmtRelative(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return 'hozirgina';
+  if (min < 60) return `${min} daqiqa oldin`;
+  const hours = Math.floor(min / 60);
+  if (hours < 24) return `${hours} soat oldin`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} kun oldin`;
+  return fmtDate(iso);
+}
+
 export const planLabel = (p: Plan) => PLAN_LABELS[p];
 export const statusLabel = (s: TenantStatus) => TENANT_STATUS_LABELS[s];
 export const invoiceLabel = (s: InvoiceStatus) => INVOICE_STATUS_LABELS[s];

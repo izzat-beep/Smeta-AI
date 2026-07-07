@@ -17,6 +17,8 @@ import {
 } from '../auth.js';
 import * as s from '../serialize.js';
 import { PLAN_PRICES } from '@smeta/shared';
+import { allowedNextStatuses, notifyOrderStatus, notifyCustomerMessage } from '../notify.js';
+import { buildNotificationsRouter } from './notifications.js';
 
 export const adminRouter = Router();
 
@@ -579,4 +581,70 @@ adminRouter.get(
     });
     res.json(out);
   }),
+);
+
+// Buyurtma shu vendorga tegishlimi (kamida bitta pozitsiyasi uning mahsuloti).
+// RBAC: sotuvchi faqat o'z buyurtmalari bilan ishlaydi.
+// Eslatma: OrderItem.materialId oddiy ustun (FK relation emas), shuning uchun
+// avval vendorning material id'lari olinadi.
+async function findVendorOrder(vendorId: string, orderId: string) {
+  const myMaterials = await prisma.material.findMany({ where: { vendorId }, select: { id: true } });
+  const ids = myMaterials.map((m) => m.id);
+  if (!ids.length) return null;
+  return prisma.order.findFirst({
+    where: { id: orderId, items: { some: { materialId: { in: ids } } } },
+    include: { items: true },
+  });
+}
+
+// PATCH /vendor/orders/:id/status — statusni bosqichma-bosqich o'zgartirish.
+// Mijozga avtomatik bildirishnoma BITTA tranzaksiya ichida yoziladi.
+adminRouter.patch(
+  '/vendor/orders/:id/status',
+  requireVendor,
+  ah(async (req, res) => {
+    const body = z
+      .object({ status: z.enum(['ACCEPTED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED']) })
+      .parse(req.body);
+    const order = await findVendorOrder(req.admin!.sub, req.params.id);
+    if (!order) return res.status(404).json({ error: 'not_found', message: 'Buyurtma topilmadi' });
+
+    const allowed = allowedNextStatuses(order.status);
+    if (!allowed.includes(body.status)) {
+      return res.status(400).json({
+        error: 'bad_request',
+        message: `"${order.status}" holatidan "${body.status}" holatiga o'tib bo'lmaydi`,
+        allowed,
+      });
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const u = await tx.order.update({ where: { id: order.id }, data: { status: body.status }, include: { items: true } });
+      await notifyOrderStatus(tx, u, body.status);
+      return u;
+    });
+
+    res.json(s.order(updated));
+  }),
+);
+
+// POST /vendor/orders/:id/message — sotuvchidan mijozga ixtiyoriy matnli xabar.
+adminRouter.post(
+  '/vendor/orders/:id/message',
+  requireVendor,
+  ah(async (req, res) => {
+    const body = z.object({ text: z.string().trim().min(1).max(1000) }).parse(req.body);
+    const order = await findVendorOrder(req.admin!.sub, req.params.id);
+    if (!order) return res.status(404).json({ error: 'not_found', message: 'Buyurtma topilmadi' });
+    const v = await prisma.vendor.findUnique({ where: { id: req.admin!.sub } });
+    await notifyCustomerMessage(prisma, order, body.text, v?.shopName || v?.name || 'Sotuvchi');
+    res.status(201).json({ ok: true });
+  }),
+);
+
+// Vendor bildirishnomalari: GET /vendor/notifications, /unread-count, PATCH :id/read, read-all
+adminRouter.use(
+  '/vendor/notifications',
+  requireVendor,
+  buildNotificationsRouter((req) => ({ vendorId: req.admin!.sub })),
 );

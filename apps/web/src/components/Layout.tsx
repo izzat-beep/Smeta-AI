@@ -7,6 +7,7 @@ import { useCurrency } from '../lib/currency';
 import { useCart } from '../lib/cart';
 import { setLanguage, type Lang } from '../i18n';
 import { api } from '../lib/api';
+import { NotificationBell } from './NotificationBell';
 
 const NAV = [
   { to: '/app', key: 'nav.dashboard', icon: 'lucide:layout-dashboard', end: true },
@@ -84,6 +85,7 @@ export function Layout() {
           <div className="flex items-center gap-2 md:gap-3">
             <LanguageSwitcher />
             <CurrencySwitcher />
+            <NotificationBell orderLink={(orderId) => `/app/tolov/${orderId}`} />
             <NavLink to="/app/savat" className="relative w-10 h-10 flex items-center justify-center hover:bg-white/5 rounded-lg" aria-label="Savat">
               <Icon icon="lucide:shopping-cart" className="w-5 h-5" />
               {count > 0 && (

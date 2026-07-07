@@ -27,7 +27,19 @@ export type EstimateStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export type InvoiceStatus = 'PAID' | 'PENDING' | 'OVERDUE' | 'CANCELLED';
 
-export type OrderStatus = 'PENDING_PAYMENT' | 'PAID' | 'DELIVERED' | 'CANCELLED';
+// Buyurtma oqimi: NEW -> ACCEPTED -> PREPARING -> IN_TRANSIT -> DELIVERED (+ CANCELLED).
+// PENDING_PAYMENT/PAID — kelajakdagi to'lov integratsiyasi uchun.
+export type OrderStatus =
+  | 'NEW'
+  | 'ACCEPTED'
+  | 'PREPARING'
+  | 'IN_TRANSIT'
+  | 'PENDING_PAYMENT'
+  | 'PAID'
+  | 'DELIVERED'
+  | 'CANCELLED';
+
+export type NotificationType = 'NEW_ORDER' | 'ORDER_STATUS' | 'MESSAGE';
 
 export type VendorStatus = 'ACTIVE' | 'BLOCKED';
 
@@ -147,7 +159,9 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
+  no: number; // inson o'qiydigan raqam: "#123"
   tenantId: string;
+  userId: string | null; // buyurtmani bergan foydalanuvchi
   customerName: string;
   customerPhone: string;
   address: string | null;
@@ -156,6 +170,17 @@ export interface Order {
   total: number;
   status: OrderStatus;
   items: OrderItem[];
+  createdAt: string;
+}
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  data: { orderNo?: number; status?: OrderStatus; from?: string } | null;
+  orderId: string | null;
+  isRead: boolean;
   createdAt: string;
 }
 
