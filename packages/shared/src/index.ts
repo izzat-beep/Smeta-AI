@@ -288,13 +288,13 @@ export interface AdminAuthResponse {
 // ─── Dashboard / Reports agregatlari ─────────────────────────────────────
 
 export interface DashboardStats {
-  totalExpenses: number;
+  totalExpenses: number; // smetalar (kalkulyator formulasi) + umumiy harajatlar, UZS
   pendingEstimates: number;
   pendingApproval: number;
-  workersCount: number;
+  teamCount: number; // tenant jamoasi (real; eski fake workersCount o'rniga)
   activeObjects: number;
   productivity: number;
-  budgetTrend: number[]; // 12 oylik
+  budgetTrend: number[]; // 12 oylik REAL xarajat dinamikasi
 }
 
 export interface DashboardData {
@@ -304,15 +304,49 @@ export interface DashboardData {
   aiRecommendation: string;
 }
 
+// Trend: joriy oy vs o'tgan oy (%). O'tgan oy ma'lumoti bo'lmasa null —
+// frontend badge'ni umuman ko'rsatmaydi (fake foiz taqiqlangan).
+export interface FinanceTrends {
+  totalExpense: number | null;
+  materialCost: number | null;
+  laborCost: number | null;
+  netProfit: number | null;
+}
+
+// P&L kategoriya kaliti — frontendda i18n bilan tarjima qilinadi
+export type PnlKey = 'materials' | 'labor' | 'equipment' | 'general' | 'sales';
+export type PnlStatus = 'ok' | 'warn' | 'good';
+
 export interface ReportSummary {
   totalExpense: number;
   materialCost: number;
   laborCost: number;
-  netProfit: number;
-  trends: { totalExpense: number; materialCost: number; laborCost: number; netProfit: number };
+  netProfit: number; // real: kelgan pullar - umumiy xarajat
+  incoming: number;
+  trends: FinanceTrends;
   resourceUsage: { label: string; percentage: number }[];
-  costDynamics: { month: string; actual: number; planned: number }[];
-  pnl: { category: string; revenue: number; expense: number; profit: number; status: string }[];
+  costDynamics: { ym: string; actual: number; planned: number }[]; // ym: '2026-07'
+  pnl: { key: PnlKey; revenue: number; expense: number; profit: number; status: PnlStatus }[];
+  currency: 'UZS';
+}
+
+// GET /api/dashboard/stats javobi — finance.ts agregatlari
+export interface TenantFinanceStats {
+  materialCost: number;
+  laborCost: number;
+  equipmentCost: number;
+  taxAmount: number;
+  estimatesTotal: number;
+  orderExpenses: number; // buyurtmadan avto yozuvlar (Vazifa 5)
+  manualExpenses: number;
+  generalExpensesTotal: number;
+  totalExpense: number;
+  incoming: number;
+  netProfit: number;
+  estimatesCount: number;
+  pendingEstimates: number;
+  trends: FinanceTrends;
+  currency: 'UZS';
 }
 
 // ─── Admin agregatlari ───────────────────────────────────────────────────

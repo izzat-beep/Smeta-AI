@@ -6,11 +6,17 @@ import { useCurrency } from '../lib/currency';
 import type { ReportSummary } from '@smeta/shared';
 
 export function Reports() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { fmt } = useCurrency();
   const [data, setData] = useState<ReportSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // '2026-07' -> lokalga mos qisqa oy nomi ("iyul" / "июль")
+  const monthLabel = (ym: string) => {
+    const [y, m] = ym.split('-').map(Number);
+    return new Date(y, m - 1, 1).toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'uz-UZ', { month: 'short' });
+  };
 
   useEffect(() => {
     let alive = true;
@@ -104,13 +110,13 @@ export function Reports() {
                 </div>
               </div>
               <div className="flex-1 min-h-[300px] relative flex items-end justify-between gap-2 sm:gap-4 px-1">
-                {data.costDynamics.length === 0 ? (
+                {data.costDynamics.every((d) => d.actual === 0 && d.planned === 0) ? (
                   <div className="w-full h-full flex items-center justify-center text-sm text-[#BCC0C7]">
                     {t('common.noData')}
                   </div>
                 ) : (
                   data.costDynamics.map((d) => (
-                    <div key={d.month} className="flex-1 flex flex-col items-center gap-3 min-w-0 h-full justify-end">
+                    <div key={d.ym} className="flex-1 flex flex-col items-center gap-3 min-w-0 h-full justify-end">
                       <div className="w-full flex items-end justify-center gap-1 sm:gap-1.5 h-full">
                         <div
                           className="w-1/2 max-w-[18px] rounded-t-md bg-[#FF8E4D] transition-all duration-500"
@@ -123,7 +129,7 @@ export function Reports() {
                           title={`${t('reports.planned')}: ${fmt(d.planned)}`}
                         ></div>
                       </div>
-                      <span className="text-[10px] sm:text-xs text-[#BCC0C7] truncate w-full text-center">{d.month}</span>
+                      <span className="text-[10px] sm:text-xs text-[#BCC0C7] truncate w-full text-center">{monthLabel(d.ym)}</span>
                     </div>
                   ))
                 )}
@@ -133,7 +139,7 @@ export function Reports() {
                   <div className="w-2 h-2 rounded-sm bg-[#FF8E4D]"></div>
                   <span className="text-xs text-white">{t('reports.actual')}</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2" title={t('reports.plannedHint')}>
                   <div className="w-2 h-2 rounded-sm bg-[#3DF2FF]"></div>
                   <span className="text-xs text-white">{t('reports.planned')}</span>
                 </div>
@@ -186,7 +192,7 @@ export function Reports() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#343841]/30">
-                  {data.pnl.length === 0 ? (
+                  {data.pnl.every((r) => r.revenue === 0 && r.expense === 0) ? (
                     <tr>
                       <td colSpan={5} className="px-6 py-8 text-center text-sm text-[#BCC0C7]">
                         {t('common.noData')}
@@ -195,13 +201,14 @@ export function Reports() {
                   ) : (
                     data.pnl.map((row) => (
                       <TableRow
-                        key={row.category}
-                        category={row.category}
+                        key={row.key}
+                        category={t(`reports.pnlCat.${row.key}`)}
                         revenue={fmt(row.revenue)}
                         expense={fmt(row.expense)}
                         profit={row.profit}
                         profitStr={fmt(Math.abs(row.profit))}
                         status={row.status}
+                        statusLabel={t(`reports.pnlStatus.${row.status}`)}
                       />
                     ))
                   )}
@@ -210,31 +217,21 @@ export function Reports() {
             </div>
           </div>
 
-          {/* Bottom Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12">
+          {/* Bottom Actions — PDF eksport (brauzer print orqali PDF saqlash) */}
+          <div className="grid grid-cols-1 gap-6 pb-12">
             <div className="glass-panel rounded-2xl p-6 flex items-center gap-4 bg-gradient-to-br from-[#191B1F]/40 to-[#16181D]/40">
               <div className="w-12 h-12 rounded-full bg-[#F97316]/10 border border-[#F97316]/20 flex items-center justify-center shrink-0">
                 <Icon icon="lucide:download" className="w-5 h-5 text-[#F97316]" />
               </div>
               <div className="flex-1">
-                <h4 className="font-bold text-white font-display">PDF Eksport</h4>
-                <p className="text-xs text-[#BCC0C7]">Barcha grafiklar va jadvallar bilan to'liq hisobot.</p>
+                <h4 className="font-bold text-white font-display">{t('reports.pdfExport')}</h4>
+                <p className="text-xs text-[#BCC0C7]">{t('reports.pdfExportDesc')}</p>
               </div>
-              <button className="px-5 py-2.5 bg-[#FF6B1A] text-white text-sm font-semibold rounded-xl shadow-[0_8px_16px_rgba(249,115,22,0.2)] hover:scale-105 transition-transform">
-                Yuklab olish
-              </button>
-            </div>
-
-            <div className="glass-panel rounded-2xl p-6 flex items-center gap-4 bg-gradient-to-br from-[#191B1F]/40 to-[#16181D]/40">
-              <div className="w-12 h-12 rounded-full bg-[#22D3EE]/10 border border-[#22D3EE]/20 flex items-center justify-center shrink-0">
-                <Icon icon="lucide:filter" className="w-5 h-5 text-[#22D3EE]" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-bold text-white font-display">Filtrlar To'plami</h4>
-                <p className="text-xs text-[#BCC0C7]">Sizning maxsus filtrlaringiz saqlangan.</p>
-              </div>
-              <button className="px-5 py-2.5 bg-[#16181D] border border-[#22D3EE]/20 text-[#22D3EE] text-sm font-semibold rounded-xl hover:bg-[#22D3EE]/5 transition-colors">
-                Boshqarish
+              <button
+                onClick={() => window.print()}
+                className="px-5 py-2.5 bg-[#FF6B1A] text-white text-sm font-semibold rounded-xl shadow-[0_8px_16px_rgba(249,115,22,0.2)] hover:scale-105 transition-transform"
+              >
+                {t('reports.download')}
               </button>
             </div>
           </div>
@@ -251,6 +248,8 @@ function avgUsage(data: ReportSummary): number {
 }
 
 // Helper Components
+// trend: joriy oy vs o'tgan oy (%). null = o'tgan davr ma'lumoti yo'q —
+// badge UMUMAN ko'rsatilmaydi (fake foiz taqiqlangan).
 function StatCard({
   icon,
   iconColor,
@@ -262,19 +261,21 @@ function StatCard({
   iconColor: string;
   label: string;
   value: string;
-  trend: number;
+  trend: number | null;
 }) {
-  const trendUp = trend >= 0;
+  const trendUp = (trend ?? 0) >= 0;
   return (
     <div className="glass-panel rounded-2xl p-6 flex flex-col gap-4 hover:translate-y-[-2px] transition-transform duration-300">
       <div className="flex items-start justify-between">
         <div className={`w-12 h-12 rounded-2xl bg-[#16181D]/50 border border-[#343841]/50 flex items-center justify-center ${iconColor}`}>
           <Icon icon={icon} className="w-6 h-6" />
         </div>
-        <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${trendUp ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
-          <Icon icon={trendUp ? 'lucide:trending-up' : 'lucide:trending-down'} className="w-3 h-3" />
-          {trendUp ? '+' : ''}{trend}%
-        </div>
+        {trend !== null && (
+          <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${trendUp ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+            <Icon icon={trendUp ? 'lucide:trending-up' : 'lucide:trending-down'} className="w-3 h-3" />
+            {trendUp ? '+' : ''}{trend}%
+          </div>
+        )}
       </div>
       <div>
         <p className="text-sm font-medium text-[#BCC0C7]">{label}</p>
@@ -298,12 +299,13 @@ function ResourceBar({ label, percentage, color }: { label: string; percentage: 
   );
 }
 
-function statusColors(status: string): string {
-  const s = status.toLowerCase();
-  if (s.includes('yaxshi') || s.includes('good')) return 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
-  if (s.includes('diqqat') || s.includes('warn')) return 'bg-orange-500/10 border-orange-500/20 text-orange-400';
-  return 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400';
-}
+// Holat backend'dan key sifatida keladi ('ok'|'warn'|'good' — ma'lumotdan
+// kelib chiqqan), label i18n orqali tarjima qilinadi.
+const STATUS_CLS: Record<string, string> = {
+  good: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+  warn: 'bg-orange-500/10 border-orange-500/20 text-orange-400',
+  ok: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400',
+};
 
 function TableRow({
   category,
@@ -312,6 +314,7 @@ function TableRow({
   profit,
   profitStr,
   status,
+  statusLabel,
 }: {
   category: string;
   revenue: string;
@@ -319,6 +322,7 @@ function TableRow({
   profit: number;
   profitStr: string;
   status: string;
+  statusLabel: string;
 }) {
   const isLoss = profit < 0;
   return (
@@ -330,8 +334,8 @@ function TableRow({
         {isLoss ? '-' : ''}{profitStr}
       </td>
       <td className="px-6 py-4 text-right">
-        <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold border ${statusColors(status)}`}>
-          {status}
+        <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold border ${STATUS_CLS[status] ?? STATUS_CLS.ok}`}>
+          {statusLabel}
         </span>
       </td>
     </tr>

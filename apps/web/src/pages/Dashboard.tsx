@@ -66,7 +66,7 @@ export function Dashboard() {
         {
           label: t('dashboard.statActiveObjects'),
           value: t('dashboard.unitCount', { count: stats.activeObjects }),
-          sub: t('dashboard.statActiveObjectsSub', { count: stats.workersCount }),
+          sub: t('dashboard.statActiveObjectsSub', { count: stats.teamCount }),
           icon: '/assets/dashboard/IMG_20.svg',
           color: 'text-[#5555E7]',
         },

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../prisma.js';
 import { ah } from '../util.js';
 import * as s from '../serialize.js';
+import { estimateTotals } from '../finance.js';
 
 export const estimatesRouter = Router();
 
@@ -32,19 +33,14 @@ const createSchema = z.object({
   stages: z.array(stageSchema).default([]),
 });
 
-function totals(items: { qty: number; unitPrice: number }[], taxRate: number) {
-  const subtotal = items.reduce((sum, i) => sum + i.qty * i.unitPrice, 0);
-  const taxAmount = (subtotal * taxRate) / 100;
-  return { subtotal, taxAmount, total: subtotal + taxAmount };
-}
-
-// Tezkor hisoblash (saqlamasdan) — kalkulyator ekrani uchun
+// Tezkor hisoblash (saqlamasdan) — kalkulyator ekrani uchun.
+// Formula finance.ts'da (yagona hisoblash manbai — Vazifa 2).
 estimatesRouter.post(
   '/calc',
   ah(async (req, res) => {
     const body = z.object({ items: z.array(itemSchema).default([]), taxRate: z.number().optional() }).parse(req.body);
     const items = body.items.map((i) => ({ ...i, lineTotal: i.qty * i.unitPrice }));
-    const t = totals(items, body.taxRate ?? 12);
+    const t = estimateTotals(items, body.taxRate ?? 12);
     const byType = { MATERIAL: 0, LABOR: 0, EQUIPMENT: 0 } as Record<string, number>;
     for (const i of items) byType[i.type ?? 'MATERIAL'] += i.qty * i.unitPrice;
     res.json({ items, ...t, breakdown: byType });
@@ -81,7 +77,7 @@ estimatesRouter.post(
     const tenantId = req.user!.tenantId;
     const body = createSchema.parse(req.body);
     const taxRate = body.taxRate ?? 12;
-    const t = totals(body.items, taxRate);
+    const t = estimateTotals(body.items, taxRate);
     const e = await prisma.estimate.create({
       data: {
         tenantId,
