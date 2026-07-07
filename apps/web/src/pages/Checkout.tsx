@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
-import type { Order } from '@smeta/shared';
+import type { Order, Project } from '@smeta/shared';
 import { api, ApiError } from '../lib/api';
 import { useCart } from '../lib/cart';
 import { useCurrency } from '../lib/currency';
@@ -17,8 +17,15 @@ export function Checkout() {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [note, setNote] = useState('');
+  // Vazifa 5: xarajat qaysi loyihaga (binoga) yozilsin; '' = umumiy bo'lim
+  const [projectId, setProjectId] = useState('');
+  const [projects, setProjects] = useState<Project[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.get<Project[]>('/projects').then(setProjects).catch(() => setProjects([]));
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,6 +37,7 @@ export function Checkout() {
         customerPhone: phone.trim(),
         address: address.trim() || null,
         note: note.trim() || null,
+        projectId: projectId || null,
         currency: 'UZS', // savat baza valyutasi
         items: items.map((i) => ({ materialId: i.materialId, name: i.name, unit: i.unit, unitPrice: i.priceUzs, qty: i.qty })),
       });
@@ -86,6 +94,17 @@ export function Checkout() {
           <div className="space-y-1.5">
             <label className="text-[12px] text-[#BCC0C7]">{t('checkout.note')}</label>
             <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('checkout.notePh')} rows={2} className={inp} />
+          </div>
+          {/* Xarajat qaysi loyihaga yozilsin (Vazifa 5) */}
+          <div className="space-y-1.5">
+            <label className="text-[12px] text-[#BCC0C7]">{t('checkout.project')}</label>
+            <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className={inp}>
+              <option value="" className="bg-[#191B1F]">{t('checkout.projectNone')}</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id} className="bg-[#191B1F]">{p.title}</option>
+              ))}
+            </select>
+            <p className="text-[10px] text-[#BCC0C7]/60">{t('checkout.projectHint')}</p>
           </div>
           <button disabled={saving} className="w-full py-3 bg-[#FF6B1A] hover:bg-[#e55a10] text-white font-bold rounded-xl disabled:opacity-60 flex items-center justify-center gap-2">
             {saving && <Icon icon="lucide:loader" className="w-4 h-4 animate-spin" />}

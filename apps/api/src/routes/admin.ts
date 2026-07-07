@@ -620,6 +620,11 @@ adminRouter.patch(
 
     const updated = await prisma.$transaction(async (tx) => {
       const u = await tx.order.update({ where: { id: order.id }, data: { status: body.status }, include: { items: true } });
+      // Vazifa 5: buyurtma bekor qilinsa — avtomatik "Umumiy harajatlar"
+      // yozuvi o'chadi (summalar qayta hisoblanadi).
+      if (body.status === 'CANCELLED') {
+        await tx.generalExpenses.deleteMany({ where: { orderId: order.id } });
+      }
       await notifyOrderStatus(tx, u, body.status);
       return u;
     });

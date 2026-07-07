@@ -194,6 +194,7 @@ export const uz = {
     addRow: "Qator qo'shish",
     total: 'Umumiy summa:',
     removeRow: "Qatorni o'chirish",
+    fromOrder: 'Buyurtmadan avtomatik yozilgan',
   },
   materials: {
     titlePrefix: 'Materiallar ',
@@ -424,6 +425,9 @@ export const uz = {
     orderError: 'Buyurtma berishda xatolik',
     emptyCart: 'Savat bo\'sh',
     back: 'Savatga qaytish',
+    project: 'Loyiha (bino) — ixtiyoriy',
+    projectNone: 'Umumiy harajatlar (loyihasiz)',
+    projectHint: 'Xarid summasi avtomatik "Umumiy harajatlar"ga yoziladi. Loyiha tanlansa — o\'sha binoning harajatlariga.',
   },
   payment: {
     title: 'To\'lov',

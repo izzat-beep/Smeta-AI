@@ -47,22 +47,42 @@ const createSchema = z.object({
   address: z.string().optional().nullable(),
   note: z.string().optional().nullable(),
   currency: z.enum(['UZS', 'USD']).optional(),
+  // Vazifa 5: xarajat qaysi loyihaga (binoga) yozilsin; berilmasa umumiy bo'lim
+  projectId: z.string().optional().nullable(),
   items: z.array(itemSchema).min(1),
 });
 
+// Avto-xarajat yozuvi nomi: "Material: {nom} × {miqdor} (Buyurtma #N)".
+// Bir nechta pozitsiyada birinchisi + qolganlar soni ko'rsatiladi.
+function expenseLabel(no: number, items: { name: string; qty: number }[]): string {
+  const first = items[0];
+  const head = `Material: ${first.name} × ${first.qty}`;
+  const rest = items.length > 1 ? ` (+${items.length - 1} ta boshqa)` : '';
+  return `${head}${rest} (Buyurtma #${no})`;
+}
+
 // POST /api/orders — yangi buyurtma (status = NEW).
-// Sotuvchi(lar)ga bildirishnoma buyurtma bilan BITTA tranzaksiya ichida yoziladi.
+// Sotuvchi(lar)ga bildirishnoma HAMDA avtomatik "Umumiy harajatlar" yozuvi
+// (Vazifa 5) buyurtma bilan BITTA tranzaksiya ichida yoziladi.
 ordersRouter.post(
   '/',
   ah(async (req, res) => {
     const body = createSchema.parse(req.body);
     const total = body.items.reduce((sum, i) => sum + i.qty * i.unitPrice, 0);
 
+    // projectId berilgan bo'lsa — shu tenant'ning loyihasi ekanini tekshiramiz.
+    const projectId = body.projectId?.trim() || null;
+    if (projectId) {
+      const p = await prisma.project.findFirst({ where: { id: projectId, tenantId: req.user!.tenantId } });
+      if (!p) return res.status(400).json({ error: 'bad_request', message: 'Loyiha (bino) topilmadi' });
+    }
+
     const o = await prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
         data: {
           tenantId: req.user!.tenantId,
           userId: req.user!.sub,
+          projectId,
           customerName: body.customerName,
           customerPhone: body.customerPhone,
           address: body.address ?? null,
@@ -82,6 +102,20 @@ ordersRouter.post(
           },
         },
         include: { items: true },
+      });
+
+      // Vazifa 5: sotib olingan materiallar avtomatik "Umumiy harajatlar"ga.
+      // orderId UNIQUE — takror yozilmaydi (idempotent). Buyurtma bekor
+      // qilinsa yozuv o'chiriladi (admin.ts status handler).
+      await tx.generalExpenses.create({
+        data: {
+          tenantId: req.user!.tenantId,
+          projectId,
+          orderId: order.id,
+          label: expenseLabel(order.no, body.items),
+          amount: Math.round(total * 100) / 100,
+          currency: order.currency,
+        },
       });
 
       // Sotuvchilarga "Yangi buyurtma" bildirishnomasi (materiallari bo'yicha)

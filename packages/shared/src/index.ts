@@ -162,6 +162,7 @@ export interface Order {
   no: number; // inson o'qiydigan raqam: "#123"
   tenantId: string;
   userId: string | null; // buyurtmani bergan foydalanuvchi
+  projectId: string | null; // xarajat qaysi loyihaga (binoga) yozilgan; null = umumiy
   customerName: string;
   customerPhone: string;
   address: string | null;

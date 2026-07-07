@@ -81,6 +81,7 @@ export function order(o: any) {
     no: o.no ?? 0,
     tenantId: o.tenantId,
     userId: o.userId ?? null,
+    projectId: o.projectId ?? null,
     customerName: o.customerName,
     customerPhone: o.customerPhone,
     address: o.address ?? null,

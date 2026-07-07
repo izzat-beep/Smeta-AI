@@ -5,7 +5,8 @@ import { api, ApiError } from '../lib/api';
 import { fmtMoney } from '../lib/format';
 
 type Currency = 'UZS' | 'USD';
-interface Row { id: number; name: string; amount: string }
+// orderId — buyurtmadan avtomatik yozilgan qator (Vazifa 5); saqlashda yo'qolmasligi kerak.
+interface Row { id: number; name: string; amount: string; orderId?: string | null }
 
 const DEFAULT_ROWS: Row[] = [
   { id: 1, name: '', amount: '' },
@@ -13,7 +14,7 @@ const DEFAULT_ROWS: Row[] = [
 ];
 
 interface ExpensesResponse {
-  items: { id: number; label: string; amount: number }[];
+  items: { id: number; label: string; amount: number; orderId?: string | null }[];
   currency: Currency;
 }
 
@@ -38,7 +39,7 @@ export function GeneralExpenses({ projectId }: { projectId?: string } = {}) {
         const data = await api.get<ExpensesResponse>('/expenses' + (projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''));
         if (!active) return;
         if (data.items.length) {
-          const loaded = data.items.map((it, i) => ({ id: i + 1, name: it.label, amount: String(it.amount) }));
+          const loaded = data.items.map((it, i) => ({ id: i + 1, name: it.label, amount: String(it.amount), orderId: it.orderId ?? null }));
           setRows(loaded);
           nextId.current = loaded.length + 1;
           setCurrency(data.currency === 'USD' ? 'USD' : 'UZS');
@@ -80,7 +81,7 @@ export function GeneralExpenses({ projectId }: { projectId?: string } = {}) {
       await api.post('/expenses', {
         projectId: projectId ?? null,
         currency,
-        rows: rows.map((r) => ({ name: r.name, amount: r.amount })),
+        rows: rows.map((r) => ({ name: r.name, amount: r.amount, orderId: r.orderId ?? null })),
       });
       setSaved(true);
       window.setTimeout(() => setSaved(false), 2500);
@@ -117,6 +118,12 @@ export function GeneralExpenses({ projectId }: { projectId?: string } = {}) {
         {rows.map((r, i) => (
           <div key={r.id} className="flex items-center gap-2.5">
             <span className="w-6 text-center text-xs text-[#7A7F8A] shrink-0">{i + 1}</span>
+            {/* Buyurtmadan avtomatik kelgan qator belgisi */}
+            {r.orderId && (
+              <span title={t('expenses.fromOrder')} className="w-6 h-6 rounded-lg bg-[#22D3EE]/10 border border-[#22D3EE]/20 flex items-center justify-center shrink-0">
+                <Icon icon="lucide:shopping-bag" className="w-3.5 h-3.5 text-[#22D3EE]" />
+              </span>
+            )}
             <input
               value={r.name}
               onChange={(e) => update(r.id, { name: e.target.value })}
