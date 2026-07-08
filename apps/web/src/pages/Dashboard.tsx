@@ -374,8 +374,14 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="pt-10 pb-6 border-t border-[var(--c-border)]/40 text-center">
+      {/* Footer — landing bo'limlariga real linklar (Vazifa 4.5) */}
+      <footer className="pt-10 pb-6 border-t border-[var(--c-border)]/40 text-center space-y-3">
+        <div className="flex items-center justify-center gap-5 text-[12px]">
+          <Link to="/#biz-haqimizda" className="text-[var(--c-muted)] hover:text-[#22D3EE] transition-colors">{t('landing.nav.about')}</Link>
+          <Link to="/#faq" className="text-[var(--c-muted)] hover:text-[#22D3EE] transition-colors">{t('landing.nav.faq')}</Link>
+          <Link to="/#narxlar" className="text-[var(--c-muted)] hover:text-[#22D3EE] transition-colors">{t('landing.nav.pricing')}</Link>
+          <Link to="/#kontakt" className="text-[var(--c-muted)] hover:text-[#22D3EE] transition-colors">{t('landing.nav.contact')}</Link>
+        </div>
         <p className="text-[12px] text-[var(--c-muted)]/60">{t('dashboard.footer')}</p>
       </footer>
     </div>
