@@ -64,7 +64,7 @@ export function Checkout() {
     );
   }
 
-  const inp = 'w-full bg-[#16181D]/50 border border-[#343841]/50 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-[#5555E7]/50';
+  const inp = 'w-full bg-[var(--c-bg)]/50 border border-[var(--c-border)]/50 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-[#5555E7]/50';
 
   return (
     <div className="p-4 lg:p-10 max-w-[900px] mx-auto w-full space-y-6">
@@ -73,38 +73,38 @@ export function Checkout() {
       </Link>
       <div>
         <h1 className="font-display text-3xl font-extrabold text-white tracking-tight">{t('checkout.title')}</h1>
-        <p className="text-[#BCC0C7] mt-1">{t('checkout.subtitle')}</p>
+        <p className="text-[var(--c-muted)] mt-1">{t('checkout.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <form onSubmit={submit} className="lg:col-span-3 glass-panel rounded-2xl p-6 space-y-4">
           {error && <div className="px-4 py-2.5 bg-[#E11919]/10 border border-[#E11919]/30 rounded-lg text-[#ff6b6b] text-sm">{error}</div>}
           <div className="space-y-1.5">
-            <label className="text-[12px] text-[#BCC0C7]">{t('checkout.name')}</label>
+            <label className="text-[12px] text-[var(--c-muted)]">{t('checkout.name')}</label>
             <input value={name} onChange={(e) => setName(e.target.value)} required minLength={2} placeholder={t('checkout.namePh')} className={inp} />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[12px] text-[#BCC0C7]">{t('checkout.phone')}</label>
+            <label className="text-[12px] text-[var(--c-muted)]">{t('checkout.phone')}</label>
             <input value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder={t('checkout.phonePh')} className={inp} />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[12px] text-[#BCC0C7]">{t('checkout.address')}</label>
+            <label className="text-[12px] text-[var(--c-muted)]">{t('checkout.address')}</label>
             <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t('checkout.addressPh')} className={inp} />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[12px] text-[#BCC0C7]">{t('checkout.note')}</label>
+            <label className="text-[12px] text-[var(--c-muted)]">{t('checkout.note')}</label>
             <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('checkout.notePh')} rows={2} className={inp} />
           </div>
           {/* Xarajat qaysi loyihaga yozilsin (Vazifa 5) */}
           <div className="space-y-1.5">
-            <label className="text-[12px] text-[#BCC0C7]">{t('checkout.project')}</label>
+            <label className="text-[12px] text-[var(--c-muted)]">{t('checkout.project')}</label>
             <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className={inp}>
-              <option value="" className="bg-[#191B1F]">{t('checkout.projectNone')}</option>
+              <option value="" className="bg-[var(--c-panel)]">{t('checkout.projectNone')}</option>
               {projects.map((p) => (
-                <option key={p.id} value={p.id} className="bg-[#191B1F]">{p.title}</option>
+                <option key={p.id} value={p.id} className="bg-[var(--c-panel)]">{p.title}</option>
               ))}
             </select>
-            <p className="text-[10px] text-[#BCC0C7]/60">{t('checkout.projectHint')}</p>
+            <p className="text-[10px] text-[var(--c-muted)]/60">{t('checkout.projectHint')}</p>
           </div>
           <button disabled={saving} className="w-full py-3 bg-[#FF6B1A] hover:bg-[#e55a10] text-white font-bold rounded-xl disabled:opacity-60 flex items-center justify-center gap-2">
             {saving && <Icon icon="lucide:loader" className="w-4 h-4 animate-spin" />}
@@ -113,16 +113,16 @@ export function Checkout() {
         </form>
 
         <div className="lg:col-span-2 glass-panel rounded-2xl p-6 h-fit space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-[#BCC0C7]">{t('checkout.summary')}</h3>
+          <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--c-muted)]">{t('checkout.summary')}</h3>
           <div className="space-y-2">
             {items.map((it) => (
               <div key={it.materialId} className="flex justify-between text-sm">
-                <span className="text-[#BCC0C7] truncate mr-2">{it.name} × {it.qty}</span>
+                <span className="text-[var(--c-muted)] truncate mr-2">{it.name} × {it.qty}</span>
                 <span className="text-white font-medium whitespace-nowrap">{fmt(it.priceUzs * it.qty)}</span>
               </div>
             ))}
           </div>
-          <div className="pt-4 border-t border-[#343841]/40 flex justify-between items-center">
+          <div className="pt-4 border-t border-[var(--c-border)]/40 flex justify-between items-center">
             <span className="text-sm font-bold text-white">{t('checkout.total')}</span>
             <span className="text-xl font-display font-black text-[#FF6B1A]">{fmt(totalUzs)}</span>
           </div>

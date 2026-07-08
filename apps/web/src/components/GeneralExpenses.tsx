@@ -92,10 +92,10 @@ export function GeneralExpenses({ projectId }: { projectId?: string } = {}) {
     }
   }
 
-  const inp = 'bg-[#16181D] border border-[#343841]/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[#FF6B1A]/50';
+  const inp = 'bg-[var(--c-bg)] border border-[var(--c-border)]/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[#FF6B1A]/50';
 
   return (
-    <div className="bg-[#191B1F]/40 backdrop-blur-3xl border border-[#343841]/40 rounded-2xl p-6 space-y-5">
+    <div className="bg-[var(--c-panel)]/40 backdrop-blur-3xl border border-[var(--c-border)]/40 rounded-2xl p-6 space-y-5">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-[#FF6B1A]/10 border border-[#FF6B1A]/20 rounded-xl flex items-center justify-center">
@@ -103,12 +103,12 @@ export function GeneralExpenses({ projectId }: { projectId?: string } = {}) {
           </div>
           <div>
             <h3 className="font-display font-bold text-lg text-white">{t('expenses.title')}</h3>
-            <p className="text-[12px] text-[#BCC0C7]">{t('expenses.subtitle')}</p>
+            <p className="text-[12px] text-[var(--c-muted)]">{t('expenses.subtitle')}</p>
           </div>
         </div>
-        <div className="flex bg-[#343841]/40 border border-[#343841]/40 rounded-xl p-1">
+        <div className="flex bg-[var(--c-border)]/40 border border-[var(--c-border)]/40 rounded-xl p-1">
           {(['UZS', 'USD'] as Currency[]).map((c) => (
-            <button key={c} type="button" onClick={() => { setCurrency(c); setSaved(false); }} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${currency === c ? 'bg-[#191B1F] text-white' : 'text-[#BCC0C7]'}`}>{c}</button>
+            <button key={c} type="button" onClick={() => { setCurrency(c); setSaved(false); }} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${currency === c ? 'bg-[var(--c-panel)] text-white' : 'text-[var(--c-muted)]'}`}>{c}</button>
           ))}
         </div>
       </div>
@@ -117,7 +117,7 @@ export function GeneralExpenses({ projectId }: { projectId?: string } = {}) {
       <div className={`space-y-2.5 ${loading ? 'opacity-50' : ''}`}>
         {rows.map((r, i) => (
           <div key={r.id} className="flex items-center gap-2.5">
-            <span className="w-6 text-center text-xs text-[#7A7F8A] shrink-0">{i + 1}</span>
+            <span className="w-6 text-center text-xs text-[var(--c-muted2)] shrink-0">{i + 1}</span>
             {/* Buyurtmadan avtomatik kelgan qator belgisi */}
             {r.orderId && (
               <span title={t('expenses.fromOrder')} className="w-6 h-6 rounded-lg bg-[#22D3EE]/10 border border-[#22D3EE]/20 flex items-center justify-center shrink-0">
@@ -154,13 +154,13 @@ export function GeneralExpenses({ projectId }: { projectId?: string } = {}) {
       <button
         type="button"
         onClick={addRow}
-        className="w-full py-2.5 border border-dashed border-[#343841] hover:border-[#FF6B1A]/40 text-[#BCC0C7] hover:text-[#FF6B1A] rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+        className="w-full py-2.5 border border-dashed border-[var(--c-border)] hover:border-[#FF6B1A]/40 text-[var(--c-muted)] hover:text-[#FF6B1A] rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors"
       >
         <Icon icon="lucide:plus" className="w-4 h-4" /> {t('expenses.addRow')}
       </button>
 
       {/* Avtomatik jami summa */}
-      <div className="flex items-center justify-between pt-4 border-t border-[#343841]/40">
+      <div className="flex items-center justify-between pt-4 border-t border-[var(--c-border)]/40">
         <span className="text-sm font-bold text-white">{t('expenses.total')}</span>
         <span className="text-2xl font-display font-black text-[#FF6B1A]">{fmtMoney(total, currency)}</span>
       </div>
@@ -177,7 +177,7 @@ export function GeneralExpenses({ projectId }: { projectId?: string } = {}) {
         className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-60 ${
           saved
             ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30'
-            : 'bg-[#FF6B1A] hover:bg-[#FF6B1A]/90 text-white'
+            : 'bg-[#FF6B1A] hover:bg-[#e55a10] text-white'
         }`}
       >
         <Icon icon={saving ? 'lucide:loader' : saved ? 'lucide:check' : 'lucide:save'} className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} />

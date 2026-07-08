@@ -76,17 +76,17 @@ export function Materials() {
       <div className="glass-panel rounded-2xl p-6 mb-10 shadow-2xl">
         <div className="flex flex-col lg:flex-row gap-4 mb-6">
           <div className="flex-1 relative">
-            <Icon icon="lucide:search" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#BCC0C7]" />
+            <Icon icon="lucide:search" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--c-muted)]" />
             <input
               type="text"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder={t('materials.searchPh')}
-              className="w-full bg-[#16181D]/50 border border-white/10 rounded-xl py-4 pl-12 pr-4 focus:outline-none focus:border-[#5555E7]/50 transition-colors"
+              className="w-full bg-[var(--c-bg)]/50 border border-white/10 rounded-xl py-4 pl-12 pr-4 focus:outline-none focus:border-[#5555E7]/50 transition-colors"
             />
           </div>
           <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
-            <button className="flex items-center justify-center gap-2 px-3 sm:px-6 py-3.5 bg-[#16181D]/30 border border-white/10 rounded-xl hover:bg-white/5 transition-colors min-w-0">
+            <button className="flex items-center justify-center gap-2 px-3 sm:px-6 py-3.5 bg-[var(--c-bg)]/30 border border-white/10 rounded-xl hover:bg-white/5 transition-colors min-w-0">
               <Icon icon="lucide:arrow-up-down" className="w-5 h-5 text-[#22D3EE] shrink-0" />
               <span className="text-sm font-medium text-white truncate">{t('materials.sort')}</span>
             </button>
@@ -156,12 +156,12 @@ export function Materials() {
             <h3 className="text-xl font-black text-white mb-3">{t('materials.quickCalcTitle')}</h3>
             <p className="text-sm leading-relaxed mb-8">{t('materials.quickCalcDesc')}</p>
           </div>
-          <button className="w-full py-3 bg-[#16181D] border border-[#5555E7]/50 rounded-xl text-[#5555E7] font-medium hover:bg-[#5555E7]/5 transition-colors">
+          <button className="w-full py-3 bg-[var(--c-bg)] border border-[#5555E7]/50 rounded-xl text-[#5555E7] font-medium hover:bg-[#5555E7]/5 transition-colors">
             {t('materials.goToCalc')}
           </button>
         </div>
 
-        <div className="lg:col-span-8 p-8 rounded-2xl bg-[#191B1F]/40 border border-white/10 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div className="lg:col-span-8 p-8 rounded-2xl bg-[var(--c-panel)]/40 border border-white/10 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-8">
           <div className="relative z-10 max-w-md">
             <h3 className="text-2xl font-black text-white mb-4">{t('materials.partnerTitle')}</h3>
             <p className="text-base leading-relaxed mb-8">{t('materials.partnerDesc')}</p>
@@ -172,10 +172,10 @@ export function Materials() {
                     key={n}
                     src={`/assets/materials/IMG_${n}.webp`}
                     alt="Partner"
-                    className="w-10 h-10 rounded-full border-2 border-[#16181D]"
+                    className="w-10 h-10 rounded-full border-2 border-[var(--c-bg)]"
                   />
                 ))}
-                <div className="w-10 h-10 rounded-full bg-[#5555E7]/20 border-2 border-[#16181D] flex items-center justify-center text-[10px] font-bold text-[#5555E7]">
+                <div className="w-10 h-10 rounded-full bg-[#5555E7]/20 border-2 border-[var(--c-bg)] flex items-center justify-center text-[10px] font-bold text-[#5555E7]">
                   +12
                 </div>
               </div>
@@ -190,7 +190,7 @@ export function Materials() {
       </div>
 
       {/* Footer */}
-      <footer className="pt-16 border-t border-[#343841]/40">
+      <footer className="pt-16 border-t border-[var(--c-border)]/40">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           <div className="space-y-6">
             <div className="flex items-center gap-3">
@@ -263,7 +263,7 @@ export function Materials() {
           </div>
         </div>
 
-        <div className="pt-8 border-t border-[#343841]/40 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold tracking-widest uppercase opacity-60 pb-10">
+        <div className="pt-8 border-t border-[var(--c-border)]/40 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold tracking-widest uppercase opacity-60 pb-10">
           <span>© 2026 SMETA AI</span>
           <div className="flex gap-8">
             <span>UZS (SO'M)</span>
@@ -283,7 +283,7 @@ function FilterBadge({ label, active = false, onClick }: { label: string; active
       className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all shrink-0 ${
         active
           ? 'bg-[#5555E7]/20 border border-[#5555E7] text-[#5555E7] shadow-[0_0_15px_rgba(85,85,231,0.2)]'
-          : 'bg-[#16181D]/40 border border-white/5 text-[#BCC0C7] hover:border-white/20'
+          : 'bg-[var(--c-bg)]/40 border border-white/5 text-[var(--c-muted)] hover:border-white/20'
       }`}
     >
       {label}
@@ -314,8 +314,8 @@ function MaterialCard({ material }: { material: Material }) {
             <Icon icon="lucide:package" className="w-14 h-14 text-white/40" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#16181D] to-transparent opacity-60"></div>
-        <div className="absolute top-4 right-4 px-2.5 py-0.5 bg-[#16181D]/80 backdrop-blur-md border border-[#22D3EE]/20 rounded-full">
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--c-bg)] to-transparent opacity-60"></div>
+        <div className="absolute top-4 right-4 px-2.5 py-0.5 bg-[var(--c-bg)]/80 backdrop-blur-md border border-[#22D3EE]/20 rounded-full">
           <span className="text-xs font-bold text-[#22D3EE]">{unit}</span>
         </div>
         <div className="absolute bottom-4 left-4 flex items-center gap-1.5 px-2 py-1 bg-black/40 backdrop-blur-md rounded-lg">
@@ -350,7 +350,7 @@ function MaterialCard({ material }: { material: Material }) {
         </div>
 
         <div className="pt-4 border-t border-white/5 flex gap-2">
-          <Link to={`/app/materiallar/${id}`} title={t('materials.detail')} className="w-10 h-10 flex items-center justify-center bg-[#16181D] border border-white/10 rounded-lg hover:bg-white/5 transition-colors">
+          <Link to={`/app/materiallar/${id}`} title={t('materials.detail')} className="w-10 h-10 flex items-center justify-center bg-[var(--c-bg)] border border-white/10 rounded-lg hover:bg-white/5 transition-colors">
             <Icon icon="lucide:info" className="w-4 h-4" />
           </Link>
           <button

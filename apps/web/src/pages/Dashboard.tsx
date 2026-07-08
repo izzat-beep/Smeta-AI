@@ -82,15 +82,15 @@ export function Dashboard() {
             {t('dashboard.welcome')},{' '}
             <span className="text-[#5555E7] drop-shadow-[0_0_20px_rgba(85,85,231,0.2)]">{firstName}</span> !
           </h1>
-          <p className="mt-2 text-[#BCC0C7]">{t('dashboard.subtitle')}</p>
+          <p className="mt-2 text-[var(--c-muted)]">{t('dashboard.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[240px]">
-            <Icon icon="lucide:search" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BCC0C7]" />
+            <Icon icon="lucide:search" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--c-muted)]" />
             <input
               type="text"
               placeholder={t('dashboard.searchProjects')}
-              className="w-full pl-10 pr-4 py-2 bg-[#191B1F]/40 border border-[#343841]/50 rounded-xl outline-none focus:border-[#5555E7]/50 transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-[var(--c-panel)]/40 border border-[var(--c-border)]/50 rounded-xl outline-none focus:border-[#5555E7]/50 transition-all"
             />
           </div>
           <button
@@ -109,27 +109,27 @@ export function Dashboard() {
           ? Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="p-6 bg-[#191B1F]/40 backdrop-blur-xl border border-[#343841]/30 rounded-2xl h-[170px] animate-pulse"
+                className="p-6 bg-[var(--c-panel)]/40 backdrop-blur-xl border border-[var(--c-border)]/30 rounded-2xl h-[170px] animate-pulse"
               >
-                <div className="w-10 h-10 bg-[#343841]/40 rounded-xl mb-6" />
-                <div className="h-3 w-24 bg-[#343841]/40 rounded mb-3" />
-                <div className="h-6 w-32 bg-[#343841]/40 rounded" />
+                <div className="w-10 h-10 bg-[var(--c-border)]/40 rounded-xl mb-6" />
+                <div className="h-3 w-24 bg-[var(--c-border)]/40 rounded mb-3" />
+                <div className="h-6 w-32 bg-[var(--c-border)]/40 rounded" />
               </div>
             ))
           : statCards.map((stat, i) => (
               <div
                 key={i}
-                className="p-6 bg-[#191B1F]/40 backdrop-blur-xl border border-[#343841]/30 rounded-2xl relative overflow-hidden group"
+                className="p-6 bg-[var(--c-panel)]/40 backdrop-blur-xl border border-[var(--c-border)]/30 rounded-2xl relative overflow-hidden group"
               >
                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 blur-3xl rounded-full -mr-10 -mt-10" />
                 <div className="flex justify-between items-start mb-6">
-                  <div className="w-10 h-10 bg-[#16181D]/50 border border-[#343841]/50 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-[var(--c-bg)]/50 border border-[var(--c-border)]/50 rounded-xl flex items-center justify-center">
                     <img src={stat.icon} className={`w-5 h-5 ${stat.color}`} alt="" />
                   </div>
                 </div>
-                <p className="text-sm font-medium text-[#BCC0C7]">{stat.label}</p>
+                <p className="text-sm font-medium text-[var(--c-muted)]">{stat.label}</p>
                 <h3 className={`text-2xl font-bold font-['Oxanium'] mt-1 ${stat.color}`}>{stat.value}</h3>
-                <p className="text-[12px] text-[#BCC0C7]/60 mt-2">{stat.sub}</p>
+                <p className="text-[12px] text-[var(--c-muted)]/60 mt-2">{stat.sub}</p>
               </div>
             ))}
       </div>
@@ -155,7 +155,7 @@ export function Dashboard() {
               return (
                 <div
                   key={project.id}
-                  className="bg-[#191B1F]/40 backdrop-blur-xl border border-[#343841]/30 rounded-2xl overflow-hidden flex flex-col"
+                  className="bg-[var(--c-panel)]/40 backdrop-blur-xl border border-[var(--c-border)]/30 rounded-2xl overflow-hidden flex flex-col"
                 >
                   <div className={`h-2 w-full ${color}`} />
                   <div className="p-5 flex-1 flex flex-col">
@@ -167,34 +167,34 @@ export function Dashboard() {
                         {t(`projects.statuses.${project.status}`)}
                       </span>
                     </div>
-                    <p className="text-xs text-[#BCC0C7] mb-6">{project.clientName}</p>
+                    <p className="text-xs text-[var(--c-muted)] mb-6">{project.clientName}</p>
 
                     <div className="space-y-2 mb-6">
                       <div className="flex justify-between text-[12px]">
                         <span>{t('dashboard.progress')}</span>
                         <span className="text-white font-medium">{project.progress}%</span>
                       </div>
-                      <div className="h-1.5 bg-[#343841] rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-[var(--c-border)] rounded-full overflow-hidden">
                         <div className={`h-full ${color}`} style={{ width: `${project.progress}%` }} />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 mb-6">
                       <div>
-                        <p className="text-[10px] uppercase tracking-wider text-[#BCC0C7]/60">{t('dashboard.budget')}</p>
+                        <p className="text-[10px] uppercase tracking-wider text-[var(--c-muted)]/60">{t('dashboard.budget')}</p>
                         <p className="text-sm font-semibold text-white truncate">
                           {fmt(project.currency === 'USD' ? project.value * rate : project.value)}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] uppercase tracking-wider text-[#BCC0C7]/60">{t('dashboard.deadline')}</p>
+                        <p className="text-[10px] uppercase tracking-wider text-[var(--c-muted)]/60">{t('dashboard.deadline')}</p>
                         <p className="text-sm font-semibold text-white">{fmtDate(project.deadline)}</p>
                       </div>
                     </div>
 
                     <button
                       onClick={() => navigate('/app/loyihalar')}
-                      className="w-full py-2.5 bg-[#343841]/50 border border-[#343841]/50 rounded-xl text-sm font-medium text-white hover:bg-[#343841] transition-colors mt-auto"
+                      className="w-full py-2.5 bg-[var(--c-border)]/50 border border-[var(--c-border)]/50 rounded-xl text-sm font-medium text-white hover:bg-[var(--c-border)] transition-colors mt-auto"
                     >
                       {t('dashboard.projectDetails')}
                     </button>
@@ -206,19 +206,19 @@ export function Dashboard() {
             {/* Add Project Placeholder */}
             <Link
               to="/app/loyihalar"
-              className="border-2 border-dashed border-[#343841]/40 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-white/5 transition-all group min-h-[294px]"
+              className="border-2 border-dashed border-[var(--c-border)]/40 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-white/5 transition-all group min-h-[294px]"
             >
-              <div className="w-12 h-12 bg-[#343841]/30 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Icon icon="lucide:plus" className="w-6 h-6 text-[#BCC0C7]" />
+              <div className="w-12 h-12 bg-[var(--c-border)]/30 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Icon icon="lucide:plus" className="w-6 h-6 text-[var(--c-muted)]" />
               </div>
-              <span className="text-sm font-medium text-[#BCC0C7]">{t('dashboard.addProject')}</span>
+              <span className="text-sm font-medium text-[var(--c-muted)]">{t('dashboard.addProject')}</span>
             </Link>
           </div>
 
           {/* Charts & AI Recommendation */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Budget Chart */}
-            <div className="bg-[#191B1F]/40 backdrop-blur-xl border border-[#343841]/30 rounded-2xl p-6 overflow-hidden">
+            <div className="bg-[var(--c-panel)]/40 backdrop-blur-xl border border-[var(--c-border)]/30 rounded-2xl p-6 overflow-hidden">
               <div className="flex items-center gap-3 mb-8">
                 <Icon icon="lucide:trending-up" className="w-4 h-4 text-white" />
                 <h3 className="text-sm font-semibold text-white">{t('dashboard.budgetDynamics')}</h3>
@@ -233,12 +233,12 @@ export function Dashboard() {
                     />
                   ))
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xs text-[#BCC0C7]/60">
+                  <div className="w-full h-full flex items-center justify-center text-xs text-[var(--c-muted)]/60">
                     {t('common.noData')}
                   </div>
                 )}
               </div>
-              <div className="mt-4 pt-4 border-t border-[#343841]/40 flex justify-between text-[10px] uppercase tracking-widest text-[#BCC0C7]/60">
+              <div className="mt-4 pt-4 border-t border-[var(--c-border)]/40 flex justify-between text-[10px] uppercase tracking-widest text-[var(--c-muted)]/60">
                 <span>{t('dashboard.months.jan')}</span>
                 <span>{t('dashboard.months.jun')}</span>
                 <span>{t('dashboard.months.dec')}</span>
@@ -246,13 +246,13 @@ export function Dashboard() {
             </div>
 
             {/* AI Recommendation */}
-            <div className="bg-[#191B1F]/40 backdrop-blur-xl border border-[#343841]/30 rounded-2xl p-6 relative overflow-hidden">
+            <div className="bg-[var(--c-panel)]/40 backdrop-blur-xl border border-[var(--c-border)]/30 rounded-2xl p-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#06B6D4]/10 blur-[80px] -mr-10 -mt-10" />
               <div className="flex items-center gap-3 mb-4">
                 <img src="/assets/dashboard/IMG_22.svg" className="w-4 h-4 text-[#22D3EE]" alt="" />
                 <h3 className="text-sm font-semibold text-white">{t('dashboard.aiRecommendation')}</h3>
               </div>
-              <p className="text-sm text-[#BCC0C7] leading-relaxed italic mb-8">
+              <p className="text-sm text-[var(--c-muted)] leading-relaxed italic mb-8">
                 {data?.aiRecommendation ? `"${data.aiRecommendation}"` : t('dashboard.aiPreparing')}
               </p>
               <div className="flex flex-wrap gap-3">
@@ -273,44 +273,44 @@ export function Dashboard() {
         {/* Right Sidebar Panels */}
         <div className="lg:col-span-4 space-y-6">
           {/* Quick Calculator */}
-          <div className="bg-[#191B1F]/40 backdrop-blur-xl border border-[#343841]/30 rounded-2xl p-6">
+          <div className="bg-[var(--c-panel)]/40 backdrop-blur-xl border border-[var(--c-border)]/30 rounded-2xl p-6">
             <div className="flex items-center gap-3 mb-1">
               <img src="/assets/dashboard/IMG_22.svg" className="w-4 h-4 text-[#F97316]" alt="" />
               <h3 className="text-sm font-semibold text-white">{t('dashboard.quickCalc')}</h3>
             </div>
-            <p className="text-xs text-[#BCC0C7] mb-6">{t('dashboard.quickCalcSub')}</p>
+            <p className="text-xs text-[var(--c-muted)] mb-6">{t('dashboard.quickCalcSub')}</p>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-[12px] font-medium text-[#BCC0C7] mb-2">{t('dashboard.materialType')}</label>
+                <label className="block text-[12px] font-medium text-[var(--c-muted)] mb-2">{t('dashboard.materialType')}</label>
                 <div className="relative">
                   <img
                     src="/assets/dashboard/IMG_19.svg"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BCC0C7]"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--c-muted)]"
                     alt=""
                   />
                   <input
                     type="text"
                     placeholder={t('dashboard.materialTypePh')}
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#16181D]/50 border border-[#343841]/50 rounded-xl text-sm outline-none"
+                    className="w-full pl-10 pr-4 py-2.5 bg-[var(--c-bg)]/50 border border-[var(--c-border)]/50 rounded-xl text-sm outline-none"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[12px] font-medium text-[#BCC0C7] mb-2">{t('dashboard.size')}</label>
+                  <label className="block text-[12px] font-medium text-[var(--c-muted)] mb-2">{t('dashboard.size')}</label>
                   <input
                     type="text"
                     placeholder="0.00"
-                    className="w-full px-4 py-2.5 bg-[#16181D]/50 border border-[#343841]/50 rounded-xl text-sm outline-none"
+                    className="w-full px-4 py-2.5 bg-[var(--c-bg)]/50 border border-[var(--c-border)]/50 rounded-xl text-sm outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-[12px] font-medium text-[#BCC0C7] mb-2">{t('dashboard.thickness')}</label>
+                  <label className="block text-[12px] font-medium text-[var(--c-muted)] mb-2">{t('dashboard.thickness')}</label>
                   <input
                     type="text"
                     placeholder="0"
-                    className="w-full px-4 py-2.5 bg-[#16181D]/50 border border-[#343841]/50 rounded-xl text-sm outline-none"
+                    className="w-full px-4 py-2.5 bg-[var(--c-bg)]/50 border border-[var(--c-border)]/50 rounded-xl text-sm outline-none"
                   />
                 </div>
               </div>
@@ -324,21 +324,21 @@ export function Dashboard() {
           </div>
 
           {/* Recent Activity */}
-          <div className="bg-[#191B1F]/40 backdrop-blur-xl border border-[#343841]/30 rounded-2xl p-6">
+          <div className="bg-[var(--c-panel)]/40 backdrop-blur-xl border border-[var(--c-border)]/30 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <img src="/assets/dashboard/IMG_23.svg" className="w-4 h-4 text-[#22D3EE]" alt="" />
                 <h3 className="text-sm font-semibold text-white">{t('dashboard.recentActivity')}</h3>
               </div>
-              <button className="text-[12px] text-[#BCC0C7] hover:text-white">{t('common.all')}</button>
+              <button className="text-[12px] text-[var(--c-muted)] hover:text-white">{t('common.all')}</button>
             </div>
 
             {(data?.recentActivity ?? []).length === 0 ? (
-              <p className="text-xs text-[#BCC0C7]/60">{t('dashboard.noActivity')}</p>
+              <p className="text-xs text-[var(--c-muted)]/60">{t('dashboard.noActivity')}</p>
             ) : (
               <div className="space-y-6 relative">
                 {/* Vertical Line */}
-                <div className="absolute left-[17px] top-4 bottom-4 w-px bg-[#343841]/40" />
+                <div className="absolute left-[17px] top-4 bottom-4 w-px bg-[var(--c-border)]/40" />
 
                 {(data?.recentActivity ?? []).map((activity) => {
                   const name = activity.user?.fullName ?? t('dashboard.system');
@@ -354,7 +354,7 @@ export function Dashboard() {
                       <div className="space-y-1">
                         <p className="text-sm leading-tight">
                           <span className="font-semibold text-white">{name}</span>{' '}
-                          <span className="text-[#BCC0C7]">{activity.action}</span>
+                          <span className="text-[var(--c-muted)]">{activity.action}</span>
                         </p>
                         <div className="flex items-center gap-2">
                           {activity.projectName && (
@@ -362,7 +362,7 @@ export function Dashboard() {
                               {activity.projectName}
                             </span>
                           )}
-                          <span className="text-[10px] text-[#BCC0C7]/60">{fmtRelative(activity.createdAt)}</span>
+                          <span className="text-[10px] text-[var(--c-muted)]/60">{fmtRelative(activity.createdAt)}</span>
                         </div>
                       </div>
                     </div>
@@ -375,8 +375,8 @@ export function Dashboard() {
       </div>
 
       {/* Footer */}
-      <footer className="pt-10 pb-6 border-t border-[#343841]/40 text-center">
-        <p className="text-[12px] text-[#BCC0C7]/60">{t('dashboard.footer')}</p>
+      <footer className="pt-10 pb-6 border-t border-[var(--c-border)]/40 text-center">
+        <p className="text-[12px] text-[var(--c-muted)]/60">{t('dashboard.footer')}</p>
       </footer>
     </div>
   );

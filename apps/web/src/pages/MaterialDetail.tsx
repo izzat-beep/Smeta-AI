@@ -40,8 +40,8 @@ export function MaterialDetail() {
 
       {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-pulse">
-          <div className="h-80 bg-[#191B1F]/50 rounded-2xl" />
-          <div className="space-y-4"><div className="h-8 w-2/3 bg-[#343841]/40 rounded" /><div className="h-4 w-1/3 bg-[#343841]/40 rounded" /><div className="h-24 bg-[#343841]/30 rounded" /></div>
+          <div className="h-80 bg-[var(--c-panel)]/50 rounded-2xl" />
+          <div className="space-y-4"><div className="h-8 w-2/3 bg-[var(--c-border)]/40 rounded" /><div className="h-4 w-1/3 bg-[var(--c-border)]/40 rounded" /><div className="h-24 bg-[var(--c-border)]/30 rounded" /></div>
         </div>
       ) : !m ? (
         <div className="glass-panel rounded-2xl p-16 text-center">
@@ -64,7 +64,7 @@ export function MaterialDetail() {
             <div>
               <span className="text-[10px] font-bold uppercase tracking-widest text-[#22D3EE] bg-[#22D3EE]/10 px-2.5 py-1 rounded-full">{m.category}</span>
               <h1 className="text-3xl font-black text-white mt-3">{m.name}</h1>
-              <div className="flex items-center gap-4 mt-2 text-sm text-[#BCC0C7]">
+              <div className="flex items-center gap-4 mt-2 text-sm text-[var(--c-muted)]">
                 <span className="flex items-center gap-1.5"><Icon icon="lucide:box" className="w-4 h-4" />{m.provider ?? '—'}</span>
                 <span className="flex items-center gap-1.5"><Icon icon="lucide:star" className="w-4 h-4 text-[#F97316]" />{m.rating}</span>
               </div>
@@ -72,12 +72,12 @@ export function MaterialDetail() {
 
             <div className="glass-panel rounded-2xl p-5 flex items-end justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7] mb-1">{t('materials.priceUnit')}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--c-muted)] mb-1">{t('materials.priceUnit')}</p>
                 <p className="font-oxanium text-3xl font-black text-[#F97316]">{fmt(m.priceUzs)}</p>
-                <p className="text-xs text-[#BCC0C7] mt-1">1 {m.unit}</p>
+                <p className="text-xs text-[var(--c-muted)] mt-1">1 {m.unit}</p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7] mb-1">{t('materials.availability')}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--c-muted)] mb-1">{t('materials.availability')}</p>
                 {m.stock > 0 ? (
                   <span className="text-sm font-bold text-[#10B981] flex items-center justify-end gap-1"><Icon icon="lucide:circle-check" className="w-4 h-4" />{fmtNumber(m.stock)} {m.unit}</span>
                 ) : (
@@ -87,8 +87,8 @@ export function MaterialDetail() {
             </div>
 
             <div>
-              <h3 className="text-sm font-bold uppercase tracking-widest text-[#BCC0C7] mb-2">{t('materials.description')}</h3>
-              <p className="text-sm text-[#BCC0C7] leading-relaxed">{m.description || t('materials.noDescription')}</p>
+              <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--c-muted)] mb-2">{t('materials.description')}</h3>
+              <p className="text-sm text-[var(--c-muted)] leading-relaxed">{m.description || t('materials.noDescription')}</p>
             </div>
 
             <div className="flex gap-3">

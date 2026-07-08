@@ -47,7 +47,7 @@ export function GridBackground({ className }: { className?: string }) {
       className={cn('pointer-events-none absolute inset-0 z-0 opacity-[0.07]', className)}
       style={{
         backgroundImage:
-          'linear-gradient(to right, #BCC0C7 1px, transparent 1px), linear-gradient(to bottom, #BCC0C7 1px, transparent 1px)',
+          'linear-gradient(to right, var(--c-muted) 1px, transparent 1px), linear-gradient(to bottom, var(--c-muted) 1px, transparent 1px)',
         backgroundSize: '48px 48px',
         maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)',
         WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)',
@@ -121,7 +121,7 @@ export function SpotlightCard({ children, className }: { children: ReactNode; cl
     <div
       ref={ref}
       onMouseMove={onMove}
-      className={cn('group relative overflow-hidden rounded-2xl border border-[#343841]/40 bg-[#191B1F]/40 backdrop-blur-xl', className)}
+      className={cn('group relative overflow-hidden rounded-2xl border border-[var(--c-border)]/40 bg-[var(--c-panel)]/40 backdrop-blur-xl', className)}
     >
       <motion.div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" style={{ background: bg }} />
       <div className="relative z-10">{children}</div>
@@ -145,7 +145,7 @@ export function InfiniteMovingCards({
             <p className="text-white/80 italic leading-relaxed mb-6 text-sm">{t.text}</p>
             <div>
               <div className="font-display font-bold text-sm text-white">{t.name}</div>
-              <div className="text-[#BCC0C7] text-[12px]">{t.role}</div>
+              <div className="text-[var(--c-muted)] text-[12px]">{t.role}</div>
             </div>
           </div>
         ))}

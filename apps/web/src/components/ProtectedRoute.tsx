@@ -7,10 +7,10 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#16181D] text-[#5555E7]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--c-bg)] text-[#5555E7]">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-2 border-[#5555E7]/30 border-t-[#5555E7] rounded-full animate-spin" />
-          <span className="text-sm text-[#BCC0C7]">Yuklanmoqda...</span>
+          <span className="text-sm text-[var(--c-muted)]">Yuklanmoqda...</span>
         </div>
       </div>
     );

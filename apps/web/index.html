@@ -98,6 +98,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@200..800&display=swap" rel="stylesheet" />
   </head>
   <body>
+    <!-- Tema (dark/light) FOUC oldini olish: React yuklanishidan OLDIN
+         localStorage'dagi tanlovni <html> klassiga qo'yamiz. -->
+    <script>
+      try {
+        if (localStorage.getItem('smeta_theme') === 'light') {
+          document.documentElement.classList.add('light');
+        }
+      } catch (e) {}
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

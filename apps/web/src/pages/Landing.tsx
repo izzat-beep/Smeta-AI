@@ -64,13 +64,13 @@ const ABOUT_POINTS = [
 export function Landing() {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
-    <div className="min-h-screen bg-[#16181D] text-white font-sans selection:bg-[#FF6B1A]/30 overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--c-bg)] text-white font-sans overflow-x-hidden">
       {/* Navigation */}
       <motion.nav
         initial={{ y: -40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
-        className="fixed top-0 left-0 right-0 z-50 bg-[#16181D]/60 backdrop-blur-xl border-b border-[#343841]/40"
+        className="fixed top-0 left-0 right-0 z-50 bg-[var(--c-bg)]/60 backdrop-blur-xl border-b border-[var(--c-border)]/40"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
           <Link to="/" className="flex items-center gap-2 shrink-0">
@@ -78,12 +78,12 @@ export function Landing() {
           </Link>
           <div className="hidden md:flex items-center gap-1">
             {NAV_LINKS.map((l) => (
-              <a key={l.label} href={l.href} className="px-4 py-2 text-sm font-medium text-[#BCC0C7] hover:text-white transition-colors">{l.label}</a>
+              <a key={l.label} href={l.href} className="px-4 py-2 text-sm font-medium text-[var(--c-muted)] hover:text-white transition-colors">{l.label}</a>
             ))}
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <Link to="/kirish" className="hidden sm:block px-4 py-2 text-sm font-medium text-[#22D3EE] border border-[#22D3EE] rounded-lg hover:bg-[#22D3EE]/10 transition-colors">Kirish</Link>
-            <Link to="/kirish" className="hidden sm:block px-4 py-2 text-sm font-medium bg-[#FF6B1A] rounded-lg hover:bg-[#FF6B1A]/90 transition-colors">Ro‘yxatdan o‘tish</Link>
+            <Link to="/kirish" className="hidden sm:block px-4 py-2 text-sm font-medium bg-[#FF6B1A] rounded-lg hover:bg-[#e55a10] transition-colors">Ro‘yxatdan o‘tish</Link>
             {/* Mobil hamburger */}
             <button
               onClick={() => setMenuOpen((v) => !v)}
@@ -97,9 +97,9 @@ export function Landing() {
 
         {/* Mobil menyu paneli */}
         {menuOpen && (
-          <div className="md:hidden border-t border-[#343841]/40 bg-[#16181D]/95 backdrop-blur-xl px-4 py-4 space-y-1">
+          <div className="md:hidden border-t border-[var(--c-border)]/40 bg-[var(--c-bg)]/95 backdrop-blur-xl px-4 py-4 space-y-1">
             {NAV_LINKS.map((l) => (
-              <a key={l.label} href={l.href} onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-sm font-medium text-[#BCC0C7] hover:bg-white/5 hover:text-white transition-colors">{l.label}</a>
+              <a key={l.label} href={l.href} onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-sm font-medium text-[var(--c-muted)] hover:bg-white/5 hover:text-white transition-colors">{l.label}</a>
             ))}
             <div className="grid grid-cols-2 gap-3 pt-3">
               <Link to="/kirish" onClick={() => setMenuOpen(false)} className="px-4 py-3 text-center text-sm font-medium text-[#22D3EE] border border-[#22D3EE] rounded-xl">Kirish</Link>
@@ -136,7 +136,7 @@ export function Landing() {
             <span className="bg-gradient-to-r from-[#FF6B1A] to-[#FB923C] bg-clip-text text-transparent">AI yordamida</span> hisoblang
           </motion.h1>
 
-          <p className="max-w-2xl mx-auto text-lg md:text-xl text-[#BCC0C7] font-display leading-relaxed mb-10">
+          <p className="max-w-2xl mx-auto text-lg md:text-xl text-[var(--c-muted)] font-display leading-relaxed mb-10">
             <TextGenerateEffect words="Smeta AI — muhandislar, pudratchilar va hunarmandlar uchun intellektual kalkulyator. Murakkab loyihalarni soniyalarda hisoblang." />
           </p>
 
@@ -145,7 +145,7 @@ export function Landing() {
               <Link to="/kirish" className="w-full sm:w-auto px-8 py-4 bg-[#FF6B1A] rounded-xl text-lg font-medium shadow-[0_10px_30px_rgba(255,107,26,0.3)] hover:scale-105 transition-transform">
                 Bepul sinab ko'ring
               </Link>
-              <Link to="/kirish" className="w-full sm:w-auto px-8 py-4 bg-[#16181D] border border-[#22D3EE]/30 rounded-xl text-lg font-medium text-[#22D3EE] flex items-center justify-center gap-3 hover:bg-[#22D3EE]/5 transition-colors">
+              <Link to="/kirish" className="w-full sm:w-auto px-8 py-4 bg-[var(--c-bg)] border border-[#22D3EE]/30 rounded-xl text-lg font-medium text-[#22D3EE] flex items-center justify-center gap-3 hover:bg-[#22D3EE]/5 transition-colors">
                 Kirish <Icon icon="lucide:arrow-right" className="w-5 h-5" />
               </Link>
             </div>
@@ -159,7 +159,7 @@ export function Landing() {
             className="relative max-w-5xl mx-auto"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-[#F97316]/20 to-[#06B6D4]/20 blur-[40px] rounded-[32px] -z-10" />
-            <div className="bg-[#191B1F]/60 border border-white/10 rounded-[32px] p-4 backdrop-blur-2xl shadow-2xl">
+            <div className="bg-[var(--c-panel)]/60 border border-white/10 rounded-[32px] p-4 backdrop-blur-2xl shadow-2xl">
               <img src="/assets/landing/IMG_6.webp" alt="Dashboard" className="w-full h-auto rounded-2xl" />
             </div>
           </motion.div>
@@ -167,12 +167,12 @@ export function Landing() {
       </section>
 
       {/* Features */}
-      <section id="Imkoniyatlar" className="py-24 bg-[#191B1F]/30 scroll-mt-20">
+      <section id="Imkoniyatlar" className="py-24 bg-[var(--c-panel)]/30 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold font-display mb-4">Hammasi bitta tizimda</h2>
-              <p className="text-[#BCC0C7] max-w-lg mx-auto">Rejalashtirishdan to'liq hisobotgacha bo'lgan barcha jarayonlarni avtomatlashtiring.</p>
+              <p className="text-[var(--c-muted)] max-w-lg mx-auto">Rejalashtirishdan to'liq hisobotgacha bo'lgan barcha jarayonlarni avtomatlashtiring.</p>
             </div>
           </Reveal>
 
@@ -184,7 +184,7 @@ export function Landing() {
                     <Icon icon={f.icon} className="w-7 h-7" style={{ color: f.color }} />
                   </div>
                   <h3 className="text-2xl font-bold font-display mb-4">{f.title}</h3>
-                  <p className="text-[#BCC0C7] leading-relaxed">{f.desc}</p>
+                  <p className="text-[var(--c-muted)] leading-relaxed">{f.desc}</p>
                 </SpotlightCard>
               </Reveal>
             ))}
@@ -193,7 +193,7 @@ export function Landing() {
       </section>
 
       {/* Stats */}
-      <section className="py-16 border-y border-[#343841]/20">
+      <section className="py-16 border-y border-[var(--c-border)]/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
             {STATS.map((s) => (
@@ -201,7 +201,7 @@ export function Landing() {
                 <div className={`text-4xl font-bold font-display mb-2 ${s.color}`}>
                   <Counter value={s.value} suffix={s.suffix} />
                 </div>
-                <div className="text-[14px] text-[#BCC0C7] uppercase tracking-widest">{s.label}</div>
+                <div className="text-[14px] text-[var(--c-muted)] uppercase tracking-widest">{s.label}</div>
               </div>
             ))}
           </div>
@@ -220,12 +220,12 @@ export function Landing() {
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-display mb-6 leading-tight">
                   Qurilish hisob-kitoblarini <span className="text-[#22D3EE]">aqlli</span> qilamiz
                 </h2>
-                <p className="text-[#BCC0C7] leading-relaxed mb-4">
+                <p className="text-[var(--c-muted)] leading-relaxed mb-4">
                   Smeta AI — O'zbekistondagi pudratchilar, muhandislar va hunarmandlar uchun yaratilgan
                   sun'iy intellektga asoslangan smeta platformasi. Biz murakkab va ko'p vaqt
                   oladigan hisob-kitoblarni soniyalar ichida, aniq va shaffof qilishni maqsad qilganmiz.
                 </p>
-                <p className="text-[#BCC0C7] leading-relaxed">
+                <p className="text-[var(--c-muted)] leading-relaxed">
                   Materiallar katalogi, usta ish haqi kalkulyatori, loyiha boshqaruvi va AI konsultant —
                   barchasi yagona, qulay tizimda jamlangan.
                 </p>
@@ -234,13 +234,13 @@ export function Landing() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
               {ABOUT_POINTS.map((p, i) => (
                 <Reveal key={p.title} delay={i * 0.1}>
-                  <div className="glass-card rounded-2xl p-6 flex items-start gap-4 bg-[#191B1F]/40 h-full">
+                  <div className="glass-card rounded-2xl p-6 flex items-start gap-4 bg-[var(--c-panel)]/40 h-full">
                     <div className="w-11 h-11 shrink-0 rounded-xl bg-[#22D3EE]/10 border border-[#22D3EE]/20 flex items-center justify-center">
                       <Icon icon={p.icon} className="w-5 h-5 text-[#22D3EE]" />
                     </div>
                     <div>
                       <h3 className="font-bold font-display text-white mb-1">{p.title}</h3>
-                      <p className="text-sm text-[#BCC0C7] leading-relaxed">{p.desc}</p>
+                      <p className="text-sm text-[var(--c-muted)] leading-relaxed">{p.desc}</p>
                     </div>
                   </div>
                 </Reveal>
@@ -256,20 +256,20 @@ export function Landing() {
           <Reveal>
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold font-display mb-4">Sizga mos tarifni tanlang</h2>
-              <p className="text-[#BCC0C7]">Kichik brigadalardan yirik qurilish kompaniyalarigacha.</p>
+              <p className="text-[var(--c-muted)]">Kichik brigadalardan yirik qurilish kompaniyalarigacha.</p>
             </div>
           </Reveal>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
             {PRICING.map((p, i) => (
               <Reveal key={p.name} delay={i * 0.1}>
-                <div className={`glass-card rounded-2xl p-8 relative ${p.popular ? 'border-[#FF6B1A]/40 shadow-[0_0_40px_rgba(255,107,26,0.12)] md:scale-105 z-10 bg-[#191B1F]/60' : 'bg-[#191B1F]/30'}`}>
+                <div className={`glass-card rounded-2xl p-8 relative ${p.popular ? 'border-[#FF6B1A]/40 shadow-[0_0_40px_rgba(255,107,26,0.12)] md:scale-105 z-10 bg-[var(--c-panel)]/60' : 'bg-[var(--c-panel)]/30'}`}>
                   {p.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#FF6B1A] text-white text-[12px] font-semibold px-4 py-1 rounded-full">Eng mashhur</div>
                   )}
-                  <div className="text-[#BCC0C7] font-display font-medium mb-4">{p.name}</div>
+                  <div className="text-[var(--c-muted)] font-display font-medium mb-4">{p.name}</div>
                   <div className="flex items-baseline gap-2 mb-8">
                     <span className="text-3xl font-bold font-display">{p.price}</span>
-                    <span className="text-[#BCC0C7]">{p.price.includes('Bog') ? '' : 'UZS / oy'}</span>
+                    <span className="text-[var(--c-muted)]">{p.price.includes('Bog') ? '' : 'UZS / oy'}</span>
                   </div>
                   <ul className="space-y-4 mb-10">
                     {p.items.map((it) => (
@@ -279,7 +279,7 @@ export function Landing() {
                       </li>
                     ))}
                   </ul>
-                  <Link to="/kirish" className={`block text-center w-full py-3 rounded-xl font-bold transition-all ${p.popular ? 'bg-[#FF6B1A] hover:scale-105 shadow-[0_4px_15px_rgba(255,107,26,0.3)]' : 'bg-[#343841] hover:bg-[#343841]/80'}`}>
+                  <Link to="/kirish" className={`block text-center w-full py-3 rounded-xl font-bold transition-all ${p.popular ? 'bg-[#FF6B1A] hover:scale-105 shadow-[0_4px_15px_rgba(255,107,26,0.3)]' : 'bg-[var(--c-border)] hover:bg-[var(--c-border)]/80'}`}>
                     Boshlash
                   </Link>
                 </div>
@@ -290,7 +290,7 @@ export function Landing() {
       </section>
 
       {/* Testimonials */}
-      <section id="Mijozlar" className="py-24 bg-[#191B1F]/20 scroll-mt-20">
+      <section id="Mijozlar" className="py-24 bg-[var(--c-panel)]/20 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
           <Reveal><h2 className="text-3xl md:text-4xl font-bold font-display text-center">Mijozlarimiz fikri</h2></Reveal>
         </div>
@@ -321,13 +321,13 @@ export function Landing() {
       </section>
 
       {/* Footer */}
-      <footer id="kontakt" className="pt-16 pb-10 border-t border-[#343841]/40 scroll-mt-20">
+      <footer id="kontakt" className="pt-16 pb-10 border-t border-[var(--c-border)]/40 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
             {/* Brend */}
             <div className="space-y-4">
               <img src="/logo.svg" alt="Smeta AI" className="h-14 w-auto" />
-              <p className="text-sm text-[#BCC0C7] leading-relaxed max-w-xs">
+              <p className="text-sm text-[var(--c-muted)] leading-relaxed max-w-xs">
                 Sun'iy intellekt yordamida qurilish smetalarini soniyalarda tayyorlovchi O'zbekiston platformasi.
               </p>
             </div>
@@ -338,7 +338,7 @@ export function Landing() {
               <ul className="space-y-2.5 text-sm">
                 {NAV_LINKS.map((l) => (
                   <li key={l.label}>
-                    <a href={l.href} className="text-[#BCC0C7] hover:text-white transition-colors">{l.label}</a>
+                    <a href={l.href} className="text-[var(--c-muted)] hover:text-white transition-colors">{l.label}</a>
                   </li>
                 ))}
               </ul>
@@ -349,7 +349,7 @@ export function Landing() {
               <h4 className="font-display font-bold text-white mb-4">Biz bilan bog'laning</h4>
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="inline-flex items-center gap-2 text-sm text-[#BCC0C7] hover:text-[#22D3EE] transition-colors mb-5"
+                className="inline-flex items-center gap-2 text-sm text-[var(--c-muted)] hover:text-[#22D3EE] transition-colors mb-5"
               >
                 <Icon icon="lucide:mail" className="w-4 h-4 text-[#22D3EE]" />
                 {CONTACT_EMAIL}
@@ -363,7 +363,7 @@ export function Landing() {
                     rel="noopener noreferrer"
                     aria-label={s.label}
                     title={s.label}
-                    className="w-11 h-11 flex items-center justify-center rounded-xl bg-[#191B1F] border border-[#343841]/60 text-[#BCC0C7] hover:text-white hover:border-[#FF6B1A]/50 hover:bg-[#FF6B1A]/10 transition-colors"
+                    className="w-11 h-11 flex items-center justify-center rounded-xl bg-[var(--c-panel)] border border-[var(--c-border)]/60 text-[var(--c-muted)] hover:text-white hover:border-[#FF6B1A]/50 hover:bg-[#FF6B1A]/10 transition-colors"
                   >
                     <Icon icon={s.icon} className="w-5 h-5" />
                   </a>
@@ -372,9 +372,9 @@ export function Landing() {
             </div>
           </div>
 
-          <div className="pt-8 border-t border-[#343841]/40 flex flex-col sm:flex-row justify-between items-center gap-3">
-            <p className="text-[12px] text-[#BCC0C7] tracking-widest uppercase text-center">© 2026 Smeta AI — Qurilish hisob-kitoblarining kelajagi</p>
-            <p className="text-[12px] text-[#BCC0C7]/60">Toshkent, O'zbekiston</p>
+          <div className="pt-8 border-t border-[var(--c-border)]/40 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <p className="text-[12px] text-[var(--c-muted)] tracking-widest uppercase text-center">© 2026 Smeta AI — Qurilish hisob-kitoblarining kelajagi</p>
+            <p className="text-[12px] text-[var(--c-muted)]/60">Toshkent, O'zbekiston</p>
           </div>
         </div>
       </footer>

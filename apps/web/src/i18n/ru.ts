@@ -526,7 +526,7 @@ export const ru = {
     exchangeRateOwnerOnly: 'Курс может менять только руководитель (OWNER)',
     units: 'Единицы измерения',
     notifications: 'Уведомления',
-    darkMode: 'Тёмный режим (Постоянно)',
+    darkMode: 'Тёмный режим',
     interfaceLang: 'Язык интерфейса',
     langUz: 'Узбекский (латиница)',
     langRu: 'Русский',

@@ -244,7 +244,7 @@ export function Calculator() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1400px] mx-auto">
         {/* Left Panel: Inputs */}
         <div className="lg:col-span-3 space-y-6">
-          <div className="bg-[#191B1F]/40 backdrop-blur-3xl border border-[#343841]/40 rounded-2xl p-6">
+          <div className="bg-[var(--c-panel)]/40 backdrop-blur-3xl border border-[var(--c-border)]/40 rounded-2xl p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-8.5 h-8.5 bg-[#5555E7]/10 border border-[#5555E7]/20 rounded-xl flex items-center justify-center">
                 <img src="/assets/calculator/IMG_14.svg" className="w-4 h-4 text-[#FF6B1A]" alt="" />
@@ -260,7 +260,7 @@ export function Calculator() {
                   value={matName}
                   onChange={(e) => setMatName(e.target.value)}
                   placeholder={t('calc.materialNamePh')}
-                  className="w-full bg-[#343841]/30 border border-[#343841]/40 rounded-xl px-3 py-2 text-sm text-white focus:ring-2 focus:ring-[#5555E7]/50 outline-none transition-all"
+                  className="w-full bg-[var(--c-border)]/30 border border-[var(--c-border)]/40 rounded-xl px-3 py-2 text-sm text-white focus:ring-2 focus:ring-[#5555E7]/50 outline-none transition-all"
                 />
               </div>
               <div className="flex gap-3">
@@ -270,12 +270,12 @@ export function Calculator() {
                     type="number"
                     value={matQty}
                     onChange={(e) => setMatQty(e.target.value)}
-                    className="w-full bg-[#343841]/30 border border-[#343841]/40 rounded-xl px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[#5555E7]/50 transition-all"
+                    className="w-full bg-[var(--c-border)]/30 border border-[var(--c-border)]/40 rounded-xl px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[#5555E7]/50 transition-all"
                   />
                 </div>
                 <div className="w-24">
                   <label className="block text-[12px] font-medium mb-2">{t('calc.unit')}</label>
-                  <div className="flex bg-[#343841]/30 border border-[#343841]/40 rounded-xl p-1">
+                  <div className="flex bg-[var(--c-border)]/30 border border-[var(--c-border)]/40 rounded-xl p-1">
                     {UNITS.map((u) => (
                       <button
                         key={u}
@@ -295,20 +295,20 @@ export function Calculator() {
                   type="number"
                   value={matPrice}
                   onChange={(e) => setMatPrice(e.target.value)}
-                  className="w-full bg-[#343841]/30 border border-[#343841]/40 rounded-xl px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[#5555E7]/50 transition-all"
+                  className="w-full bg-[var(--c-border)]/30 border border-[var(--c-border)]/40 rounded-xl px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[#5555E7]/50 transition-all"
                 />
               </div>
               <button
                 type="button"
                 onClick={addMaterial}
-                className="w-full py-2.5 border border-[#22D3EE]/30 bg-[#16181D] text-[#22D3EE] rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#22D3EE]/5 transition-colors"
+                className="w-full py-2.5 border border-[#22D3EE]/30 bg-[var(--c-bg)] text-[#22D3EE] rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#22D3EE]/5 transition-colors"
               >
                 <img src="/assets/calculator/IMG_15.svg" className="w-4 h-4" alt="" />
                 {t('common.add')}
               </button>
             </div>
 
-            <div className="my-8 border-t border-[#343841]/40"></div>
+            <div className="my-8 border-t border-[var(--c-border)]/40"></div>
 
             <div className="flex items-center gap-3 mb-6">
               <div className="w-8.5 h-8.5 bg-[#5555E7]/10 border border-[#5555E7]/20 rounded-xl flex items-center justify-center">
@@ -324,14 +324,14 @@ export function Calculator() {
               <button
                 type="button"
                 onClick={addLaborAndEquipment}
-                className="w-full py-2.5 border border-[#22D3EE]/30 bg-[#16181D] text-[#22D3EE] rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#22D3EE]/5 transition-colors"
+                className="w-full py-2.5 border border-[#22D3EE]/30 bg-[var(--c-bg)] text-[#22D3EE] rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#22D3EE]/5 transition-colors"
               >
                 <img src="/assets/calculator/IMG_15.svg" className="w-4 h-4" alt="" />
                 {t('common.add')}
               </button>
             </div>
 
-            <div className="my-8 border-t border-[#343841]/40"></div>
+            <div className="my-8 border-t border-[var(--c-border)]/40"></div>
 
             {/* Usta ishi */}
             <div className="flex items-center gap-3 mb-6">
@@ -346,10 +346,10 @@ export function Calculator() {
                 <select
                   value={ustaTypeKey}
                   onChange={(e) => setUstaTypeKey(e.target.value)}
-                  className="w-full bg-[#343841]/30 border border-[#343841]/40 rounded-xl px-3 py-2 text-sm text-white outline-none"
+                  className="w-full bg-[var(--c-border)]/30 border border-[var(--c-border)]/40 rounded-xl px-3 py-2 text-sm text-white outline-none"
                 >
                   {USTA_TYPES.map((tp) => (
-                    <option key={tp.key} value={tp.key} className="bg-[#191B1F]">{t(`calc.workTypes.${tp.key}`)}</option>
+                    <option key={tp.key} value={tp.key} className="bg-[var(--c-panel)]">{t(`calc.workTypes.${tp.key}`)}</option>
                   ))}
                 </select>
               </div>
@@ -359,16 +359,16 @@ export function Calculator() {
                 <>
                   <div>
                     <label className="block text-[12px] font-medium mb-2">{t('calc.brickCount')}</label>
-                    <input type="number" value={brickCount} onChange={(e) => setBrickCount(e.target.value)} className="w-full bg-[#343841]/30 border border-[#343841]/40 rounded-xl px-3 py-2 text-sm text-white outline-none" />
+                    <input type="number" value={brickCount} onChange={(e) => setBrickCount(e.target.value)} className="w-full bg-[var(--c-border)]/30 border border-[var(--c-border)]/40 rounded-xl px-3 py-2 text-sm text-white outline-none" />
                   </div>
                   <div className="flex gap-3">
                     <div className="flex-1">
                       <label className="block text-[12px] font-medium mb-2">{t('calc.brickPrice')}</label>
-                      <input type="number" value={brickPrice} onChange={(e) => setBrickPrice(e.target.value)} className="w-full bg-[#343841]/30 border border-[#343841]/40 rounded-xl px-3 py-2 text-sm text-white outline-none" />
+                      <input type="number" value={brickPrice} onChange={(e) => setBrickPrice(e.target.value)} className="w-full bg-[var(--c-border)]/30 border border-[var(--c-border)]/40 rounded-xl px-3 py-2 text-sm text-white outline-none" />
                     </div>
                     <div className="w-24">
                       <label className="block text-[12px] font-medium mb-2">{t('calc.currency')}</label>
-                      <div className="flex bg-[#343841]/30 border border-[#343841]/40 rounded-xl p-1">
+                      <div className="flex bg-[var(--c-border)]/30 border border-[var(--c-border)]/40 rounded-xl p-1">
                         {(['USD', 'UZS'] as const).map((c) => (
                           <button key={c} type="button" onClick={() => setBrickCur(c)} className={`flex-1 py-1 text-[9px] font-bold rounded ${brickCur === c ? 'bg-[#FF6B1A] text-white' : 'text-white'}`}>{c}</button>
                         ))}
@@ -376,7 +376,7 @@ export function Calculator() {
                     </div>
                   </div>
                   <div className="flex justify-between text-[11px] px-1">
-                    <span className="text-[#BCC0C7]">{t('calc.totalWage')}</span>
+                    <span className="text-[var(--c-muted)]">{t('calc.totalWage')}</span>
                     <span className="text-[#FF6B1A] font-bold">
                       {fmt((parseFloat(brickCount) || 0) * (parseFloat(brickPrice) || 0) * (brickCur === 'USD' ? rate : 1))}
                     </span>
@@ -388,11 +388,11 @@ export function Calculator() {
                   <div className="flex gap-3">
                     <div className="flex-1">
                       <label className="block text-[12px] font-medium mb-2">{t('calc.area')}</label>
-                      <input type="number" value={ustaArea} onChange={(e) => setUstaArea(e.target.value)} className="w-full bg-[#343841]/30 border border-[#343841]/40 rounded-xl px-3 py-2 text-sm text-white outline-none" />
+                      <input type="number" value={ustaArea} onChange={(e) => setUstaArea(e.target.value)} className="w-full bg-[var(--c-border)]/30 border border-[var(--c-border)]/40 rounded-xl px-3 py-2 text-sm text-white outline-none" />
                     </div>
                     <div className="w-24">
                       <label className="block text-[12px] font-medium mb-2">{t('calc.unit')}</label>
-                      <div className="flex bg-[#343841]/30 border border-[#343841]/40 rounded-xl p-1">
+                      <div className="flex bg-[var(--c-border)]/30 border border-[var(--c-border)]/40 rounded-xl p-1">
                         {USTA_UNITS.map((u) => (
                           <button key={u} type="button" onClick={() => setUstaUnit(u)} className={`flex-1 py-1 text-[10px] font-bold rounded ${ustaUnit === u ? 'bg-[#FF6B1A] text-white' : 'text-white'}`}>{u}</button>
                         ))}
@@ -402,11 +402,11 @@ export function Calculator() {
                   <div className="flex gap-3">
                     <div className="flex-1">
                       <label className="block text-[12px] font-medium mb-2">{t('calc.priceForUnit', { unit: ustaUnit })}</label>
-                      <input type="number" value={ustaRate} onChange={(e) => setUstaRate(e.target.value)} className="w-full bg-[#343841]/30 border border-[#343841]/40 rounded-xl px-3 py-2 text-sm text-white outline-none" />
+                      <input type="number" value={ustaRate} onChange={(e) => setUstaRate(e.target.value)} className="w-full bg-[var(--c-border)]/30 border border-[var(--c-border)]/40 rounded-xl px-3 py-2 text-sm text-white outline-none" />
                     </div>
                     <div className="w-24">
                       <label className="block text-[12px] font-medium mb-2">{t('calc.currency')}</label>
-                      <div className="flex bg-[#343841]/30 border border-[#343841]/40 rounded-xl p-1">
+                      <div className="flex bg-[var(--c-border)]/30 border border-[var(--c-border)]/40 rounded-xl p-1">
                         {(['USD', 'UZS'] as const).map((c) => (
                           <button key={c} type="button" onClick={() => setUstaCur(c)} className={`flex-1 py-1 text-[9px] font-bold rounded ${ustaCur === c ? 'bg-[#FF6B1A] text-white' : 'text-white'}`}>{c}</button>
                         ))}
@@ -414,7 +414,7 @@ export function Calculator() {
                     </div>
                   </div>
                   <div className="flex justify-between text-[11px] px-1">
-                    <span className="text-[#BCC0C7]">{t('calc.totalWage')}</span>
+                    <span className="text-[var(--c-muted)]">{t('calc.totalWage')}</span>
                     <span className="text-[#FF6B1A] font-bold">
                       {fmt((parseFloat(ustaArea) || 0) * (parseFloat(ustaRate) || 0) * (ustaCur === 'USD' ? rate : 1))}
                     </span>
@@ -422,7 +422,7 @@ export function Calculator() {
                 </>
               )}
 
-              <button type="button" onClick={addUstaWork} className="w-full py-2.5 border border-[#FF6B1A]/40 bg-[#16181D] text-[#FF6B1A] rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#FF6B1A]/5 transition-colors">
+              <button type="button" onClick={addUstaWork} className="w-full py-2.5 border border-[#FF6B1A]/40 bg-[var(--c-bg)] text-[#FF6B1A] rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#FF6B1A]/5 transition-colors">
                 <Icon icon="lucide:plus" className="w-4 h-4" />
                 {t('calc.addUstaWork')}
               </button>
@@ -439,12 +439,12 @@ export function Calculator() {
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex bg-[#191B1F]/40 backdrop-blur-xl border border-[#343841]/40 rounded-xl p-1">
+            <div className="flex bg-[var(--c-panel)]/40 backdrop-blur-xl border border-[var(--c-border)]/40 rounded-xl p-1">
               {([['summary', t('calc.tabSummary')], ['details', t('calc.tabDetails')], ['terms', t('calc.tabTerms')]] as const).map(([key, label]) => (
                 <button
                   key={key}
                   onClick={() => setTab(key)}
-                  className={`px-5 py-1.5 text-sm font-medium rounded-lg transition-colors ${tab === key ? 'bg-[#5555E7]/20 text-[#5555E7] shadow-sm' : 'text-[#BCC0C7] hover:text-white'}`}
+                  className={`px-5 py-1.5 text-sm font-medium rounded-lg transition-colors ${tab === key ? 'bg-[#5555E7]/20 text-[#5555E7] shadow-sm' : 'text-[var(--c-muted)] hover:text-white'}`}
                 >
                   {label}
                 </button>
@@ -455,18 +455,18 @@ export function Calculator() {
 
           {/* Tab: Xulosa */}
           {tab === 'summary' && (
-            <div className="bg-[#191B1F]/40 backdrop-blur-3xl border border-[#343841]/40 rounded-2xl p-8 relative overflow-hidden">
+            <div className="bg-[var(--c-panel)]/40 backdrop-blur-3xl border border-[var(--c-border)]/40 rounded-2xl p-8 relative overflow-hidden">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
                   <h3 className="font-display font-bold text-xl text-white">{t('calc.structure')}</h3>
-                  <p className="text-sm text-[#BCC0C7] mt-1">{t('calc.structureSub')}</p>
+                  <p className="text-sm text-[var(--c-muted)] mt-1">{t('calc.structureSub')}</p>
                 </div>
               </div>
               <div className="flex flex-col lg:flex-row items-center justify-center gap-12 py-4">
                 <div className="relative w-64 h-64">
                   <div className="w-full h-full rounded-full" style={donutStyle}></div>
-                  <div className="absolute inset-[18%] rounded-full bg-[#191B1F] flex flex-col items-center justify-center">
-                    <span className="text-xs text-[#BCC0C7] uppercase tracking-widest">{t('calc.total')}</span>
+                  <div className="absolute inset-[18%] rounded-full bg-[var(--c-panel)] flex flex-col items-center justify-center">
+                    <span className="text-xs text-[var(--c-muted)] uppercase tracking-widest">{t('calc.total')}</span>
                     <span className="text-2xl font-display font-bold text-white">100%</span>
                   </div>
                 </div>
@@ -481,14 +481,14 @@ export function Calculator() {
 
           {/* Tab: Tafsilotlar */}
           {tab === 'details' && (
-            <div className="bg-[#191B1F]/40 backdrop-blur-3xl border border-[#343841]/40 rounded-2xl p-6 overflow-x-auto">
+            <div className="bg-[var(--c-panel)]/40 backdrop-blur-3xl border border-[var(--c-border)]/40 rounded-2xl p-6 overflow-x-auto">
               {items.length === 0 ? (
-                <p className="text-center text-sm text-[#BCC0C7] py-10">{t('calc.noPositions')}</p>
+                <p className="text-center text-sm text-[var(--c-muted)] py-10">{t('calc.noPositions')}</p>
               ) : (
                 <>
                   <table className="w-full text-sm min-w-[560px]">
                     <thead>
-                      <tr className="text-[11px] uppercase tracking-wider text-[#BCC0C7]/70 border-b border-[#343841]/40">
+                      <tr className="text-[11px] uppercase tracking-wider text-[var(--c-muted)]/70 border-b border-[var(--c-border)]/40">
                         <th className="text-left py-2 pr-2">{t('calc.detailName')}</th>
                         <th className="text-left py-2 px-2">{t('calc.detailType')}</th>
                         <th className="text-right py-2 px-2">{t('calc.detailQty')}</th>
@@ -498,18 +498,18 @@ export function Calculator() {
                     </thead>
                     <tbody>
                       {items.map((it, idx) => (
-                        <tr key={idx} className="border-b border-[#343841]/20">
+                        <tr key={idx} className="border-b border-[var(--c-border)]/20">
                           <td className="py-2.5 pr-2 text-white font-medium">{it.name}</td>
-                          <td className="py-2.5 px-2 text-[#BCC0C7]">{typeLabel(it.type)}</td>
-                          <td className="py-2.5 px-2 text-right text-[#BCC0C7]">{fmtNumber(it.qty)} {it.unit}</td>
-                          <td className="py-2.5 px-2 text-right text-[#BCC0C7]">{fmt(it.unitPrice)}</td>
+                          <td className="py-2.5 px-2 text-[var(--c-muted)]">{typeLabel(it.type)}</td>
+                          <td className="py-2.5 px-2 text-right text-[var(--c-muted)]">{fmtNumber(it.qty)} {it.unit}</td>
+                          <td className="py-2.5 px-2 text-right text-[var(--c-muted)]">{fmt(it.unitPrice)}</td>
                           <td className="py-2.5 pl-2 text-right text-white font-semibold">{fmt(it.qty * it.unitPrice)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                  <div className="mt-6 pt-4 border-t border-[#343841]/40 space-y-2">
-                    <p className="text-[11px] uppercase tracking-wider text-[#BCC0C7]/70 mb-2">{t('calc.detailByCategory')}</p>
+                  <div className="mt-6 pt-4 border-t border-[var(--c-border)]/40 space-y-2">
+                    <p className="text-[11px] uppercase tracking-wider text-[var(--c-muted)]/70 mb-2">{t('calc.detailByCategory')}</p>
                     <CatRow label={t('calc.typeMaterial')} value={fmt(byType.MATERIAL)} />
                     <CatRow label={t('calc.typeLabor')} value={fmt(byType.LABOR)} />
                     <CatRow label={t('calc.typeEquipment')} value={fmt(byType.EQUIPMENT)} />
@@ -521,36 +521,36 @@ export function Calculator() {
 
           {/* Tab: Muddatlar */}
           {tab === 'terms' && (
-            <div className="bg-[#191B1F]/40 backdrop-blur-3xl border border-[#343841]/40 rounded-2xl p-6 space-y-4">
+            <div className="bg-[var(--c-panel)]/40 backdrop-blur-3xl border border-[var(--c-border)]/40 rounded-2xl p-6 space-y-4">
               <div>
                 <h3 className="font-display font-bold text-lg text-white">{t('calc.termsTitle')}</h3>
-                <p className="text-[12px] text-[#BCC0C7]">{t('calc.termsSub')}</p>
+                <p className="text-[12px] text-[var(--c-muted)]">{t('calc.termsSub')}</p>
               </div>
               {stages.length === 0 ? (
-                <p className="text-center text-sm text-[#BCC0C7] py-6">{t('calc.noStages')}</p>
+                <p className="text-center text-sm text-[var(--c-muted)] py-6">{t('calc.noStages')}</p>
               ) : (
                 <div className="space-y-2.5">
                   {stages.map((s, i) => (
                     <div key={s.id} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                      <span className="hidden sm:block w-5 text-center text-xs text-[#7A7F8A] shrink-0">{i + 1}</span>
+                      <span className="hidden sm:block w-5 text-center text-xs text-[var(--c-muted2)] shrink-0">{i + 1}</span>
                       <input
                         value={s.label}
                         onChange={(e) => updateStage(s.id, { label: e.target.value })}
                         placeholder={t('calc.stageNamePh')}
-                        className="flex-1 min-w-0 bg-[#16181D] border border-[#343841]/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[#5555E7]/50"
+                        className="flex-1 min-w-0 bg-[var(--c-bg)] border border-[var(--c-border)]/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[#5555E7]/50"
                       />
                       <input
                         type="date"
                         value={s.date}
                         onChange={(e) => updateStage(s.id, { date: e.target.value })}
-                        className="bg-[#16181D] border border-[#343841]/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[#5555E7]/50 [color-scheme:dark]"
+                        className="bg-[var(--c-bg)] border border-[var(--c-border)]/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[#5555E7]/50 [color-scheme:dark]"
                       />
                       <input
                         type="number"
                         value={s.amount}
                         onChange={(e) => updateStage(s.id, { amount: e.target.value })}
                         placeholder={t('calc.stageAmount')}
-                        className="w-full sm:w-32 bg-[#16181D] border border-[#343841]/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[#5555E7]/50"
+                        className="w-full sm:w-32 bg-[var(--c-bg)] border border-[var(--c-border)]/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[#5555E7]/50"
                       />
                       <button
                         type="button"
@@ -567,12 +567,12 @@ export function Calculator() {
               <button
                 type="button"
                 onClick={addStage}
-                className="w-full py-2.5 border border-dashed border-[#343841] hover:border-[#5555E7]/40 text-[#BCC0C7] hover:text-[#5555E7] rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                className="w-full py-2.5 border border-dashed border-[var(--c-border)] hover:border-[#5555E7]/40 text-[var(--c-muted)] hover:text-[#5555E7] rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors"
               >
                 <Icon icon="lucide:plus" className="w-4 h-4" /> {t('calc.addStage')}
               </button>
               {stages.length > 0 && (
-                <div className="flex items-center justify-between pt-4 border-t border-[#343841]/40">
+                <div className="flex items-center justify-between pt-4 border-t border-[var(--c-border)]/40">
                   <span className="text-sm font-bold text-white">{t('calc.stagesTotal')}</span>
                   <span className="text-xl font-display font-black text-[#FF6B1A]">{fmtDisplay(stagesTotal)}</span>
                 </div>
@@ -583,8 +583,8 @@ export function Calculator() {
 
         {/* Right Panel: Summary */}
         <div className="lg:col-span-3 space-y-6">
-          <div className="bg-[#191B1F]/40 backdrop-blur-3xl border border-[#343841]/40 rounded-2xl overflow-hidden flex flex-col h-full max-h-[818px]">
-            <div className="p-5 bg-white/5 border-b border-[#343841]/40 flex items-center justify-between">
+          <div className="bg-[var(--c-panel)]/40 backdrop-blur-3xl border border-[var(--c-border)]/40 rounded-2xl overflow-hidden flex flex-col h-full max-h-[818px]">
+            <div className="p-5 bg-white/5 border-b border-[var(--c-border)]/40 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <img src="/assets/calculator/IMG_25.svg" className="w-3 h-3 text-[#FF6B1A]" alt="" />
                 <h3 className="font-display font-bold text-sm text-white uppercase">{t('calc.vedomost')}</h3>
@@ -596,7 +596,7 @@ export function Calculator() {
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
               {items.length === 0 ? (
-                <div className="text-center text-[12px] text-[#BCC0C7] py-8">{t('calc.noPositions')}</div>
+                <div className="text-center text-[12px] text-[var(--c-muted)] py-8">{t('calc.noPositions')}</div>
               ) : (
                 items.map((it, idx) => (
                   <VedomostiItem
@@ -610,10 +610,10 @@ export function Calculator() {
               )}
             </div>
 
-            <div className="p-5 bg-white/5 border-t border-[#343841]/40 space-y-4">
+            <div className="p-5 bg-white/5 border-t border-[var(--c-border)]/40 space-y-4">
               <div className="flex justify-between text-xs">
-                <span className="text-[#BCC0C7]">{t('calc.taxes', { rate: TAX_RATE })}</span>
-                <span className="text-[#BCC0C7]">{fmt(taxAmount)}</span>
+                <span className="text-[var(--c-muted)]">{t('calc.taxes', { rate: TAX_RATE })}</span>
+                <span className="text-[var(--c-muted)]">{fmt(taxAmount)}</span>
               </div>
               <div className="flex justify-between items-end">
                 <span className="text-sm font-bold text-white">{t('calc.finalSum')}</span>
@@ -674,7 +674,7 @@ function InputWithIcon({ label, icon, value, onChange }: { label: string; icon: 
   return (
     <div>
       <label className="block text-[12px] font-medium mb-2">{label}</label>
-      <div className="relative flex items-center bg-[#343841]/30 border border-[#343841]/40 rounded-xl px-3 py-2">
+      <div className="relative flex items-center bg-[var(--c-border)]/30 border border-[var(--c-border)]/40 rounded-xl px-3 py-2">
         <img src={icon} className="w-4 h-4 mr-2 opacity-60" alt="" />
         <input type="number" value={value} onChange={(e) => onChange(e.target.value)} className="w-full bg-transparent text-sm text-white outline-none" />
       </div>
@@ -684,17 +684,17 @@ function InputWithIcon({ label, icon, value, onChange }: { label: string; icon: 
 
 function StatCard({ label, value, gradient, icon }: { label: string; value: string; gradient: string; icon: string }) {
   return (
-    <div className="bg-[#191B1F]/40 backdrop-blur-3xl border border-[#343841]/40 rounded-2xl p-5 relative overflow-hidden group hover:border-[#343841] transition-colors">
+    <div className="bg-[var(--c-panel)]/40 backdrop-blur-3xl border border-[var(--c-border)]/40 rounded-2xl p-5 relative overflow-hidden group hover:border-[var(--c-border)] transition-colors">
       <div className="flex justify-between items-start mb-4">
         <div className={`w-9 h-9 bg-gradient-to-br ${gradient} rounded-xl flex items-center justify-center shadow-lg`}>
           <img src={icon} className="w-5 h-5 text-white" alt="" />
         </div>
       </div>
       <div className="space-y-1">
-        <p className="text-[12px] font-medium text-[#BCC0C7]">{label}</p>
+        <p className="text-[12px] font-medium text-[var(--c-muted)]">{label}</p>
         <h4 className="text-xl font-display font-bold text-white tracking-tight break-all">{value}</h4>
       </div>
-      <div className="mt-4 h-1 w-full bg-[#343841]/30 rounded-full overflow-hidden">
+      <div className="mt-4 h-1 w-full bg-[var(--c-border)]/30 rounded-full overflow-hidden">
         <div className={`h-full bg-gradient-to-r ${gradient} w-[70%] rounded-full`}></div>
       </div>
     </div>
@@ -703,7 +703,7 @@ function StatCard({ label, value, gradient, icon }: { label: string; value: stri
 
 function LegendItem({ color, label, percent }: { color: string; label: string; percent: string }) {
   return (
-    <div className="flex items-center justify-between p-3 bg-[#343841]/20 border border-white/5 rounded-xl">
+    <div className="flex items-center justify-between p-3 bg-[var(--c-border)]/20 border border-white/5 rounded-xl">
       <div className="flex items-center gap-3">
         <div className={`w-3 h-3 rounded-full ${color}`}></div>
         <span className="text-sm font-medium text-white">{label}</span>
@@ -716,7 +716,7 @@ function LegendItem({ color, label, percent }: { color: string; label: string; p
 function CatRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between text-sm">
-      <span className="text-[#BCC0C7]">{label}</span>
+      <span className="text-[var(--c-muted)]">{label}</span>
       <span className="text-white font-semibold">{value}</span>
     </div>
   );
@@ -724,17 +724,17 @@ function CatRow({ label, value }: { label: string; value: string }) {
 
 function VedomostiItem({ name, qty, price, onRemove }: { name: string; qty: string; price: string; onRemove?: () => void }) {
   return (
-    <div className="p-3 bg-[#343841]/20 border border-white/5 rounded-xl group hover:bg-[#343841]/30 transition-colors">
+    <div className="p-3 bg-[var(--c-border)]/20 border border-white/5 rounded-xl group hover:bg-[var(--c-border)]/30 transition-colors">
       <div className="flex justify-between items-start mb-1">
         <span className="text-[12px] font-bold text-white">{name}</span>
         {onRemove && (
-          <button type="button" onClick={onRemove} className="text-[#BCC0C7]/50 hover:text-[#E11919] transition-colors opacity-0 group-hover:opacity-100" aria-label="x">
+          <button type="button" onClick={onRemove} className="text-[var(--c-muted)]/50 hover:text-[#E11919] transition-colors opacity-0 group-hover:opacity-100" aria-label="x">
             <Icon icon="lucide:x" className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
       <div className="flex justify-between items-center">
-        <span className="text-[10px] text-[#BCC0C7]">{qty}</span>
+        <span className="text-[10px] text-[var(--c-muted)]">{qty}</span>
         <span className="text-[12px] font-bold text-[#5555E7]">{price}</span>
       </div>
     </div>

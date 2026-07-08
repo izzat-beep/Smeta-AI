@@ -529,7 +529,7 @@ export const uz = {
     exchangeRateOwnerOnly: 'Kursni faqat rahbar (OWNER) o\'zgartira oladi',
     units: "O'lchov Birliklari",
     notifications: 'Bildirishnomalar',
-    darkMode: 'Tungi rejim (Doimiy)',
+    darkMode: 'Tungi rejim',
     interfaceLang: 'Interfeys tili',
     langUz: "O'zbek (Lotin)",
     langRu: 'Rus tili',

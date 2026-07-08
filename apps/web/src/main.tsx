@@ -7,17 +7,20 @@ import { App } from './App';
 import { AuthProvider } from './lib/auth';
 import { CurrencyProvider } from './lib/currency';
 import { CartProvider } from './lib/cart';
+import { ThemeProvider } from './lib/theme';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <AuthProvider>
-        <CurrencyProvider>
-          <CartProvider>
-            <App />
-          </CartProvider>
-        </CurrencyProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <CurrencyProvider>
+            <CartProvider>
+              <App />
+            </CartProvider>
+          </CurrencyProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   </StrictMode>,
 );

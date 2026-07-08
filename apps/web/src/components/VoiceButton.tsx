@@ -26,7 +26,7 @@ export function VoiceButton({ onIntent, hint }: { onIntent: (intent: VoiceIntent
         <Icon icon={processing ? 'lucide:loader' : listening ? 'lucide:mic' : 'lucide:mic'} className={`w-4 h-4 ${processing ? 'animate-spin' : ''}`} />
         {processing ? t('voice.processing') : listening ? t('voice.listening') : t('voice.listen')}
       </button>
-      {hint && state === 'idle' && !error && <span className="text-[10px] text-[#7A7F8A] max-w-[240px] text-right">{hint}</span>}
+      {hint && state === 'idle' && !error && <span className="text-[10px] text-[var(--c-muted2)] max-w-[240px] text-right">{hint}</span>}
       {error && <span className="text-[11px] text-[#E11919] max-w-[240px] text-right">{t(`voice.${error}`)}</span>}
     </div>
   );

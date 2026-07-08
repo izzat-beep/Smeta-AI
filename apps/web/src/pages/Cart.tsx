@@ -15,7 +15,7 @@ export function Cart() {
       <div className="flex items-center gap-3">
         <Icon icon="lucide:shopping-cart" className="w-8 h-8 text-[#FF6B1A]" />
         <h1 className="font-display text-3xl font-extrabold text-white tracking-tight">{t('cart.title')}</h1>
-        {items.length > 0 && <span className="text-sm text-[#BCC0C7]">{t('cart.count', { count: items.length })}</span>}
+        {items.length > 0 && <span className="text-sm text-[var(--c-muted)]">{t('cart.count', { count: items.length })}</span>}
       </div>
 
       {items.length === 0 ? (
@@ -23,7 +23,7 @@ export function Cart() {
           <Icon icon="lucide:shopping-cart" className="w-14 h-14 text-[#5555E7]/60 mx-auto" />
           <div>
             <h3 className="text-lg font-bold text-white">{t('cart.empty')}</h3>
-            <p className="text-sm text-[#BCC0C7] mt-1">{t('cart.emptyDesc')}</p>
+            <p className="text-sm text-[var(--c-muted)] mt-1">{t('cart.emptyDesc')}</p>
           </div>
           <Link to="/app/materiallar" className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#5555E7] text-white rounded-xl text-sm font-bold hover:bg-[#4444d6]">
             <Icon icon="lucide:package" className="w-4 h-4" /> {t('cart.continueShopping')}
@@ -31,25 +31,25 @@ export function Cart() {
         </div>
       ) : (
         <>
-          <div className="glass-panel rounded-2xl divide-y divide-[#343841]/30">
+          <div className="glass-panel rounded-2xl divide-y divide-[var(--c-border)]/30">
             {items.map((it) => (
               <div key={it.materialId} className="flex items-center gap-4 p-4">
-                <div className="w-16 h-16 rounded-xl overflow-hidden bg-[#16181D] shrink-0 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-xl overflow-hidden bg-[var(--c-bg)] shrink-0 flex items-center justify-center">
                   {it.imageUrl ? <img src={it.imageUrl} alt={it.name} className="w-full h-full object-cover" /> : <Icon icon="lucide:package" className="w-7 h-7 text-white/30" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-white truncate">{it.name}</p>
-                  <p className="text-xs text-[#BCC0C7]">{fmt(it.priceUzs)} / {it.unit}</p>
+                  <p className="text-xs text-[var(--c-muted)]">{fmt(it.priceUzs)} / {it.unit}</p>
                 </div>
-                <div className="flex items-center gap-1 bg-[#16181D] border border-[#343841]/50 rounded-lg">
-                  <button onClick={() => setQty(it.materialId, it.qty - 1)} className="w-8 h-8 inline-flex items-center justify-center text-[#BCC0C7] hover:text-white"><Icon icon="lucide:minus" className="w-3.5 h-3.5" /></button>
+                <div className="flex items-center gap-1 bg-[var(--c-bg)] border border-[var(--c-border)]/50 rounded-lg">
+                  <button onClick={() => setQty(it.materialId, it.qty - 1)} className="w-8 h-8 inline-flex items-center justify-center text-[var(--c-muted)] hover:text-white"><Icon icon="lucide:minus" className="w-3.5 h-3.5" /></button>
                   <input
                     type="number"
                     value={it.qty}
                     onChange={(e) => setQty(it.materialId, Number(e.target.value) || 1)}
                     className="w-12 bg-transparent text-center text-sm text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
-                  <button onClick={() => setQty(it.materialId, it.qty + 1)} className="w-8 h-8 inline-flex items-center justify-center text-[#BCC0C7] hover:text-white"><Icon icon="lucide:plus" className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => setQty(it.materialId, it.qty + 1)} className="w-8 h-8 inline-flex items-center justify-center text-[var(--c-muted)] hover:text-white"><Icon icon="lucide:plus" className="w-3.5 h-3.5" /></button>
                 </div>
                 <div className="w-28 text-right text-sm font-bold text-white hidden sm:block">{fmt(it.priceUzs * it.qty)}</div>
                 <button onClick={() => remove(it.materialId)} aria-label={t('cart.remove')} className="w-9 h-9 inline-flex items-center justify-center rounded-lg text-[#E11919] hover:bg-[#E11919]/10 shrink-0"><Icon icon="lucide:trash-2" className="w-4 h-4" /></button>

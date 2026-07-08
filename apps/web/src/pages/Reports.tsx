@@ -48,10 +48,10 @@ export function Reports() {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div className="space-y-2">
           <h1 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight font-display">{t('reports.title')}</h1>
-          <p className="text-[#BCC0C7] max-w-xl">{t('reports.subtitle')}</p>
+          <p className="text-[var(--c-muted)] max-w-xl">{t('reports.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex bg-[#343841]/30 border border-[#343841]/50 rounded-xl p-1">
+          <div className="flex bg-[var(--c-border)]/30 border border-[var(--c-border)]/50 rounded-xl p-1">
             <button aria-label="Excel" className="w-10 h-10 inline-flex items-center justify-center hover:bg-white/5 rounded-lg"><Icon icon="lucide:file-spreadsheet" className="w-4 h-4" /></button>
             <button aria-label="PDF" className="w-10 h-10 inline-flex items-center justify-center hover:bg-white/5 rounded-lg"><Icon icon="lucide:file-text" className="w-4 h-4" /></button>
           </div>
@@ -111,7 +111,7 @@ export function Reports() {
               </div>
               <div className="flex-1 min-h-[300px] relative flex items-end justify-between gap-2 sm:gap-4 px-1">
                 {data.costDynamics.every((d) => d.actual === 0 && d.planned === 0) ? (
-                  <div className="w-full h-full flex items-center justify-center text-sm text-[#BCC0C7]">
+                  <div className="w-full h-full flex items-center justify-center text-sm text-[var(--c-muted)]">
                     {t('common.noData')}
                   </div>
                 ) : (
@@ -129,7 +129,7 @@ export function Reports() {
                           title={`${t('reports.planned')}: ${fmt(d.planned)}`}
                         ></div>
                       </div>
-                      <span className="text-[10px] sm:text-xs text-[#BCC0C7] truncate w-full text-center">{monthLabel(d.ym)}</span>
+                      <span className="text-[10px] sm:text-xs text-[var(--c-muted)] truncate w-full text-center">{monthLabel(d.ym)}</span>
                     </div>
                   ))
                 )}
@@ -149,11 +149,11 @@ export function Reports() {
             {/* Resource Usage Chart */}
             <div className="glass-panel rounded-2xl p-6 flex flex-col">
               <h3 className="text-xl font-bold text-white font-display mb-1">{t('reports.resourceUsage')}</h3>
-              <p className="text-sm text-[#BCC0C7] mb-8">&nbsp;</p>
+              <p className="text-sm text-[var(--c-muted)] mb-8">&nbsp;</p>
 
               <div className="flex-1 space-y-6">
                 {data.resourceUsage.length === 0 ? (
-                  <p className="text-sm text-[#BCC0C7]">{t('common.noData')}</p>
+                  <p className="text-sm text-[var(--c-muted)]">{t('common.noData')}</p>
                 ) : (
                   data.resourceUsage.map((r) => (
                     <ResourceBar key={r.label} label={r.label} percentage={r.percentage} color="bg-[#22D3EE]" />
@@ -161,12 +161,12 @@ export function Reports() {
                 )}
               </div>
 
-              <div className="mt-8 p-4 bg-[#16181D]/40 border border-[#343841]/50 rounded-xl">
+              <div className="mt-8 p-4 bg-[var(--c-bg)]/40 border border-[var(--c-border)]/50 rounded-xl">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs text-[#BCC0C7]">{t('reports.resourceUsage')}</span>
+                  <span className="text-xs text-[var(--c-muted)]">{t('reports.resourceUsage')}</span>
                   <span className="text-sm font-bold text-[#F97316]">{avgUsage(data)}%</span>
                 </div>
-                <div className="h-1.5 w-full bg-[#343841]/30 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-[var(--c-border)]/30 rounded-full overflow-hidden">
                   <div className="h-full bg-[#F97316]" style={{ width: `${avgUsage(data)}%` }}></div>
                 </div>
               </div>
@@ -175,7 +175,7 @@ export function Reports() {
 
           {/* Table Section */}
           <div className="glass-panel rounded-2xl overflow-hidden">
-            <div className="p-6 border-b border-[#343841]/50 flex items-center justify-between">
+            <div className="p-6 border-b border-[var(--c-border)]/50 flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-bold text-white font-display">{t('reports.pnl')}</h3>
               </div>
@@ -183,18 +183,18 @@ export function Reports() {
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-separate border-spacing-0">
                 <thead>
-                  <tr className="bg-[#16181D]/20">
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7]">{t('reports.category')}</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7]">{t('reports.revenue')}</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7]">{t('reports.expense')}</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[#BCC0C7]">{t('reports.profit')}</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-right text-[#BCC0C7]">{t('reports.status')}</th>
+                  <tr className="bg-[var(--c-bg)]/20">
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[var(--c-muted)]">{t('reports.category')}</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[var(--c-muted)]">{t('reports.revenue')}</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[var(--c-muted)]">{t('reports.expense')}</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-[var(--c-muted)]">{t('reports.profit')}</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-right text-[var(--c-muted)]">{t('reports.status')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#343841]/30">
+                <tbody className="divide-y divide-[var(--c-border)]/30">
                   {data.pnl.every((r) => r.revenue === 0 && r.expense === 0) ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-sm text-[#BCC0C7]">
+                      <td colSpan={5} className="px-6 py-8 text-center text-sm text-[var(--c-muted)]">
                         {t('common.noData')}
                       </td>
                     </tr>
@@ -219,13 +219,13 @@ export function Reports() {
 
           {/* Bottom Actions — PDF eksport (brauzer print orqali PDF saqlash) */}
           <div className="grid grid-cols-1 gap-6 pb-12">
-            <div className="glass-panel rounded-2xl p-6 flex items-center gap-4 bg-gradient-to-br from-[#191B1F]/40 to-[#16181D]/40">
+            <div className="glass-panel rounded-2xl p-6 flex items-center gap-4 bg-gradient-to-br from-[var(--c-panel)]/40 to-[var(--c-bg)]/40">
               <div className="w-12 h-12 rounded-full bg-[#F97316]/10 border border-[#F97316]/20 flex items-center justify-center shrink-0">
                 <Icon icon="lucide:download" className="w-5 h-5 text-[#F97316]" />
               </div>
               <div className="flex-1">
                 <h4 className="font-bold text-white font-display">{t('reports.pdfExport')}</h4>
-                <p className="text-xs text-[#BCC0C7]">{t('reports.pdfExportDesc')}</p>
+                <p className="text-xs text-[var(--c-muted)]">{t('reports.pdfExportDesc')}</p>
               </div>
               <button
                 onClick={() => window.print()}
@@ -267,7 +267,7 @@ function StatCard({
   return (
     <div className="glass-panel rounded-2xl p-6 flex flex-col gap-4 hover:translate-y-[-2px] transition-transform duration-300">
       <div className="flex items-start justify-between">
-        <div className={`w-12 h-12 rounded-2xl bg-[#16181D]/50 border border-[#343841]/50 flex items-center justify-center ${iconColor}`}>
+        <div className={`w-12 h-12 rounded-2xl bg-[var(--c-bg)]/50 border border-[var(--c-border)]/50 flex items-center justify-center ${iconColor}`}>
           <Icon icon={icon} className="w-6 h-6" />
         </div>
         {trend !== null && (
@@ -278,7 +278,7 @@ function StatCard({
         )}
       </div>
       <div>
-        <p className="text-sm font-medium text-[#BCC0C7]">{label}</p>
+        <p className="text-sm font-medium text-[var(--c-muted)]">{label}</p>
         <p className="text-2xl font-bold text-white font-display mt-1 data-value">{value}</p>
       </div>
     </div>
@@ -289,10 +289,10 @@ function ResourceBar({ label, percentage, color }: { label: string; percentage: 
   return (
     <div className="space-y-2">
       <div className="flex justify-between text-xs font-medium">
-        <span className="text-[#BCC0C7]">{label}</span>
+        <span className="text-[var(--c-muted)]">{label}</span>
         <span className="text-white">{percentage}%</span>
       </div>
-      <div className="h-2 w-full bg-[#343841]/30 rounded-full overflow-hidden">
+      <div className="h-2 w-full bg-[var(--c-border)]/30 rounded-full overflow-hidden">
         <div className={`h-full ${color} rounded-full`} style={{ width: `${percentage}%` }}></div>
       </div>
     </div>
@@ -328,8 +328,8 @@ function TableRow({
   return (
     <tr className="hover:bg-white/5 transition-colors group">
       <td className="px-6 py-4 text-sm font-medium text-white">{category}</td>
-      <td className="px-6 py-4 text-sm text-[#BCC0C7] data-value">{revenue}</td>
-      <td className="px-6 py-4 text-sm text-[#BCC0C7] data-value">{expense}</td>
+      <td className="px-6 py-4 text-sm text-[var(--c-muted)] data-value">{revenue}</td>
+      <td className="px-6 py-4 text-sm text-[var(--c-muted)] data-value">{expense}</td>
       <td className={`px-6 py-4 text-sm font-bold data-value ${isLoss ? 'text-red-400' : 'text-emerald-400'}`}>
         {isLoss ? '-' : ''}{profitStr}
       </td>
@@ -348,9 +348,9 @@ function ReportSkeleton() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="glass-panel rounded-2xl p-6 h-[140px]">
-            <div className="w-12 h-12 rounded-2xl bg-[#343841]/40"></div>
-            <div className="h-3 w-24 bg-[#343841]/40 rounded mt-6"></div>
-            <div className="h-5 w-32 bg-[#343841]/40 rounded mt-2"></div>
+            <div className="w-12 h-12 rounded-2xl bg-[var(--c-border)]/40"></div>
+            <div className="h-3 w-24 bg-[var(--c-border)]/40 rounded mt-6"></div>
+            <div className="h-5 w-32 bg-[var(--c-border)]/40 rounded mt-2"></div>
           </div>
         ))}
       </div>

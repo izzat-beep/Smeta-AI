@@ -145,11 +145,11 @@ export function NotificationBell({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-12 w-[340px] sm:w-[380px] max-h-[70vh] flex flex-col bg-[#191B1F] border border-[#343841]/60 rounded-2xl shadow-2xl z-[70] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#343841]/40 flex items-center justify-between shrink-0">
+        <div className="absolute right-0 top-12 w-[340px] sm:w-[380px] max-h-[70vh] flex flex-col bg-[var(--c-panel)] border border-[var(--c-border)]/60 rounded-2xl shadow-2xl z-[70] overflow-hidden">
+          <div className="px-4 py-3 border-b border-[var(--c-border)]/40 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-white">{t('notif.title')}</span>
-              {count > 0 && <span className="text-[10px] text-[#BCC0C7]">{t('notif.unreadCount', { count })}</span>}
+              {count > 0 && <span className="text-[10px] text-[var(--c-muted)]">{t('notif.unreadCount', { count })}</span>}
             </div>
             {count > 0 && (
               <button onClick={markAll} className="text-[11px] text-[#22D3EE] hover:underline">
@@ -165,11 +165,11 @@ export function NotificationBell({
               </div>
             ) : items.length === 0 ? (
               <div className="p-8 text-center space-y-2">
-                <Icon icon="lucide:bell-off" className="w-8 h-8 mx-auto text-[#BCC0C7]/40" />
-                <p className="text-xs text-[#BCC0C7]">{t('notif.empty')}</p>
+                <Icon icon="lucide:bell-off" className="w-8 h-8 mx-auto text-[var(--c-muted)]/40" />
+                <p className="text-xs text-[var(--c-muted)]">{t('notif.empty')}</p>
               </div>
             ) : (
-              <div className="divide-y divide-[#343841]/30">
+              <div className="divide-y divide-[var(--c-border)]/30">
                 {items.map((n) => {
                   const txt = notifText(n);
                   const ic = TYPE_ICON[n.type] ?? TYPE_ICON.MESSAGE;
@@ -187,11 +187,11 @@ export function NotificationBell({
                           <p className="text-[12px] font-bold text-white truncate">{txt.title}</p>
                           {!n.isRead && <span className="w-2 h-2 rounded-full bg-[#FF6B1A] shrink-0" />}
                         </div>
-                        <p className="text-[12px] text-[#BCC0C7] leading-snug line-clamp-2">{txt.body}</p>
+                        <p className="text-[12px] text-[var(--c-muted)] leading-snug line-clamp-2">{txt.body}</p>
                         {n.data?.from && n.type === 'MESSAGE' && (
                           <p className="text-[10px] text-[#5555E7] mt-0.5">{t('notif.from', { from: n.data.from })}</p>
                         )}
-                        <p className="text-[10px] text-[#BCC0C7]/50 mt-0.5">{fmtRelative(n.createdAt)}</p>
+                        <p className="text-[10px] text-[var(--c-muted)]/50 mt-0.5">{fmtRelative(n.createdAt)}</p>
                       </div>
                     </button>
                   );

@@ -18,7 +18,7 @@ const STATUS_CLS: Record<string, string> = {
   PENDING_PAYMENT: 'text-[#F97316] bg-[#F97316]/10 border-[#F97316]/20',
   PAID: 'text-[#10B981] bg-[#10B981]/10 border-[#10B981]/20',
   DELIVERED: 'text-[#10B981] bg-[#10B981]/10 border-[#10B981]/20',
-  CANCELLED: 'text-[#BCC0C7] bg-[#343841]/40 border-[#343841]',
+  CANCELLED: 'text-[var(--c-muted)] bg-[var(--c-border)]/40 border-[var(--c-border)]',
 };
 
 const FLOW = ['NEW', 'ACCEPTED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED'] as const;
@@ -45,7 +45,7 @@ export function Payment() {
         <h1 className="text-2xl font-display font-extrabold text-white">
           {cancelled ? t('orderStatus.CANCELLED') : t('payment.orderCreated')}
         </h1>
-        {order && <p className="text-sm text-[#BCC0C7]">{t('payment.orderId')}: <span className="font-mono text-white">#{order.no || order.id.slice(-8).toUpperCase()}</span></p>}
+        {order && <p className="text-sm text-[var(--c-muted)]">{t('payment.orderId')}: <span className="font-mono text-white">#{order.no || order.id.slice(-8).toUpperCase()}</span></p>}
       </div>
 
       {order && (
@@ -53,17 +53,17 @@ export function Payment() {
           <div className="space-y-2">
             {order.items.map((it) => (
               <div key={it.id} className="flex justify-between text-sm">
-                <span className="text-[#BCC0C7]">{it.name} × {it.qty}</span>
+                <span className="text-[var(--c-muted)]">{it.name} × {it.qty}</span>
                 <span className="text-white font-medium">{fmt(it.lineTotal)}</span>
               </div>
             ))}
           </div>
-          <div className="pt-3 border-t border-[#343841]/40 flex justify-between items-center">
+          <div className="pt-3 border-t border-[var(--c-border)]/40 flex justify-between items-center">
             <span className="text-sm font-bold text-white">{t('payment.total')}</span>
             <span className="text-xl font-display font-black text-[#FF6B1A]">{fmt(order.total)}</span>
           </div>
           <div className="flex justify-between items-center pt-2">
-            <span className="text-sm text-[#BCC0C7]">{t('payment.status')}</span>
+            <span className="text-sm text-[var(--c-muted)]">{t('payment.status')}</span>
             <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${STATUS_CLS[order.status] ?? STATUS_CLS.NEW}`}>
               {t(`orderStatus.${order.status}`)}
             </span>
@@ -74,8 +74,8 @@ export function Payment() {
             <div className="pt-4 flex items-center gap-1">
               {FLOW.map((st, i) => (
                 <div key={st} className="flex-1 flex flex-col items-center gap-1.5">
-                  <div className={`w-full h-1.5 rounded-full ${i <= flowIdx ? 'bg-[#FF6B1A]' : 'bg-[#343841]/50'}`} />
-                  <span className={`text-[9px] text-center leading-tight ${i <= flowIdx ? 'text-white' : 'text-[#BCC0C7]/50'}`}>
+                  <div className={`w-full h-1.5 rounded-full ${i <= flowIdx ? 'bg-[#FF6B1A]' : 'bg-[var(--c-border)]/50'}`} />
+                  <span className={`text-[9px] text-center leading-tight ${i <= flowIdx ? 'text-white' : 'text-[var(--c-muted)]/50'}`}>
                     {t(`orderStatus.${st}`)}
                   </span>
                 </div>
@@ -89,7 +89,7 @@ export function Payment() {
       <div className="glass-panel rounded-2xl p-8 text-center space-y-3 border border-dashed border-[#5555E7]/30">
         <Icon icon="lucide:credit-card" className="w-12 h-12 text-[#5555E7]/60 mx-auto" />
         <h3 className="text-lg font-bold text-white">{t('payment.comingSoon')}</h3>
-        <p className="text-sm text-[#BCC0C7] max-w-md mx-auto leading-relaxed">{t('payment.comingSoonDesc')}</p>
+        <p className="text-sm text-[var(--c-muted)] max-w-md mx-auto leading-relaxed">{t('payment.comingSoonDesc')}</p>
         <div className="flex items-center justify-center gap-3 pt-2 opacity-50">
           <span className="text-xs font-bold text-[#00CFA6]">Payme</span>
           <span className="text-xs font-bold text-[#0099FF]">Click</span>
@@ -97,7 +97,7 @@ export function Payment() {
       </div>
 
       <div className="flex justify-center">
-        <Link to="/app/materiallar" className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#16181D] border border-[#343841]/60 text-white rounded-xl text-sm font-medium hover:bg-[#343841]/30">
+        <Link to="/app/materiallar" className="inline-flex items-center gap-2 px-6 py-2.5 bg-[var(--c-bg)] border border-[var(--c-border)]/60 text-white rounded-xl text-sm font-medium hover:bg-[var(--c-border)]/30">
           <Icon icon="lucide:arrow-left" className="w-4 h-4" /> {t('payment.backToCatalog')}
         </Link>
       </div>

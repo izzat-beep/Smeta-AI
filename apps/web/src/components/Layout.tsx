@@ -33,22 +33,22 @@ export function Layout() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#16181D] text-[#BCC0C7] font-sans relative">
+    <div className="flex h-screen overflow-hidden bg-[var(--c-bg)] text-[var(--c-muted)] font-sans relative">
       {/* Fon bezaklari (qotgan) */}
       <div className="fixed top-[-149px] right-[-100px] w-[576px] h-[593px] bg-[#5555E7]/10 rounded-full blur-[120px] pointer-events-none z-0" />
       <div className="fixed bottom-[-100px] left-[-72px] w-[432px] h-[445px] bg-[#06B6D4]/10 rounded-full blur-[120px] pointer-events-none z-0" />
 
       {/* ─── Desktop sidebar (md+) — qotib turadi ─── */}
       <aside
-        className={`${open ? 'w-64' : 'w-20'} hidden md:flex flex-col border-r border-[#343841]/40 bg-[#16181D]/40 backdrop-blur-xl h-screen shrink-0 transition-all duration-300 z-50 relative`}
+        className={`${open ? 'w-64' : 'w-20'} hidden md:flex flex-col border-r border-[var(--c-border)]/40 bg-[var(--c-bg)]/40 backdrop-blur-xl h-screen shrink-0 transition-all duration-300 z-50 relative`}
       >
         <SidebarContent showLabels={open} onLogout={handleLogout} />
         <button
           onClick={() => setOpen(!open)}
-          className="absolute -right-3 top-10 w-6 h-6 bg-[#16181D] border border-[#343841] rounded-full flex items-center justify-center shadow-lg z-50"
+          className="absolute -right-3 top-10 w-6 h-6 bg-[var(--c-bg)] border border-[var(--c-border)] rounded-full flex items-center justify-center shadow-lg z-50"
           aria-label="Menyu"
         >
-          <Icon icon={open ? 'lucide:chevron-left' : 'lucide:chevron-right'} className="w-4 h-4 text-[#BCC0C7]" />
+          <Icon icon={open ? 'lucide:chevron-left' : 'lucide:chevron-right'} className="w-4 h-4 text-[var(--c-muted)]" />
         </button>
       </aside>
 
@@ -56,7 +56,7 @@ export function Layout() {
       {mobileOpen && (
         <div className="fixed inset-0 z-[60] md:hidden">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute left-0 top-0 h-full w-72 max-w-[82%] bg-[#16181D] border-r border-[#343841]/40 flex flex-col shadow-2xl">
+          <aside className="absolute left-0 top-0 h-full w-72 max-w-[82%] bg-[var(--c-bg)] border-r border-[var(--c-border)]/40 flex flex-col shadow-2xl">
             <SidebarContent
               showLabels
               onLogout={() => { setMobileOpen(false); handleLogout(); }}
@@ -68,7 +68,7 @@ export function Layout() {
 
       {/* ─── Asosiy qism — header qotgan, faqat content scroll ─── */}
       <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden z-10">
-        <header className="h-20 md:h-24 shrink-0 border-b border-[#343841]/40 bg-[#16181D]/60 backdrop-blur-2xl z-40 px-4 md:px-10 flex items-center justify-between gap-3">
+        <header className="h-20 md:h-24 shrink-0 border-b border-[var(--c-border)]/40 bg-[var(--c-bg)]/60 backdrop-blur-2xl z-40 px-4 md:px-10 flex items-center justify-between gap-3">
           {/* Mobil: hamburger + logo */}
           <div className="flex items-center gap-2 md:hidden">
             <button
@@ -98,7 +98,7 @@ export function Layout() {
             <div className="flex items-center gap-2">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-medium text-white leading-tight">{user?.fullName ?? 'Foydalanuvchi'}</p>
-                <p className="text-[10px] text-[#BCC0C7]">{tenant?.name}</p>
+                <p className="text-[10px] text-[var(--c-muted)]">{tenant?.name}</p>
               </div>
               <div className="relative">
                 <div className="w-9 h-9 rounded-full overflow-hidden border border-white/10 bg-[#5555E7]/20 flex items-center justify-center text-[#5555E7] font-bold">
@@ -108,7 +108,7 @@ export function Layout() {
                     (user?.fullName ?? 'F').charAt(0)
                   )}
                 </div>
-                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#26D926] border-2 border-[#16181D] rounded-full" />
+                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#26D926] border-2 border-[var(--c-bg)] rounded-full" />
               </div>
             </div>
           </div>
@@ -135,12 +135,12 @@ function LanguageSwitcher() {
   }
 
   return (
-    <div className="flex bg-[#343841]/50 border border-[#343841]/50 rounded-full p-0.5 text-[11px] font-bold uppercase">
+    <div className="flex bg-[var(--c-border)]/50 border border-[var(--c-border)]/50 rounded-full p-0.5 text-[11px] font-bold uppercase">
       {(['uz', 'ru'] as Lang[]).map((l) => (
         <button
           key={l}
           onClick={() => change(l)}
-          className={`px-2.5 py-1 rounded-full transition-colors ${current === l ? 'bg-[#5555E7] text-white' : 'text-[#BCC0C7] hover:text-white'}`}
+          className={`px-2.5 py-1 rounded-full transition-colors ${current === l ? 'bg-[#5555E7] text-white' : 'text-[var(--c-muted)] hover:text-white'}`}
         >
           {l === 'uz' ? 'UZ' : 'RU'}
         </button>
@@ -153,12 +153,12 @@ function LanguageSwitcher() {
 function CurrencySwitcher() {
   const { currency, setCurrency } = useCurrency();
   return (
-    <div className="flex bg-[#343841]/50 border border-[#343841]/50 rounded-full p-0.5 text-[11px] font-bold">
+    <div className="flex bg-[var(--c-border)]/50 border border-[var(--c-border)]/50 rounded-full p-0.5 text-[11px] font-bold">
       {(['UZS', 'USD'] as const).map((c) => (
         <button
           key={c}
           onClick={() => setCurrency(c)}
-          className={`px-2.5 py-1 rounded-full transition-colors ${currency === c ? 'bg-[#FF6B1A] text-white' : 'text-[#BCC0C7] hover:text-white'}`}
+          className={`px-2.5 py-1 rounded-full transition-colors ${currency === c ? 'bg-[#FF6B1A] text-white' : 'text-[var(--c-muted)] hover:text-white'}`}
         >
           {c}
         </button>
@@ -200,7 +200,7 @@ function SidebarContent({
               `w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all group ${
                 isActive
                   ? 'bg-[#5555E7]/10 border border-[#5555E7]/20 text-[#5555E7] shadow-[0_0_15px_rgba(85,85,231,0.1)]'
-                  : 'hover:bg-white/5 text-[#BCC0C7]'
+                  : 'hover:bg-white/5 text-[var(--c-muted)]'
               }`
             }
           >
@@ -214,7 +214,7 @@ function SidebarContent({
         ))}
       </nav>
 
-      <div className="border-t border-[#343841]/40 pt-4 space-y-1 shrink-0">
+      <div className="border-t border-[var(--c-border)]/40 pt-4 space-y-1 shrink-0">
         <NavLink
           to="/app/sozlamalar"
           onClick={onNavigate}
