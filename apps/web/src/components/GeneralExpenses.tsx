@@ -18,10 +18,25 @@ interface ExpensesResponse {
   currency: Currency;
 }
 
+// Ota-komponentga uzatiladigan holat (kalkulyatorning bitta "Saqlash" oqimi uchun).
+export interface GeneralExpensesState {
+  rows: { name: string; amount: string; orderId: string | null }[];
+  currency: Currency;
+}
+
 // Umumiy harajatlar — xarajat qatorlarini (nomi + summa) qo'shib/o'chirib ketadi,
-// jami summa avtomatik hisoblanadi. Ma'lumot SERVERGA (tenant profiliga) saqlanadi,
-// shuning uchun boshqa qurilmadan kirilganda ham ko'rinadi.
-export function GeneralExpenses({ projectId }: { projectId?: string } = {}) {
+// jami summa avtomatik hisoblanadi. Standart holatda o'zi serverga saqlaydi.
+// `embedded` — kalkulyator ichida: o'z "Saqlash" tugmasi yashiriladi va holat
+// `onStateChange` orqali ota-komponentga uzatiladi (u bitta so'rovda saqlaydi).
+export function GeneralExpenses({
+  projectId,
+  embedded = false,
+  onStateChange,
+}: {
+  projectId?: string;
+  embedded?: boolean;
+  onStateChange?: (state: GeneralExpensesState) => void;
+} = {}) {
   const { t } = useTranslation();
   const [currency, setCurrency] = useState<Currency>('UZS');
   const [rows, setRows] = useState<Row[]>(DEFAULT_ROWS);
@@ -30,6 +45,16 @@ export function GeneralExpenses({ projectId }: { projectId?: string } = {}) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const nextId = useRef(3);
+
+  // Embedded rejimda holatni ota-komponentga uzatamiz (har o'zgarishda).
+  useEffect(() => {
+    if (!embedded || !onStateChange) return;
+    onStateChange({
+      rows: rows.map((r) => ({ name: r.name, amount: r.amount, orderId: r.orderId ?? null })),
+      currency,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, currency, embedded]);
 
   // Serverdan yuklash (boshqa qurilmalarda ham bir xil ko'rinadi)
   useEffect(() => {
@@ -165,24 +190,27 @@ export function GeneralExpenses({ projectId }: { projectId?: string } = {}) {
         <span className="text-2xl font-display font-black text-[#FF6B1A]">{fmtMoney(total, currency)}</span>
       </div>
 
-      {error && (
+      {error && !embedded && (
         <div className="px-4 py-2.5 bg-[#E11919]/10 border border-[#E11919]/30 rounded-lg text-[#ff6b6b] text-sm">{error}</div>
       )}
 
-      {/* Saqlash — serverga (tenant profiliga) saqlaydi */}
-      <button
-        type="button"
-        onClick={handleSave}
-        disabled={saving || loading}
-        className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-60 ${
-          saved
-            ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30'
-            : 'bg-[#FF6B1A] hover:bg-[#e55a10] text-white'
-        }`}
-      >
-        <Icon icon={saving ? 'lucide:loader' : saved ? 'lucide:check' : 'lucide:save'} className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} />
-        {saving ? t('common.saving') : saved ? t('common.saved') : t('common.save')}
-      </button>
+      {/* Saqlash — faqat standalone rejimda. Embedded (kalkulyator) rejimda
+          umumiy "Saqlash" tugmasi bularni ham bitta so'rovda yuboradi. */}
+      {!embedded && (
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving || loading}
+          className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-60 ${
+            saved
+              ? 'bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30'
+              : 'bg-[#FF6B1A] hover:bg-[#e55a10] text-white'
+          }`}
+        >
+          <Icon icon={saving ? 'lucide:loader' : saved ? 'lucide:check' : 'lucide:save'} className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} />
+          {saving ? t('common.saving') : saved ? t('common.saved') : t('common.save')}
+        </button>
+      )}
     </div>
   );
 }

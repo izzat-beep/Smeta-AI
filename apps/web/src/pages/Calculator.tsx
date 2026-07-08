@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
-import type { PaymentType } from '@smeta/shared';
+import type { PaymentType, Project, Estimate } from '@smeta/shared';
 import { api, ApiError } from '../lib/api';
-import { fmtNumber } from '../lib/format';
+import { fmtNumber, fmtDate } from '../lib/format';
 import { useCurrency } from '../lib/currency';
-import { GeneralExpenses } from '../components/GeneralExpenses';
+import { GeneralExpenses, type GeneralExpensesState } from '../components/GeneralExpenses';
 import { VoiceButton } from '../components/VoiceButton';
 import { VoiceConfirm } from '../components/VoiceConfirm';
 import type { VoiceIntent } from '../lib/voice';
@@ -87,6 +87,34 @@ export function Calculator() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const [voice, setVoice] = useState<{ intent: VoiceIntent; transcript: string } | null>(null);
+
+  // Vazifa 1A: hisobot nomi + loyiha + umumiy harajatlar holati (bitta saqlash uchun)
+  const [reportName, setReportName] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [geState, setGeState] = useState<GeneralExpensesState | null>(null);
+
+  // Vazifa 1B: saqlangan hisobotlar ro'yxati + o'chirish
+  const [savedList, setSavedList] = useState<Estimate[] | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Estimate | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.get<Project[]>('/projects').then(setProjects).catch(() => setProjects([]));
+    api.get<Estimate[]>('/estimates').then(setSavedList).catch(() => setSavedList([]));
+  }, []);
+
+  // Umumiy harajatlarda to'ldirilgan qator bormi (bo'sh bo'lmagan nom yoki summa)
+  const geHasData = useMemo(
+    () => !!geState?.rows.some((r) => r.name.trim() !== '' || (parseFloat(r.amount) || 0) > 0),
+    [geState],
+  );
+  const stagesHaveData = useMemo(
+    () => stages.some((s) => s.label.trim() !== '' || (parseFloat(s.amount) || 0) > 0),
+    [stages],
+  );
+  // Kamida bitta bo'lim to'ldirilganmi (Saqlash tugmasi shunga qarab yoqiladi)
+  const hasAnyData = items.length > 0 || stagesHaveData || geHasData;
 
   const ustaType = USTA_TYPES.find((u) => u.key === ustaTypeKey)!;
 
@@ -185,12 +213,17 @@ export function Calculator() {
     return `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Math.round(n))} UZS`;
   }
 
+  // Vazifa 1A: BITTA "Saqlash" — barcha to'ldirilgan bo'limlar (Material/Mehnat/
+  // Usta = items, Muddatlar = stages, Umumiy Harajatlar = geState) bitta so'rovda,
+  // backendda bitta tranzaksiyada saqlanadi. Bo'sh bo'limlar tashlab ketiladi.
   async function save() {
+    if (!hasAnyData || saving) return;
     setSaving(true);
     setToast(null);
     try {
-      await api.post('/estimates', {
-        title: 'Kalkulyator smetasi',
+      const created = await api.post<Estimate>('/estimates', {
+        title: reportName.trim() || t('calc.defaultReportName'),
+        projectId: projectId || null,
         currency: 'UZS',
         taxRate: TAX_RATE,
         items: items.map((i) => ({
@@ -209,13 +242,41 @@ export function Calculator() {
             amount: parseFloat(s.amount) || 0,
             currency,
           })),
+        // Umumiy harajatlar — embedded GeneralExpenses holatidan (bo'lsa)
+        ...(geState
+          ? {
+              generalExpenses: geState.rows.map((r) => ({ name: r.name, amount: r.amount, orderId: r.orderId })),
+              generalExpensesCurrency: geState.currency,
+            }
+          : {}),
       });
       setToast({ kind: 'ok', text: t('calc.savedOk') });
+      // Saqlangan hisobot ro'yxat boshiga qo'shiladi (darhol ko'rinadi).
+      setSavedList((prev) => [created, ...(prev ?? [])]);
+      // Kamroq buzuvchi variant: forma ma'lumotlari saqlanib qoladi (reset qilinmaydi).
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : t('common.saveError');
       setToast({ kind: 'err', text: msg });
     } finally {
       setSaving(false);
+    }
+  }
+
+  // Vazifa 1B: saqlangan hisobotni o'chirish (optimistic + xatoda qaytarish).
+  async function deleteReport(est: Estimate) {
+    setConfirmDelete(null);
+    setDeletingId(est.id);
+    const prev = savedList;
+    setSavedList((list) => (list ?? []).filter((e) => e.id !== est.id)); // optimistic
+    try {
+      await api.delete(`/estimates/${est.id}`);
+      setToast({ kind: 'ok', text: t('calc.deletedOk') });
+    } catch (err) {
+      setSavedList(prev ?? []); // rollback
+      const msg = err instanceof ApiError ? err.message : t('common.error');
+      setToast({ kind: 'err', text: msg });
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -438,6 +499,42 @@ export function Calculator() {
             <StatCard label={t('calc.statLabor')} value={fmt(byType.LABOR)} gradient="from-[#6366F1] to-[#9333EA]" icon="/assets/calculator/IMG_16.svg" />
           </div>
 
+          {/* Hisobot nomi + loyiha + (desktop) yagona Saqlash tugmasi (Vazifa 1A) */}
+          <div className="bg-[var(--c-panel)]/40 backdrop-blur-xl border border-[var(--c-border)]/40 rounded-2xl p-4 flex flex-col sm:flex-row gap-3 sm:items-end">
+            <div className="flex-1 min-w-0">
+              <label className="block text-[11px] font-medium text-[var(--c-muted)] mb-1.5">{t('calc.reportName')}</label>
+              <input
+                value={reportName}
+                onChange={(e) => setReportName(e.target.value)}
+                placeholder={t('calc.reportNamePh')}
+                className="w-full bg-[var(--c-bg)] border border-[var(--c-border)]/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[#5555E7]/50"
+              />
+            </div>
+            <div className="sm:w-52">
+              <label className="block text-[11px] font-medium text-[var(--c-muted)] mb-1.5">{t('calc.project')}</label>
+              <select
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                className="w-full bg-[var(--c-bg)] border border-[var(--c-border)]/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-[#5555E7]/50"
+              >
+                <option value="" className="bg-[var(--c-panel)]">{t('calc.noProject')}</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id} className="bg-[var(--c-panel)]">{p.title}</option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="button"
+              onClick={save}
+              disabled={!hasAnyData || saving}
+              title={!hasAnyData ? t('calc.fillAtLeastOne') : ''}
+              className="hidden sm:flex items-center justify-center gap-2 px-6 py-2 rounded-xl font-bold text-sm bg-[#FF6B1A] hover:bg-[#e55a10] text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              <Icon icon={saving ? 'lucide:loader' : 'lucide:save'} className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} />
+              {saving ? t('common.saving') : t('common.save')}
+            </button>
+          </div>
+
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex bg-[var(--c-panel)]/40 backdrop-blur-xl border border-[var(--c-border)]/40 rounded-xl p-1">
               {([['summary', t('calc.tabSummary')], ['details', t('calc.tabDetails')], ['terms', t('calc.tabTerms')]] as const).map(([key, label]) => (
@@ -637,8 +734,9 @@ export function Calculator() {
               <button
                 type="button"
                 onClick={save}
-                disabled={saving || items.length === 0}
-                className="w-full py-2.5 bg-[#06B6D4] rounded-xl text-[12px] font-medium text-white flex items-center justify-center gap-2 shadow-[0_8px_16px_rgba(6,182,212,0.2)] hover:scale-[1.02] transition-transform disabled:opacity-50 disabled:hover:scale-100"
+                disabled={saving || !hasAnyData}
+                title={!hasAnyData ? t('calc.fillAtLeastOne') : ''}
+                className="w-full py-2.5 bg-[#06B6D4] rounded-xl text-[12px] font-medium text-white flex items-center justify-center gap-2 shadow-[0_8px_16px_rgba(6,182,212,0.2)] hover:scale-[1.02] transition-transform disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
               >
                 {saving ? (
                   <Icon icon="lucide:loader" className="w-3.5 h-3.5 animate-spin" />
@@ -652,10 +750,71 @@ export function Calculator() {
         </div>
       </div>
 
-      {/* Umumiy harajatlar */}
+      {/* Umumiy harajatlar — kalkulyator ichida embedded (o'z tugmasi yo'q,
+          bitta "Saqlash" bilan birga yuboriladi) */}
       <div className="max-w-[1400px] mx-auto mt-6">
-        <GeneralExpenses />
+        <GeneralExpenses embedded projectId={projectId || undefined} onStateChange={setGeState} />
       </div>
+
+      {/* Saqlangan hisobotlar (Vazifa 1B) */}
+      <div className="max-w-[1400px] mx-auto mt-6">
+        <SavedReports
+          list={savedList}
+          deletingId={deletingId}
+          onDelete={(e) => setConfirmDelete(e)}
+        />
+      </div>
+
+      {/* Mobil sticky Saqlash paneli */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--c-panel)]/95 backdrop-blur-xl border-t border-[var(--c-border)]/60 px-4 py-3 flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] text-[var(--c-muted)] uppercase tracking-wider">{t('calc.finalSum')}</p>
+          <p className="text-lg font-display font-black text-[#FF6B1A] truncate">{fmt(total)}</p>
+        </div>
+        <button
+          type="button"
+          onClick={save}
+          disabled={!hasAnyData || saving}
+          title={!hasAnyData ? t('calc.fillAtLeastOne') : ''}
+          className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#FF6B1A] text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+        >
+          <Icon icon={saving ? 'lucide:loader' : 'lucide:save'} className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} />
+          {saving ? t('common.saving') : t('common.save')}
+        </button>
+      </div>
+      {/* Mobil sticky bar kontentni yopmasligi uchun bo'sh joy */}
+      <div className="lg:hidden h-24" />
+
+      {/* O'chirishni tasdiqlash modali */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmDelete(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm bg-[var(--c-panel)] border border-[var(--c-border)]/60 rounded-2xl p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-full bg-[#E11919]/15 flex items-center justify-center shrink-0">
+                <Icon icon="lucide:trash-2" className="w-5 h-5 text-[#E11919]" />
+              </div>
+              <h3 className="font-display font-bold text-white text-lg">{t('calc.deleteTitle')}</h3>
+            </div>
+            <p className="text-sm text-[var(--c-muted)] leading-relaxed">{t('calc.deleteConfirm')}</p>
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-[var(--c-border)]/60 text-[var(--c-muted)] hover:text-white hover:bg-white/5 transition-colors"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteReport(confirmDelete)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-[#E11919] hover:bg-[#c41616] text-white transition-colors"
+              >
+                {t('common.delete')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {voice && (
         <VoiceConfirm
@@ -667,6 +826,76 @@ export function Calculator() {
         />
       )}
     </main>
+  );
+}
+
+// Saqlangan hisobotlar ro'yxati (Vazifa 1B) — loading / empty / list holatlari.
+function SavedReports({
+  list,
+  deletingId,
+  onDelete,
+}: {
+  list: Estimate[] | null;
+  deletingId: string | null;
+  onDelete: (e: Estimate) => void;
+}) {
+  const { t } = useTranslation();
+  const { fmt } = useCurrency();
+
+  return (
+    <div className="bg-[var(--c-panel)]/40 backdrop-blur-3xl border border-[var(--c-border)]/40 rounded-2xl p-6">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-9 h-9 bg-[#5555E7]/10 border border-[#5555E7]/20 rounded-xl flex items-center justify-center">
+          <Icon icon="lucide:folder" className="w-5 h-5 text-[#5555E7]" />
+        </div>
+        <div>
+          <h3 className="font-display font-bold text-lg text-white">{t('calc.savedReports')}</h3>
+          <p className="text-[12px] text-[var(--c-muted)]">{t('calc.savedReportsSub')}</p>
+        </div>
+      </div>
+
+      {list === null ? (
+        <div className="space-y-2.5">
+          {[0, 1].map((i) => (
+            <div key={i} className="h-16 rounded-xl bg-[var(--c-border)]/20 animate-pulse" />
+          ))}
+        </div>
+      ) : list.length === 0 ? (
+        <div className="text-center py-10 space-y-3">
+          <Icon icon="lucide:file-plus-2" className="w-10 h-10 mx-auto text-[var(--c-muted)]/40" />
+          <p className="text-sm text-[var(--c-muted)]">{t('calc.noSavedReports')}</p>
+          <p className="text-[12px] text-[var(--c-muted)]/60 max-w-sm mx-auto">{t('calc.noSavedReportsHint')}</p>
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          {list.map((e) => (
+            <div
+              key={e.id}
+              className="flex items-center justify-between gap-3 p-4 rounded-xl bg-[var(--c-bg)]/40 border border-[var(--c-border)]/30 hover:border-[var(--c-border)]/60 transition-colors"
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-white truncate">{e.title}</p>
+                <p className="text-[11px] text-[var(--c-muted)]">
+                  {fmtDate(e.createdAt)} · {t('calc.positions', { count: e.items.length })}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-sm font-display font-bold text-[#FF6B1A]">{fmt(e.total)}</span>
+                <button
+                  type="button"
+                  onClick={() => onDelete(e)}
+                  disabled={deletingId === e.id}
+                  aria-label={t('common.delete')}
+                  className="w-10 h-10 inline-flex items-center justify-center rounded-lg text-[#E11919] hover:bg-[#E11919]/10 disabled:opacity-50"
+                >
+                  <Icon icon={deletingId === e.id ? 'lucide:loader' : 'lucide:trash-2'} className={`w-4 h-4 ${deletingId === e.id ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

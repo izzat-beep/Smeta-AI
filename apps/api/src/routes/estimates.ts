@@ -4,6 +4,7 @@ import { prisma } from '../prisma.js';
 import { ah } from '../util.js';
 import * as s from '../serialize.js';
 import { estimateTotals } from '../finance.js';
+import { replaceGeneralExpenses } from '../expensesService.js';
 
 export const estimatesRouter = Router();
 
@@ -24,6 +25,13 @@ const stageSchema = z.object({
   currency: z.enum(['UZS', 'USD']).optional(),
 });
 
+// Umumiy harajatlar qatori (kalkulyatorning bitta "Saqlash" oqimi bilan birga keladi).
+const generalExpenseRowSchema = z.object({
+  name: z.string().optional().default(''),
+  amount: z.union([z.number(), z.string()]).optional().default(0),
+  orderId: z.string().optional().nullable(),
+});
+
 const createSchema = z.object({
   title: z.string().min(1),
   projectId: z.string().optional().nullable(),
@@ -31,6 +39,10 @@ const createSchema = z.object({
   taxRate: z.number().min(0).max(100).optional(),
   items: z.array(itemSchema).default([]),
   stages: z.array(stageSchema).default([]),
+  // Vazifa 1A: kalkulyatorning "Umumiy Harajatlar" bo'limi shu bilan birga saqlanadi.
+  // Berilmasa (undefined) — tegilmaydi; berilsa — projectId doirasida replace-all.
+  generalExpenses: z.array(generalExpenseRowSchema).optional(),
+  generalExpensesCurrency: z.enum(['UZS', 'USD']).optional(),
 });
 
 // Tezkor hisoblash (saqlamasdan) — kalkulyator ekrani uchun.
@@ -77,45 +89,70 @@ estimatesRouter.post(
     const tenantId = req.user!.tenantId;
     const body = createSchema.parse(req.body);
     const taxRate = body.taxRate ?? 12;
+    const projectId = body.projectId ?? null;
     const t = estimateTotals(body.items, taxRate);
-    const e = await prisma.estimate.create({
-      data: {
-        tenantId,
-        projectId: body.projectId ?? null,
-        title: body.title,
-        currency: body.currency ?? 'UZS',
-        taxRate,
-        subtotal: t.subtotal,
-        taxAmount: t.taxAmount,
-        total: t.total,
-        status: 'DRAFT',
-        items: {
-          create: body.items.map((i) => ({
-            materialId: i.materialId ?? null,
-            name: i.name,
-            type: i.type ?? 'MATERIAL',
-            paymentType: i.paymentType ?? null,
-            qty: i.qty,
-            unit: i.unit ?? 'dona',
-            unitPrice: i.unitPrice,
-            lineTotal: i.qty * i.unitPrice,
-          })),
+
+    // projectId berilsa — shu tenant loyihasi ekanini tekshiramiz (begona ID ulanmasin).
+    if (projectId) {
+      const p = await prisma.project.findFirst({ where: { id: projectId, tenantId } });
+      if (!p) return res.status(400).json({ error: 'bad_request', message: 'Loyiha topilmadi' });
+    }
+
+    // Bitta tranzaksiya: smeta (items + stages) VA umumiy harajatlar — birga saqlanadi.
+    const e = await prisma.$transaction(async (tx) => {
+      const created = await tx.estimate.create({
+        data: {
+          tenantId,
+          projectId,
+          title: body.title,
+          currency: body.currency ?? 'UZS',
+          taxRate,
+          subtotal: t.subtotal,
+          taxAmount: t.taxAmount,
+          total: t.total,
+          status: 'DRAFT',
+          items: {
+            create: body.items.map((i) => ({
+              materialId: i.materialId ?? null,
+              name: i.name,
+              type: i.type ?? 'MATERIAL',
+              paymentType: i.paymentType ?? null,
+              qty: i.qty,
+              unit: i.unit ?? 'dona',
+              unitPrice: i.unitPrice,
+              lineTotal: i.qty * i.unitPrice,
+            })),
+          },
+          stages: {
+            create: body.stages.map((st, idx) => ({
+              label: st.label,
+              date: st.date ? new Date(st.date) : null,
+              amount: st.amount ?? 0,
+              currency: st.currency ?? 'UZS',
+              order: idx,
+            })),
+          },
         },
-        stages: {
-          create: body.stages.map((st, idx) => ({
-            label: st.label,
-            date: st.date ? new Date(st.date) : null,
-            amount: st.amount ?? 0,
-            currency: st.currency ?? 'UZS',
-            order: idx,
-          })),
-        },
-      },
-      include: { items: true, stages: { orderBy: { order: 'asc' } } },
+        include: { items: true, stages: { orderBy: { order: 'asc' } } },
+      });
+
+      // Umumiy harajatlar bo'limi (agar yuborilgan bo'lsa) — shu loyiha doirasida.
+      if (body.generalExpenses) {
+        await replaceGeneralExpenses(
+          tx,
+          tenantId,
+          projectId,
+          body.generalExpensesCurrency ?? body.currency ?? 'UZS',
+          body.generalExpenses,
+        );
+      }
+
+      await tx.activity.create({
+        data: { tenantId, userId: req.user!.sub, action: 'yangi smeta yaratdi', projectName: body.title },
+      });
+      return created;
     });
-    await prisma.activity.create({
-      data: { tenantId, userId: req.user!.sub, action: 'yangi smeta yaratdi', projectName: body.title },
-    });
+
     res.status(201).json(s.estimate(e));
   }),
 );

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../prisma.js';
 import { ah } from '../util.js';
 import { requireRole } from '../auth.js';
+import { replaceGeneralExpenses } from '../expensesService.js';
 
 export const expensesRouter = Router();
 
@@ -55,56 +56,11 @@ expensesRouter.post(
       if (!p) return res.status(400).json({ error: 'bad_request', message: 'Loyiha (bino) topilmadi' });
     }
 
-    // orderId'lar faqat shu tenant'ning buyurtmalariga tegishli bo'lishi mumkin
-    // (begona orderId ulab yubormaslik uchun); dublikatlar tashlanadi.
-    const sentOrderIds = [...new Set(b.rows.map((r) => r.orderId).filter((v): v is string => !!v))];
-    const validOrderIds = new Set(
-      sentOrderIds.length
-        ? (
-            await prisma.order.findMany({
-              where: { id: { in: sentOrderIds }, tenantId: req.user!.tenantId },
-              select: { id: true },
-            })
-          ).map((o) => o.id)
-        : [],
+    // Replace-all mantig'i ulashiladigan servisda (orderId qatorlari saqlanadi).
+    const count = await prisma.$transaction((tx) =>
+      replaceGeneralExpenses(tx, req.user!.tenantId, projectId, currency, b.rows),
     );
-    // Boshqa scope'da (boshqa projectId) allaqachon band orderId — unique
-    // to'qnashuv bermasligi uchun bu ro'yxatda oddiy qator sifatida saqlanadi.
-    if (sentOrderIds.length) {
-      const busyElsewhere = await prisma.generalExpenses.findMany({
-        where: { orderId: { in: sentOrderIds }, NOT: { tenantId: req.user!.tenantId, projectId } },
-        select: { orderId: true },
-      });
-      for (const row of busyElsewhere) validOrderIds.delete(row.orderId!);
-    }
 
-    // Bo'sh qatorlarni tashlaymiz; summani raqamga aylantirib 2 xona (cent) gacha yaxlitlaymiz.
-    const seenOrderIds = new Set<string>();
-    const data = b.rows
-      .map((r) => ({ name: (r.name ?? '').trim(), amount: Number(r.amount) || 0, orderId: r.orderId ?? null }))
-      .filter((r) => r.name !== '' || r.amount > 0)
-      .map((r) => {
-        let orderId: string | null = null;
-        if (r.orderId && validOrderIds.has(r.orderId) && !seenOrderIds.has(r.orderId)) {
-          orderId = r.orderId;
-          seenOrderIds.add(r.orderId);
-        }
-        return {
-          tenantId: req.user!.tenantId,
-          projectId,
-          label: r.name,
-          amount: Math.round(r.amount * 100) / 100,
-          currency,
-          orderId,
-        };
-      });
-
-    // Eski yozuvlarni (shu projectId doirasida) o'chirib, yangilarini yozamiz.
-    await prisma.$transaction([
-      prisma.generalExpenses.deleteMany({ where: { tenantId: req.user!.tenantId, projectId } }),
-      ...(data.length ? [prisma.generalExpenses.createMany({ data })] : []),
-    ]);
-
-    res.json({ ok: true, count: data.length, currency, projectId });
+    res.json({ ok: true, count, currency, projectId });
   }),
 );
