@@ -174,7 +174,7 @@ export function Reports() {
       </div>
 
       {toast && (
-        <div className={`px-4 py-2.5 rounded-xl border text-sm ${toast.kind === 'ok' ? 'text-[#10B981] bg-[#10B981]/10 border-[#10B981]/20' : 'text-[#ff6b6b] bg-[#E11919]/10 border-[#E11919]/30'}`}>
+        <div className={`toast-in px-4 py-2.5 rounded-xl border text-sm ${toast.kind === 'ok' ? 'text-[#10B981] bg-[#10B981]/10 border-[#10B981]/20' : 'text-[#ff6b6b] bg-[#E11919]/10 border-[#E11919]/30'}`}>
           {toast.text}
         </div>
       )}

@@ -721,7 +721,7 @@ export function Calculator() {
 
               {toast && (
                 <div
-                  className={`text-[12px] rounded-xl px-3 py-2 border ${
+                  className={`toast-in text-[12px] rounded-xl px-3 py-2 border ${
                     toast.kind === 'ok'
                       ? 'text-[#10B981] bg-[#10B981]/10 border-[#10B981]/20'
                       : 'text-[#E11919] bg-[#E11919]/10 border-[#E11919]/20'

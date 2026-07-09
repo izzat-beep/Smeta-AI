@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../lib/auth';
@@ -26,6 +26,7 @@ export function Layout() {
   const { user, tenant, logout } = useAuth();
   const { count } = useCart();
   const navigate = useNavigate();
+  const location = useLocation(); // T5.6: sahifa almashganda kontent fade
 
   function handleLogout() {
     logout();
@@ -114,8 +115,8 @@ export function Layout() {
           </div>
         </header>
 
-        {/* Faqat shu konteyner scroll bo'ladi */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        {/* Faqat shu konteyner scroll bo'ladi; route almashganda qisqa fade (T5.6) */}
+        <div key={location.pathname} className="route-fade flex-1 overflow-y-auto custom-scrollbar">
           <Outlet />
         </div>
       </main>

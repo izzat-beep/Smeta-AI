@@ -1,22 +1,30 @@
 // Landing sahifasi (Vazifa 4): to'liq ikki tilli (UZ/RU, i18n orqali —
 // hardcoded matn yo'q), FAQ accordion, Biz haqimizda, ishlaydigan anchor
 // navigatsiya (#imkoniyatlar, #biz-haqimizda, #narxlar, #mijozlar, #faq, #kontakt).
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import { useGSAP } from '@gsap/react';
 import { setLanguage, type Lang } from '../i18n';
 import {
   Spotlight,
   GridBackground,
-  TextGenerateEffect,
   Meteors,
-  SpotlightCard,
   InfiniteMovingCards,
   Reveal,
   Counter,
 } from '../components/aceternity';
+// T5 (brief v3): GSAP dizayn tizimi — yagona easing tili (power3.out / elastic)
+import { gsap, EASE_IN, MM_DESKTOP } from '../lib/gsapSetup';
+import { useSplitTextI18n } from '../lib/useSplitTextI18n';
+import { MagneticButton } from '../components/motion/MagneticButton';
+import { CursorBlob } from '../components/motion/CursorBlob';
+import { RevealHeading } from '../components/motion/RevealHeading';
+import { FeatureDeck } from '../components/motion/FeatureDeck';
+import { PricingCards, type PricingPlan } from '../components/motion/PricingCards';
+import { VideoShowcase } from '../components/motion/VideoShowcase';
 
 // Vizual konstantalar (matnlar i18n'da)
 const FEATURE_META = [
@@ -32,7 +40,8 @@ const STAT_META = [
   { value: 99, suffix: '.8%', color: 'text-[#FF6B1A]' },
 ];
 const ABOUT_ICONS = ['lucide:target', 'lucide:users', 'lucide:shield-check'];
-const PLAN_PRICES_LBL = ['199 000', '499 000', null]; // null = "Bog'laning"
+// Tarif narxlari (UZS/oy) — count-up uchun sonli; null = "Bog'laning"
+const PLAN_PRICE_VALUES: (number | null)[] = [199000, 499000, null];
 
 const CONTACT_EMAIL = 'info.smeta.ai@gmail.com';
 const SOCIAL = [
@@ -87,7 +96,7 @@ export function Landing() {
           </Link>
           <div className="hidden md:flex items-center gap-1">
             {NAV_ANCHORS.map((l) => (
-              <a key={l.key} href={l.href} className="px-4 py-2 text-sm font-medium text-[var(--c-muted)] hover:text-white transition-colors">
+              <a key={l.key} href={l.href} className="nav-underline px-4 py-2 text-sm font-medium text-[var(--c-muted)] hover:text-white transition-colors">
                 {t(`landing.nav.${l.key}`)}
               </a>
             ))}
@@ -123,90 +132,37 @@ export function Landing() {
         )}
       </motion.nav>
 
-      {/* Hero */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-        <Spotlight className="-top-40 left-0 md:-top-20 md:left-60" fill="#5555E7" />
-        <GridBackground />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[576px] h-[525px] bg-[#5555E7]/10 rounded-full blur-[120px] -z-10" />
+      {/* Hero — GSAP master timeline (T5.1): SplitText chars + fade-up + scale-in,
+          jami ~1.5s; perspective konteynerda 3 parallaks qatlam (grid, blob,
+          preview) sichqonchaga ±12px reaksiya; ScrambleText — "AI" aksentida. */}
+      <HeroSection />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#22D3EE]/5 border border-[#22D3EE]/30 rounded-full backdrop-blur-md mb-8"
-          >
-            <Icon icon="lucide:cpu" className="w-4 h-4 text-[#22D3EE]" />
-            <span className="text-[12px] font-semibold text-[#22D3EE]">{t('landing.badge')}</span>
-          </motion.div>
+      {/* Imkoniyatlar — stacked card deck (T5.4): scroll'da kartalar ustma-ust
+          yig'iladi (pin+scrub); mobil/reduced'da oddiy ro'yxat. */}
+      <section id="imkoniyatlar" className="py-24 bg-[var(--c-panel)]/30 scroll-mt-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <RevealHeading className="text-4xl md:text-5xl font-bold font-display mb-4">{t('landing.featuresTitle')}</RevealHeading>
+            <p className="text-[var(--c-muted)] max-w-lg mx-auto">{t('landing.featuresSub')}</p>
+          </div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-4xl sm:text-5xl md:text-7xl font-extrabold font-display leading-tight mb-6 tracking-tight break-words"
-          >
-            {t('landing.heroTitle1')}<br />
-            <span className="bg-gradient-to-r from-[#FF6B1A] to-[#FB923C] bg-clip-text text-transparent">{t('landing.heroAccent')}</span> {t('landing.heroTitle2')}
-          </motion.h1>
-
-          <p className="max-w-2xl mx-auto text-lg md:text-xl text-[var(--c-muted)] font-display leading-relaxed mb-10">
-            <TextGenerateEffect words={t('landing.heroSub')} />
-          </p>
-
-          <Reveal delay={0.4}>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
-              <Link to="/kirish" className="w-full sm:w-auto px-8 py-4 bg-[#FF6B1A] rounded-xl text-lg font-medium shadow-[0_10px_30px_rgba(255,107,26,0.3)] hover:scale-105 transition-transform">
-                {t('landing.tryFree')}
-              </Link>
-              <Link to="/kirish" className="w-full sm:w-auto px-8 py-4 bg-[var(--c-bg)] border border-[#22D3EE]/30 rounded-xl text-lg font-medium text-[#22D3EE] flex items-center justify-center gap-3 hover:bg-[#22D3EE]/5 transition-colors">
-                {t('landing.login')} <Icon icon="lucide:arrow-right" className="w-5 h-5" />
-              </Link>
-            </div>
-          </Reveal>
-
-          {/* Dashboard preview */}
-          <motion.div
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="relative max-w-5xl mx-auto"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-[#F97316]/20 to-[#06B6D4]/20 blur-[40px] rounded-[32px] -z-10" />
-            <div className="bg-[var(--c-panel)]/60 border border-white/10 rounded-[32px] p-4 backdrop-blur-2xl shadow-2xl">
-              <img src="/assets/landing/IMG_6.webp" alt="Dashboard" className="w-full h-auto rounded-2xl" />
-            </div>
-          </motion.div>
+          <FeatureDeck
+            items={features.map((f, i) => {
+              const m = FEATURE_META[i] ?? FEATURE_META[1];
+              return {
+                icon: <Icon icon={m.icon} className="w-7 h-7" style={{ color: m.color }} />,
+                title: f.title,
+                desc: f.desc,
+              };
+            })}
+          />
         </div>
       </section>
 
-      {/* Imkoniyatlar */}
-      <section id="imkoniyatlar" className="py-24 bg-[var(--c-panel)]/30 scroll-mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal>
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold font-display mb-4">{t('landing.featuresTitle')}</h2>
-              <p className="text-[var(--c-muted)] max-w-lg mx-auto">{t('landing.featuresSub')}</p>
-            </div>
-          </Reveal>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {features.map((f, i) => {
-              const m = FEATURE_META[i] ?? FEATURE_META[1];
-              return (
-                <Reveal key={f.title} delay={i * 0.08} className={m.big ? 'md:col-span-2' : ''}>
-                  <SpotlightCard className="h-full p-8">
-                    <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-6" style={{ background: `${m.color}1a`, border: `1px solid ${m.color}33` }}>
-                      <Icon icon={m.icon} className="w-7 h-7" style={{ color: m.color }} />
-                    </div>
-                    <h3 className="text-2xl font-bold font-display mb-4">{f.title}</h3>
-                    <p className="text-[var(--c-muted)] leading-relaxed">{f.desc}</p>
-                  </SpotlightCard>
-                </Reveal>
-              );
-            })}
-          </div>
-        </div>
+      {/* Video ko'rgazma (T5.5) — hozircha poster placeholder; video asset
+          qo'shilganda src berilsa scroll-scrub avtomatik ishlaydi */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8">
+        <VideoShowcase poster="/assets/landing/IMG_6.webp" />
       </section>
 
       {/* Stats */}
@@ -264,52 +220,28 @@ export function Landing() {
       </section>
 
       {/* Narxlar */}
+      {/* Narxlar — 3D tarif kartalari (T5.2): tilt, flip-in, count-up, popular float */}
       <section id="narxlar" className="py-24 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal>
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold font-display mb-4">{t('landing.pricingTitle')}</h2>
-              <p className="text-[var(--c-muted)]">{t('landing.pricingSub')}</p>
-            </div>
-          </Reveal>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-            {plans.map((p, i) => {
-              const popular = i === 1;
-              const price = PLAN_PRICES_LBL[i];
-              return (
-                <Reveal key={p.name} delay={i * 0.1}>
-                  <div className={`glass-card rounded-2xl p-8 relative ${popular ? 'border-[#FF6B1A]/40 shadow-[0_0_40px_rgba(255,107,26,0.12)] md:scale-105 z-10 bg-[var(--c-panel)]/60' : 'bg-[var(--c-panel)]/30'}`}>
-                    {popular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#FF6B1A] text-white text-[12px] font-semibold px-4 py-1 rounded-full">{t('landing.popular')}</div>
-                    )}
-                    <div className="text-[var(--c-muted)] font-display font-medium mb-4">{p.name}</div>
-                    <div className="flex items-baseline gap-2 mb-8">
-                      <span className="text-3xl font-bold font-display">{price ?? t('landing.contactUs')}</span>
-                      {price && <span className="text-[var(--c-muted)]">{t('landing.perMonth')}</span>}
-                    </div>
-                    <ul className="space-y-4 mb-10">
-                      {p.items.map((it) => (
-                        <li key={it} className="flex items-center gap-3 text-sm text-white/90">
-                          <Icon icon="lucide:circle-check-big" className="w-5 h-5 text-[#22D3EE] shrink-0" />
-                          {it}
-                        </li>
-                      ))}
-                    </ul>
-                    <Link to="/kirish" className={`block text-center w-full py-3 rounded-xl font-bold transition-all ${popular ? 'bg-[#FF6B1A] hover:scale-105 shadow-[0_4px_15px_rgba(255,107,26,0.3)]' : 'bg-[var(--c-border)] hover:bg-[var(--c-border)]/80'}`}>
-                      {t('landing.start')}
-                    </Link>
-                  </div>
-                </Reveal>
-              );
-            })}
+          <div className="text-center mb-16">
+            <RevealHeading className="text-4xl md:text-5xl font-bold font-display mb-4">{t('landing.pricingTitle')}</RevealHeading>
+            <p className="text-[var(--c-muted)]">{t('landing.pricingSub')}</p>
           </div>
+          <PricingCards
+            plans={plans.map((p, i): PricingPlan => ({
+              name: p.name,
+              priceValue: PLAN_PRICE_VALUES[i],
+              items: p.items,
+              popular: i === 1,
+            }))}
+          />
         </div>
       </section>
 
       {/* Mijozlar */}
       <section id="mijozlar" className="py-24 bg-[var(--c-panel)]/20 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-          <Reveal><h2 className="text-3xl md:text-4xl font-bold font-display text-center">{t('landing.customersTitle')}</h2></Reveal>
+          <RevealHeading className="text-3xl md:text-4xl font-bold font-display text-center">{t('landing.customersTitle')}</RevealHeading>
         </div>
         <InfiniteMovingCards items={testimonials} speed={36} />
       </section>
@@ -319,7 +251,7 @@ export function Landing() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
             <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-bold font-display mb-4">{t('landing.faqTitle')}</h2>
+              <RevealHeading className="text-4xl md:text-5xl font-bold font-display mb-4">{t('landing.faqTitle')}</RevealHeading>
               <p className="text-[var(--c-muted)]">{t('landing.faqSub')}</p>
             </div>
           </Reveal>
@@ -343,9 +275,11 @@ export function Landing() {
               <h2 className="text-4xl lg:text-6xl font-extrabold font-display mb-8 leading-tight">{t('landing.ctaTitle')}</h2>
               <p className="text-white/90 text-xl font-display mb-12 leading-relaxed">{t('landing.ctaSub')}</p>
               <div className="flex flex-col sm:flex-row items-center gap-6">
-                <Link to="/kirish" className="w-full sm:w-auto px-8 py-4 bg-white text-[#EA580C] rounded-xl text-lg font-bold hover:scale-105 transition-transform">
-                  {t('landing.ctaBtn')}
-                </Link>
+                <MagneticButton className="w-full sm:w-auto">
+                  <Link to="/kirish" className="block w-full px-8 py-4 bg-white text-[#EA580C] rounded-xl text-lg font-bold text-center focus-visible:outline-2 focus-visible:outline-white">
+                    {t('landing.ctaBtn')}
+                  </Link>
+                </MagneticButton>
                 <div className="flex items-center gap-2 text-white text-lg font-medium">
                   <Icon icon="lucide:shield-check" className="w-6 h-6" />
                   {t('landing.ctaSafe')}
@@ -418,6 +352,132 @@ export function Landing() {
         </div>
       </footer>
     </div>
+  );
+}
+
+// Hero (T5.1): master timeline + 3D parallaks + ScrambleText.
+function HeroSection() {
+  const { t, i18n } = useTranslation();
+  const sectionRef = useRef<HTMLElement>(null);
+  const line1Ref = useRef<HTMLSpanElement>(null);
+  const accentRef = useRef<HTMLSpanElement>(null);
+
+  // H1 birinchi qatori — SplitText chars (i18n-xavfsiz: revert->rAF->rebuild)
+  useSplitTextI18n(
+    line1Ref,
+    (split) => {
+      gsap.from(split.chars, {
+        yPercent: 60,
+        autoAlpha: 0,
+        duration: 0.7,
+        ease: EASE_IN,
+        stagger: 0.02,
+        delay: 0.15,
+      });
+    },
+    { type: 'chars' },
+  );
+
+  useGSAP(
+    () => {
+      const root = sectionRef.current;
+      if (!root) return;
+      const mm = gsap.matchMedia();
+
+      // Kirish xoreografiyasi (~1.5s) — reduced-motion'da umuman ishlamaydi
+      mm.add('(prefers-reduced-motion: no-preference)', () => {
+        const tl = gsap.timeline({ defaults: { ease: EASE_IN } });
+        tl.from('.hero-badge', { scale: 0.85, autoAlpha: 0, duration: 0.5 }, 0)
+          .from('.hero-line2', { y: 26, autoAlpha: 0, duration: 0.7 }, 0.45)
+          .from('.hero-sub', { y: 22, autoAlpha: 0, duration: 0.6 }, 0.65)
+          .from('.hero-cta', { scale: 0.92, autoAlpha: 0, duration: 0.5, stagger: 0.08 }, 0.8)
+          .from('.hero-preview', { y: 56, autoAlpha: 0, duration: 0.8 }, 0.9);
+
+        // ScrambleText — saytdagi 2 ta ruxsatdan biri ("AI" aksenti)
+        const accent = accentRef.current;
+        if (accent) {
+          tl.to(accent, {
+            duration: 1,
+            scrambleText: { text: accent.textContent ?? '', chars: '01▮▯AI', speed: 0.4 },
+          }, 0.5);
+        }
+      });
+
+      // 3D parallaks qatlamlar — faqat desktop, sichqonchaga maks ±12px
+      mm.add(MM_DESKTOP, () => {
+        const layers = gsap.utils.toArray<HTMLElement>('[data-depth]', root);
+        const movers = layers.map((el) => ({
+          depth: Number(el.dataset.depth ?? 0.5),
+          x: gsap.quickTo(el, 'x', { duration: 0.8, ease: 'power3.out' }),
+          y: gsap.quickTo(el, 'y', { duration: 0.8, ease: 'power3.out' }),
+        }));
+        const onMove = (e: MouseEvent) => {
+          const nx = e.clientX / window.innerWidth - 0.5;
+          const ny = e.clientY / window.innerHeight - 0.5;
+          movers.forEach((m) => {
+            m.x(nx * 24 * m.depth); // maks ±12px (depth<=1)
+            m.y(ny * 24 * m.depth);
+          });
+        };
+        window.addEventListener('mousemove', onMove);
+        return () => window.removeEventListener('mousemove', onMove);
+      });
+
+      return () => mm.revert();
+    },
+    // Til almashganda hero qayta ijro etiladi (SplitText hook bilan sinxron)
+    { scope: sectionRef, dependencies: [i18n.language] },
+  );
+
+  return (
+    <section ref={sectionRef} className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden" style={{ perspective: '1000px' }}>
+      <CursorBlob />
+      <Spotlight className="-top-40 left-0 md:-top-20 md:left-60" fill="#5555E7" />
+      <div data-depth="0.3" className="absolute inset-0"><GridBackground /></div>
+      <div data-depth="0.6" className="absolute top-0 left-1/2 -translate-x-1/2 w-[576px] h-[525px] bg-[#5555E7]/10 rounded-full blur-[120px] -z-10" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+        <div className="hero-badge inline-flex items-center gap-2 px-4 py-1.5 bg-[#22D3EE]/5 border border-[#22D3EE]/30 rounded-full backdrop-blur-md mb-8">
+          <Icon icon="lucide:cpu" className="w-4 h-4 text-[#22D3EE]" />
+          <span className="text-[12px] font-semibold text-[#22D3EE]">{t('landing.badge')}</span>
+        </div>
+
+        <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold font-display leading-tight mb-6 tracking-tight break-words">
+          <span ref={line1Ref} className="block">{t('landing.heroTitle1')}</span>
+          <span className="hero-line2 block">
+            {/* key={til}: ScrambleText matn tugunini o'zgartiradi — til almashganda
+                React toza tugun bilan qayta o'rnatishi uchun remount qilamiz */}
+            <span key={i18n.language} ref={accentRef} className="bg-gradient-to-r from-[#FF6B1A] to-[#FB923C] bg-clip-text text-transparent">{t('landing.heroAccent')}</span>{' '}
+            {t('landing.heroTitle2')}
+          </span>
+        </h1>
+
+        <p className="hero-sub max-w-2xl mx-auto text-lg md:text-xl text-[var(--c-muted)] font-display leading-relaxed mb-10">
+          {t('landing.heroSub')}
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+          <MagneticButton className="hero-cta w-full sm:w-auto">
+            <Link to="/kirish" className="block w-full px-8 py-4 bg-[#FF6B1A] rounded-xl text-lg font-medium text-white shadow-[0_10px_30px_rgba(255,107,26,0.3)] focus-visible:outline-2 focus-visible:outline-[#22D3EE]">
+              {t('landing.tryFree')}
+            </Link>
+          </MagneticButton>
+          <MagneticButton className="hero-cta w-full sm:w-auto">
+            <Link to="/kirish" className="w-full px-8 py-4 bg-[var(--c-bg)] border border-[#22D3EE]/30 rounded-xl text-lg font-medium text-[#22D3EE] flex items-center justify-center gap-3 hover:bg-[#22D3EE]/5 transition-colors focus-visible:outline-2 focus-visible:outline-[#22D3EE]">
+              {t('landing.login')} <Icon icon="lucide:arrow-right" className="w-5 h-5" />
+            </Link>
+          </MagneticButton>
+        </div>
+
+        {/* Dashboard preview — parallaks qatlam */}
+        <div data-depth="1" className="hero-preview relative max-w-5xl mx-auto">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#F97316]/20 to-[#06B6D4]/20 blur-[40px] rounded-[32px] -z-10" />
+          <div className="bg-[var(--c-panel)]/60 border border-white/10 rounded-[32px] p-4 backdrop-blur-2xl shadow-2xl">
+            <img src="/assets/landing/IMG_6.webp" alt="Dashboard" className="w-full h-auto rounded-2xl" />
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 

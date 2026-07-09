@@ -212,3 +212,48 @@ html.light .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(2
   from { background-position: 0 0; }
   to   { background-position: -200% 0; }
 }
+
+/* ─── T5 mikro-interaksiyalar (brief v3) ────────────────────────────────── */
+
+/* Nav havolalari: chapdan chiziq chizilishi (scaleX, transform-only) */
+.nav-underline {
+  position: relative;
+}
+.nav-underline::after {
+  content: '';
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 0.35rem;
+  height: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav-underline:hover::after,
+.nav-underline:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* Toast: kirishда yengil overshoot bilan siljish (transform/opacity) */
+@keyframes toast-in {
+  0%   { opacity: 0; transform: translateY(10px) scale(0.97); }
+  70%  { opacity: 1; transform: translateY(-2px) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.toast-in { animation: toast-in 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+
+/* Route almashinuvi: qisqa fade (200ms) — bloklamaydigan, layout siljimaydi */
+@keyframes route-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.route-fade { animation: route-fade 0.2s ease-out; }
+
+/* Reduced-motion: dekorativ CSS animatsiyalar ham o'chadi */
+@media (prefers-reduced-motion: reduce) {
+  .nav-underline::after { transition: none; }
+  .toast-in, .route-fade { animation: none; }
+  .animate-marquee, .animate-meteor, .animate-aurora, .animate-spotlight { animation: none !important; }
+}
