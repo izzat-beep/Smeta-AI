@@ -131,6 +131,8 @@ model Tenant {
   realtors    Realtor[]
   generalExpenses generalExpenses[]
   orders      Order[]
+  incomes     Income[]
+  budgetPlans BudgetPlan[]
 }
 
 model User {
@@ -214,6 +216,8 @@ model Project {
   sales           Sale[]
   generalExpenses generalExpenses[]
   orders          Order[]
+  incomes         Income[]
+  budgetPlans     BudgetPlan[]
 
   @@index([tenantId])
 }
@@ -423,25 +427,73 @@ model Payment {
 
   @@index([saleId])
 }
+// Xarajat/reja kategoriyasi (Vazifa 3: Reja vs Fakt jadvali).
+enum ExpenseCategory {
+  MATERIAL
+  LABOR
+  EQUIPMENT
+  GENERAL
+}
+
 // Umumiy harajatlar — kalkulyator bo'limi (tenant profiliga serverda saqlanadi)
 model generalExpenses {
-  id        Int      @id @default(autoincrement())
+  id        Int             @id @default(autoincrement())
   tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant    Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   projectId String? // qaysi binoga (loyihaga) tegishli; null = umumiy
-  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project?        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   label     String
   amount    Float
-  currency  String   @default("UZS")
+  currency  String          @default("UZS")
+  // Vazifa 3: xarajat kategoriyasi (Reja/Fakt jadvali uchun) + sana + izoh.
+  category  ExpenseCategory @default(GENERAL)
+  spentAt   DateTime? // "+ Ma'lumot qo'shish" formasidagi sana; null bo'lsa createdAt ishlatiladi
+  note      String?
   // Vazifa 5: buyurtmadan avtomatik yozilgan xarajat. UNIQUE — bitta buyurtma
   // uchun faqat bitta yozuv (idempotentlik). Buyurtma o'chsa yozuv ham o'chadi.
-  orderId   String?  @unique
-  order     Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  orderId   String?         @unique
+  order     Order?          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 
   @@index([tenantId])
   @@index([projectId])
+}
+
+// Daromad yozuvlari (Vazifa 3) — "+ Ma'lumot qo'shish" → Daromad.
+model Income {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  amount      Decimal  @default(0) @db.Decimal(18, 2)
+  currency    Currency @default(UZS)
+  date        DateTime @default(now())
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([projectId])
+}
+
+// Byudjet rejasi (Me'yor) — kategoriya bo'yicha oylik reja (Vazifa 3D).
+model BudgetPlan {
+  id            String          @id @default(cuid())
+  tenantId      String
+  tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  projectId     String?
+  project       Project?        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  category      ExpenseCategory
+  plannedAmount Decimal         @default(0) @db.Decimal(18, 2)
+  currency      Currency        @default(UZS)
+  period        String // 'YYYY-MM'
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  // Bir tenant + loyiha + kategoriya + davr uchun bitta reja (upsert kaliti)
+  @@unique([tenantId, projectId, category, period])
+  @@index([tenantId])
 }
 
 // Materiallar buyurtmasi (Vazifa 4). Status oqimi sotuvchi tomonidan boshqariladi.

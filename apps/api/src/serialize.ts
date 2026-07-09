@@ -94,6 +94,45 @@ export function order(o: any) {
   };
 }
 
+// Yakka xarajat yozuvi (Vazifa 3: kategoriya + sana + izoh bilan)
+export function expenseItem(x: any) {
+  return {
+    id: x.id,
+    projectId: x.projectId ?? null,
+    label: x.label,
+    amount: x.amount,
+    currency: x.currency,
+    category: x.category ?? 'GENERAL',
+    spentAt: iso(x.spentAt ?? x.createdAt),
+    note: x.note ?? null,
+    orderId: x.orderId ?? null,
+    createdAt: iso(x.createdAt),
+  };
+}
+
+export function income(x: any) {
+  return {
+    id: x.id,
+    projectId: x.projectId ?? null,
+    amount: toNum(x.amount),
+    currency: x.currency,
+    date: iso(x.date),
+    description: x.description ?? null,
+    createdAt: iso(x.createdAt),
+  };
+}
+
+export function budgetPlan(x: any) {
+  return {
+    id: x.id,
+    projectId: x.projectId ?? null,
+    category: x.category,
+    plannedAmount: toNum(x.plannedAmount),
+    currency: x.currency,
+    period: x.period,
+  };
+}
+
 export function notification(n: any) {
   return {
     id: n.id,

@@ -28,17 +28,24 @@ export function pctChange(current: number, previous: number): number | null {
   return Math.round(((current - previous) / Math.abs(previous)) * 1000) / 10;
 }
 
+export type ExpenseCategory = 'MATERIAL' | 'LABOR' | 'EQUIPMENT' | 'GENERAL';
+
+// Kategoriya bo'yicha FAKT (haqiqiy) xarajat — Reja vs Fakt jadvali uchun.
+export type CategoryFakt = Record<ExpenseCategory, number>;
+
 export interface TenantFinance {
-  materialCost: number; // smeta MATERIAL pozitsiyalari + buyurtmadan avto xarajatlar (UZS)
-  laborCost: number; // smeta LABOR pozitsiyalari
-  equipmentCost: number; // smeta EQUIPMENT pozitsiyalari
+  materialCost: number; // smeta MATERIAL + buyurtma avto xarajatlar + material kategoriyali harajat (UZS)
+  laborCost: number; // smeta LABOR + labor kategoriyali harajat
+  equipmentCost: number; // smeta EQUIPMENT + equipment kategoriyali harajat
+  generalCost: number; // GENERAL kategoriyali qo'lda harajatlar
   taxAmount: number; // smeta soliqlari
   estimatesTotal: number; // Σ smeta.total (kalkulyator "Yakuniy summa")
-  orderExpenses: number; // buyurtmadan avtomatik yozilgan umumiy harajatlar (V5)
-  manualExpenses: number; // qo'lda kiritilgan umumiy harajatlar
+  orderExpenses: number; // buyurtmadan avtomatik yozilgan xarajatlar (V5, material)
+  manualExpenses: number; // qo'lda kiritilgan harajatlar (barcha kategoriya, buyurtmasiz)
   generalExpensesTotal: number; // orderExpenses + manualExpenses
   totalExpense: number; // estimatesTotal + generalExpensesTotal
-  incoming: number; // sotuvlardan kelgan pullar (UZS'ga normallashtirilgan)
+  faktByCategory: CategoryFakt; // kategoriya bo'yicha fakt (soliqsiz, lineTotal asosida)
+  incoming: number; // sotuvlar to'lovlari + Income yozuvlari (UZS'ga normallashtirilgan)
   netProfit: number; // incoming - totalExpense
   estimatesCount: number;
   pendingEstimates: number; // PENDING statusdagi smetalar
@@ -47,11 +54,17 @@ export interface TenantFinance {
 interface Range {
   from?: Date;
   to?: Date; // exclusive
+  projectId?: string | null; // berilsa — shu loyiha; 'null' (aniq) — loyihasiz; undefined — barchasi
 }
 
 function createdAtFilter(range?: Range) {
   if (!range?.from && !range?.to) return undefined;
   return { ...(range.from ? { gte: range.from } : {}), ...(range.to ? { lt: range.to } : {}) };
+}
+
+// projectId filtri: undefined bo'lsa cheklanmaydi; aniq qiymat (null yoki id) bo'lsa filtrlanadi.
+function projectFilter(range?: Range): { projectId?: string | null } {
+  return range && 'projectId' in range && range.projectId !== undefined ? { projectId: range.projectId } : {};
 }
 
 // Tenant kursi: USD summalarni UZS'ga o'girish uchun.
@@ -62,26 +75,29 @@ export async function tenantRate(tenantId: string): Promise<number> {
 
 export async function computeTenantFinance(tenantId: string, range?: Range): Promise<TenantFinance> {
   const createdAt = createdAtFilter(range);
-  const [rate, estimates, expenses, sales] = await Promise.all([
+  const proj = projectFilter(range);
+  const [rate, estimates, expenses, sales, incomes] = await Promise.all([
     tenantRate(tenantId),
     prisma.estimate.findMany({
-      where: { tenantId, ...(createdAt ? { createdAt } : {}) },
+      where: { tenantId, ...proj, ...(createdAt ? { createdAt } : {}) },
       include: { items: true },
     }),
     prisma.generalExpenses.findMany({
-      where: { tenantId, ...(createdAt ? { createdAt } : {}) },
-      select: { amount: true, currency: true, orderId: true },
+      where: { tenantId, ...proj, ...(createdAt ? { createdAt } : {}) },
+      select: { amount: true, currency: true, orderId: true, category: true },
     }),
     prisma.sale.findMany({
-      where: { tenantId, ...(createdAt ? { createdAt } : {}) },
+      where: { tenantId, ...proj, ...(createdAt ? { createdAt } : {}) },
       select: { paid: true, currency: true },
+    }),
+    prisma.income.findMany({
+      where: { tenantId, ...proj, ...(createdAt ? { date: createdAt } : {}) },
+      select: { amount: true, currency: true },
     }),
   ]);
   const toUzs = (amount: number, currency: string) => (currency === 'USD' ? amount * rate : amount);
 
-  let materialCost = 0;
-  let laborCost = 0;
-  let equipmentCost = 0;
+  const fakt: CategoryFakt = { MATERIAL: 0, LABOR: 0, EQUIPMENT: 0, GENERAL: 0 };
   let taxAmount = 0;
   let estimatesTotal = 0;
   for (const e of estimates) {
@@ -90,9 +106,9 @@ export async function computeTenantFinance(tenantId: string, range?: Range): Pro
     taxAmount += toNum(e.taxAmount);
     for (const i of e.items) {
       const line = toNum(i.lineTotal);
-      if (i.type === 'LABOR') laborCost += line;
-      else if (i.type === 'EQUIPMENT') equipmentCost += line;
-      else materialCost += line;
+      if (i.type === 'LABOR') fakt.LABOR += line;
+      else if (i.type === 'EQUIPMENT') fakt.EQUIPMENT += line;
+      else fakt.MATERIAL += line;
     }
   }
 
@@ -100,27 +116,37 @@ export async function computeTenantFinance(tenantId: string, range?: Range): Pro
   let manualExpenses = 0;
   for (const x of expenses) {
     const v = toUzs(x.amount, x.currency);
-    if (x.orderId) orderExpenses += v;
-    else manualExpenses += v;
+    if (x.orderId) {
+      // Buyurtmadan avtomatik yozilgan = material xaridi
+      orderExpenses += v;
+      fakt.MATERIAL += v;
+    } else {
+      manualExpenses += v;
+      const cat = (x.category ?? 'GENERAL') as ExpenseCategory;
+      fakt[cat] += v;
+    }
   }
   const generalExpensesTotal = orderExpenses + manualExpenses;
 
-  const incoming = sales.reduce((sum, s) => sum + toUzs(toNum(s.paid), s.currency), 0);
+  const salesIn = sales.reduce((sum, s) => sum + toUzs(toNum(s.paid), s.currency), 0);
+  const incomeIn = incomes.reduce((sum, i) => sum + toUzs(toNum(i.amount), i.currency), 0);
+  const incoming = salesIn + incomeIn;
   const totalExpense = estimatesTotal + generalExpensesTotal;
 
   const pendingEstimates = estimates.filter((e) => e.status === 'PENDING').length;
 
   return {
-    // Buyurtmadan sotib olingan materiallar ham material xarajati hisoblanadi
-    materialCost: materialCost + orderExpenses,
-    laborCost,
-    equipmentCost,
+    materialCost: fakt.MATERIAL,
+    laborCost: fakt.LABOR,
+    equipmentCost: fakt.EQUIPMENT,
+    generalCost: fakt.GENERAL,
     taxAmount,
     estimatesTotal,
     orderExpenses,
     manualExpenses,
     generalExpensesTotal,
     totalExpense,
+    faktByCategory: fakt,
     incoming,
     netProfit: incoming - totalExpense,
     estimatesCount: estimates.length,
@@ -143,22 +169,24 @@ export interface MonthPoint {
 }
 
 // Oylik xarajat dinamikasi — oxirgi N oy. Ma'lumot yo'q oy = 0 (fake taqsimot yo'q).
-export async function monthlyExpenseSeries(tenantId: string, months: number): Promise<MonthPoint[]> {
+// projectId berilsa — faqat shu loyiha (null = loyihasiz; undefined = barchasi).
+export async function monthlyExpenseSeries(tenantId: string, months: number, projectId?: string | null): Promise<MonthPoint[]> {
   const now = new Date();
   const from = monthStart(now, -(months - 1));
   const toEx = monthStart(now, 1);
+  const proj = projectId !== undefined ? { projectId } : {};
   const [rate, estimates, expenses, stages] = await Promise.all([
     tenantRate(tenantId),
     prisma.estimate.findMany({
-      where: { tenantId, createdAt: { gte: from, lt: toEx } },
+      where: { tenantId, ...proj, createdAt: { gte: from, lt: toEx } },
       select: { total: true, createdAt: true },
     }),
     prisma.generalExpenses.findMany({
-      where: { tenantId, createdAt: { gte: from, lt: toEx } },
+      where: { tenantId, ...proj, createdAt: { gte: from, lt: toEx } },
       select: { amount: true, currency: true, createdAt: true },
     }),
     prisma.estimateStage.findMany({
-      where: { estimate: { tenantId }, date: { gte: from, lt: toEx } },
+      where: { estimate: { tenantId, ...proj }, date: { gte: from, lt: toEx } },
       select: { amount: true, currency: true, date: true },
     }),
   ]);
@@ -190,9 +218,10 @@ export async function monthlyExpenseSeries(tenantId: string, months: number): Pr
 }
 
 // Resurs sarfi — smeta pozitsiyalari bo'yicha eng katta 5 ta (summasi bo'yicha % taqsimot).
-export async function resourceUsage(tenantId: string): Promise<{ label: string; percentage: number }[]> {
+export async function resourceUsage(tenantId: string, projectId?: string | null): Promise<{ label: string; percentage: number }[]> {
+  const proj = projectId !== undefined ? { projectId } : {};
   const items = await prisma.estimateItem.findMany({
-    where: { estimate: { tenantId } },
+    where: { estimate: { tenantId, ...proj } },
     select: { name: true, lineTotal: true },
   });
   const byName = new Map<string, number>();

@@ -304,13 +304,77 @@ export interface DashboardData {
   aiRecommendation: string;
 }
 
-// Trend: joriy oy vs o'tgan oy (%). O'tgan oy ma'lumoti bo'lmasa null —
+// Trend: joriy davr vs o'tgan teng davr (%). O'tgan davr ma'lumoti bo'lmasa null —
 // frontend badge'ni umuman ko'rsatmaydi (fake foiz taqiqlangan).
 export interface FinanceTrends {
   totalExpense: number | null;
   materialCost: number | null;
   laborCost: number | null;
   netProfit: number | null;
+  incoming?: number | null;
+}
+
+// ─── Vazifa 3: xarajat kategoriyasi, daromad, byudjet rejasi ─────────────
+
+export type ExpenseCategory = 'MATERIAL' | 'LABOR' | 'EQUIPMENT' | 'GENERAL';
+
+export interface ExpenseItem {
+  id: number;
+  projectId: string | null;
+  label: string;
+  amount: number;
+  currency: string;
+  category: ExpenseCategory;
+  spentAt: string | null;
+  note: string | null;
+  orderId: string | null; // buyurtmadan avtomatik yozilgan bo'lsa
+  createdAt: string;
+}
+
+export interface Income {
+  id: string;
+  projectId: string | null;
+  amount: number;
+  currency: Currency;
+  date: string;
+  description: string | null;
+  createdAt: string;
+}
+
+export interface BudgetPlan {
+  id: string;
+  projectId: string | null;
+  category: ExpenseCategory;
+  plannedAmount: number;
+  currency: Currency;
+  period: string; // 'YYYY-MM'
+}
+
+// Reja vs Fakt jadvali qatori (hammasi UZS'ga normallashtirilgan)
+export interface PlanFaktRow {
+  category: ExpenseCategory;
+  planned: number;
+  fakt: number;
+  diff: number; // fakt - planned
+}
+
+// GET /api/reports/summary javobi
+export interface ReportsSummary {
+  currency: 'UZS';
+  from: string;
+  to: string;
+  period: string; // 'YYYY-MM'
+  projectId: string | null;
+  totalExpense: number;
+  materialCost: number;
+  laborCost: number;
+  generalCost: number;
+  incoming: number;
+  netProfit: number;
+  trends: FinanceTrends;
+  planFakt: PlanFaktRow[];
+  resourceUsage: { label: string; percentage: number }[];
+  costDynamics: { ym: string; actual: number; planned: number }[];
 }
 
 // P&L kategoriya kaliti — frontendda i18n bilan tarjima qilinadi

@@ -21,6 +21,8 @@ import { expensesRouter } from './routes/expenses.js';
 import { voiceRouter } from './routes/voice.js';
 import { ordersRouter } from './routes/orders.js';
 import { notificationsRouter } from './routes/notifications.js';
+import { incomesRouter } from './routes/incomes.js';
+import { budgetRouter } from './routes/budget.js';
 import { adminRouter } from './routes/admin.js';
 const app = express();
 
@@ -87,6 +89,8 @@ app.use('/api/expenses', requireAuth, expensesRouter);
 app.use('/api/voice', requireAuth, voiceRouter);
 app.use('/api/orders', requireAuth, ordersRouter);
 app.use('/api/notifications', requireAuth, notificationsRouter);
+app.use('/api/incomes', requireAuth, incomesRouter);
+app.use('/api/budget-plans', requireAuth, budgetRouter);
 
 // Admin panel route'lari (o'z auth'i ichida)
 app.use('/api/admin', adminRouter);
