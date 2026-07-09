@@ -95,9 +95,29 @@ export interface Project {
   managerId: string | null;
   totalUnits: number;
   purchasePrice: number;
+  address: string | null;
+  description: string | null;
+  startDate: string | null;
   manager?: Pick<User, 'id' | 'fullName' | 'avatarUrl'> | null;
   createdAt: string;
+  updatedAt?: string;
 }
+
+// GET /api/projects/:id/summary — hisoblangan KPI'lar (T2)
+export interface ProjectSummary {
+  projectId: string;
+  currency: 'UZS';
+  budget: number;
+  totalEstimates: number;
+  estimatesCount: number;
+  totalExpenses: number;
+  totalIncome: number;
+  netProfit: number;
+  budgetUsedPercent: number | null; // budjet 0 bo'lsa null
+}
+
+// GET /api/projects/summaries — ro'yxat kartalari uchun jamlar
+export type ProjectSummaries = Record<string, { spent: number; income: number; estimatesCount: number }>;
 
 export interface ProjectFinance {
   projectId: string;

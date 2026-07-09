@@ -209,6 +209,10 @@ model Project {
   // "Kelgan pullar" (loyiha = bino) uchun: honadonlar soni va binoni sotib olish narxi.
   totalUnits    Int     @default(0)
   purchasePrice Decimal @default(0) @db.Decimal(18, 2)
+  // Vazifa T2 (brief v3): loyiha markazi uchun qo'shimcha maydonlar
+  address     String?
+  description String?   @db.Text
+  startDate   DateTime?
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 

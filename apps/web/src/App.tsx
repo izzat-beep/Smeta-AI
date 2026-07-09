@@ -5,6 +5,7 @@ import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Projects } from './pages/Projects';
+import { ProjectDetail } from './pages/ProjectDetail';
 import { Calculator } from './pages/Calculator';
 import { Materials } from './pages/Materials';
 import { MaterialDetail } from './pages/MaterialDetail';
@@ -35,6 +36,7 @@ export function App() {
       >
         <Route index element={<Dashboard />} />
         <Route path="loyihalar" element={<Projects />} />
+        <Route path="loyihalar/:id" element={<ProjectDetail />} />
         <Route path="kalkulyator" element={<Calculator />} />
         <Route path="materiallar" element={<Materials />} />
         <Route path="materiallar/:id" element={<MaterialDetail />} />

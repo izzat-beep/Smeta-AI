@@ -25,6 +25,101 @@ projectsRouter.get(
   }),
 );
 
+// GET /api/projects/summaries — ro'yxat kartalari uchun har loyihaning
+// sarflangan/daromad jamlari. groupBy bilan bitta so'rovlar to'plami (N+1 yo'q).
+// MUHIM: '/:id' dan OLDIN ro'yxatdan o'tishi kerak.
+projectsRouter.get(
+  '/summaries',
+  ah(async (req, res) => {
+    const tenantId = req.user!.tenantId;
+    const [tenant, estimates, expenses, incomes, sales] = await Promise.all([
+      prisma.tenant.findUnique({ where: { id: tenantId }, select: { usdRate: true } }),
+      prisma.estimate.groupBy({
+        by: ['projectId'],
+        where: { tenantId, projectId: { not: null } },
+        _sum: { total: true },
+        _count: { _all: true },
+      }),
+      prisma.generalExpenses.groupBy({
+        by: ['projectId', 'currency'],
+        where: { tenantId, projectId: { not: null } },
+        _sum: { amount: true },
+      }),
+      prisma.income.groupBy({
+        by: ['projectId', 'currency'],
+        where: { tenantId, projectId: { not: null } },
+        _sum: { amount: true },
+      }),
+      prisma.sale.groupBy({
+        by: ['projectId', 'currency'],
+        where: { tenantId, projectId: { not: null } },
+        _sum: { paid: true },
+      }),
+    ]);
+    const rate = toNum(tenant?.usdRate ?? 12600) || 12600;
+    const toUzs = (v: number, cur: string) => (cur === 'USD' ? v * rate : v);
+
+    const map = new Map<string, { spent: number; income: number; estimatesCount: number }>();
+    const entry = (id: string) => {
+      if (!map.has(id)) map.set(id, { spent: 0, income: 0, estimatesCount: 0 });
+      return map.get(id)!;
+    };
+    for (const g of estimates) {
+      const e = entry(g.projectId!);
+      e.spent += toNum(g._sum.total); // smeta bazaviy UZS
+      e.estimatesCount = g._count._all;
+    }
+    for (const g of expenses) entry(g.projectId!).spent += toUzs(g._sum.amount ?? 0, g.currency);
+    for (const g of incomes) entry(g.projectId!).income += toUzs(toNum(g._sum.amount), g.currency);
+    for (const g of sales) entry(g.projectId!).income += toUzs(toNum(g._sum.paid), g.currency);
+
+    res.json(Object.fromEntries(map));
+  }),
+);
+
+// GET /api/projects/:id/summary — hisoblangan KPI'lar (Umumiy tab).
+// Barchasi aggregate/groupBy bilan, UZS'ga normallashtirilgan. Statik raqam yo'q.
+projectsRouter.get(
+  '/:id/summary',
+  ah(async (req, res) => {
+    const tenantId = req.user!.tenantId;
+    const project = await prisma.project.findFirst({ where: { id: req.params.id, tenantId } });
+    if (!project) return res.status(404).json({ error: 'not_found', message: 'Loyiha topilmadi' });
+    const projectId = project.id;
+
+    const [tenant, est, exp, inc, sal] = await Promise.all([
+      prisma.tenant.findUnique({ where: { id: tenantId }, select: { usdRate: true } }),
+      prisma.estimate.aggregate({ where: { tenantId, projectId }, _sum: { total: true }, _count: { _all: true } }),
+      prisma.generalExpenses.groupBy({ by: ['currency'], where: { tenantId, projectId }, _sum: { amount: true } }),
+      prisma.income.groupBy({ by: ['currency'], where: { tenantId, projectId }, _sum: { amount: true } }),
+      prisma.sale.groupBy({ by: ['currency'], where: { tenantId, projectId }, _sum: { paid: true } }),
+    ]);
+    const rate = toNum(tenant?.usdRate ?? 12600) || 12600;
+    const toUzs = (v: number, cur: string) => (cur === 'USD' ? v * rate : v);
+
+    const totalEstimates = toNum(est._sum.total);
+    const totalExpenses = totalEstimates + exp.reduce((s2, g) => s2 + toUzs(g._sum.amount ?? 0, g.currency), 0);
+    const totalIncome =
+      inc.reduce((s2, g) => s2 + toUzs(toNum(g._sum.amount), g.currency), 0) +
+      sal.reduce((s2, g) => s2 + toUzs(toNum(g._sum.paid), g.currency), 0);
+    const budget = toUzs(toNum(project.value), project.currency);
+    const netProfit = totalIncome - totalExpenses;
+    const budgetUsedPercent = budget > 0 ? Math.round((totalExpenses / budget) * 1000) / 10 : null;
+
+    res.json({
+      projectId,
+      currency: 'UZS',
+      budget,
+      totalEstimates,
+      estimatesCount: est._count._all,
+      totalExpenses,
+      totalIncome,
+      netProfit,
+      budgetUsedPercent, // budjet 0 bo'lsa null -> frontend "—" ko'rsatadi
+    });
+  }),
+);
+
 projectsRouter.get(
   '/:id',
   ah(async (req, res) => {
@@ -100,6 +195,10 @@ const upsertSchema = z.object({
   managerId: z.string().optional().nullable(),
   totalUnits: z.number().int().nonnegative().optional(),
   purchasePrice: z.number().nonnegative().optional(),
+  // T2 (brief v3)
+  address: z.string().max(300).optional().nullable(),
+  description: z.string().max(2000).optional().nullable(),
+  startDate: z.string().optional().nullable(),
 });
 
 projectsRouter.post(
@@ -124,6 +223,9 @@ projectsRouter.post(
         managerId: body.managerId ?? null,
         totalUnits: body.totalUnits ?? 0,
         purchasePrice: body.purchasePrice ?? 0,
+        address: body.address?.trim() || null,
+        description: body.description?.trim() || null,
+        startDate: body.startDate ? new Date(body.startDate) : null,
       },
       include: { manager: true },
     });
@@ -146,6 +248,9 @@ projectsRouter.patch(
       data: {
         ...body,
         deadline: body.deadline !== undefined ? (body.deadline ? new Date(body.deadline) : null) : undefined,
+        startDate: body.startDate !== undefined ? (body.startDate ? new Date(body.startDate) : null) : undefined,
+        address: body.address !== undefined ? body.address?.trim() || null : undefined,
+        description: body.description !== undefined ? body.description?.trim() || null : undefined,
       },
       include: { manager: true },
     });
@@ -160,6 +265,15 @@ projectsRouter.delete(
     const tenantId = req.user!.tenantId;
     const existing = await prisma.project.findFirst({ where: { id: req.params.id, tenantId } });
     if (!existing) return res.status(404).json({ error: 'not_found', message: 'Loyiha topilmadi' });
+    // T2: smetalari bor loyihani o'chirish BLOKlanadi — avval arxivlash tavsiya qilinadi.
+    const estCount = await prisma.estimate.count({ where: { projectId: req.params.id } });
+    if (estCount > 0) {
+      return res.status(409).json({
+        error: 'conflict',
+        message: "Loyihada smetalar bor — avval arxivlang yoki smetalarni ko'chiring",
+        estimates: estCount,
+      });
+    }
     await prisma.project.delete({ where: { id: req.params.id } });
     res.status(204).end();
   }),

@@ -19,10 +19,14 @@ export function project(p: any) {
     managerId: p.managerId,
     totalUnits: p.totalUnits ?? 0,
     purchasePrice: toNum(p.purchasePrice),
+    address: p.address ?? null,
+    description: p.description ?? null,
+    startDate: iso(p.startDate),
     manager: p.manager
       ? { id: p.manager.id, fullName: p.manager.fullName, avatarUrl: p.manager.avatarUrl }
       : null,
     createdAt: iso(p.createdAt),
+    updatedAt: iso(p.updatedAt),
   };
 }
 

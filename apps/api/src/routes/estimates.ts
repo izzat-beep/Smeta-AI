@@ -62,12 +62,42 @@ estimatesRouter.post(
 estimatesRouter.get(
   '/',
   ah(async (req, res) => {
+    // ?projectId=<id> — shu loyihaning smetalari; ?projectId=none — loyihasizlar
+    const projRaw = typeof req.query.projectId === 'string' ? req.query.projectId.trim() : '';
+    const proj = projRaw === 'none' ? { projectId: null } : projRaw ? { projectId: projRaw } : {};
     const estimates = await prisma.estimate.findMany({
-      where: { tenantId: req.user!.tenantId },
+      where: { tenantId: req.user!.tenantId, ...proj },
       include: { items: true, stages: { orderBy: { order: 'asc' } } },
       orderBy: { createdAt: 'desc' },
     });
     res.json(estimates.map(s.estimate));
+  }),
+);
+
+// PATCH /api/estimates/:id — loyihaga bog'lash/uzish yoki nomini o'zgartirish (T2)
+estimatesRouter.patch(
+  '/:id',
+  ah(async (req, res) => {
+    const tenantId = req.user!.tenantId;
+    const body = z
+      .object({ projectId: z.string().optional().nullable(), title: z.string().min(1).optional() })
+      .parse(req.body);
+    const ex = await prisma.estimate.findFirst({ where: { id: req.params.id, tenantId } });
+    if (!ex) return res.status(404).json({ error: 'not_found', message: 'Smeta topilmadi' });
+    const projectId = body.projectId === undefined ? undefined : body.projectId?.trim() || null;
+    if (projectId) {
+      const p = await prisma.project.findFirst({ where: { id: projectId, tenantId }, select: { id: true } });
+      if (!p) return res.status(400).json({ error: 'bad_request', message: 'Loyiha topilmadi' });
+    }
+    const e = await prisma.estimate.update({
+      where: { id: ex.id },
+      data: {
+        ...(projectId !== undefined ? { projectId } : {}),
+        ...(body.title !== undefined ? { title: body.title.trim() } : {}),
+      },
+      include: { items: true, stages: { orderBy: { order: 'asc' } } },
+    });
+    res.json(s.estimate(e));
   }),
 );
 
