@@ -408,7 +408,12 @@ export function Landing() {
 
           <div className="pt-8 border-t border-[var(--c-border)]/40 flex flex-col sm:flex-row justify-between items-center gap-3">
             <p className="text-[12px] text-[var(--c-muted)] tracking-widest uppercase text-center">{t('landing.footerCopyright')}</p>
-            <p className="text-[12px] text-[var(--c-muted)]/60">{t('landing.footerLocation')}</p>
+            {/* Huquqiy hujjatlar (T4) */}
+            <div className="flex items-center gap-4 text-[12px]">
+              <Link to="/privacy" className="text-[var(--c-muted)] hover:text-white transition-colors">{t('legal.privacy.title')}</Link>
+              <Link to="/terms" className="text-[var(--c-muted)] hover:text-white transition-colors">{t('legal.terms.title')}</Link>
+              <span className="text-[var(--c-muted)]/60">{t('landing.footerLocation')}</span>
+            </div>
           </div>
         </div>
       </footer>

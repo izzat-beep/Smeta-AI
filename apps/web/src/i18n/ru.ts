@@ -1,4 +1,5 @@
 // Русский перевод (профессиональный).
+import { legalRu } from './legal';
 export const ru = {
   common: {
     save: 'Сохранить',
@@ -70,6 +71,13 @@ export const ru = {
     toLogin: 'Войти в существующий аккаунт',
     passwordUpdated: 'Пароль обновлён. Теперь войдите с новым паролем.',
     rights: '© 2026 Smeta AI. Все права защищены.',
+    // T4: согласие с юридическими документами
+    agreePrefix: 'Я ознакомился(-ась) и согласен(-на) с документами',
+    agreeTerms: 'Пользовательское соглашение',
+    agreeAnd: 'и',
+    agreePrivacy: 'Политика конфиденциальности',
+    agreeSuffix: '',
+    agreeRequired: 'Для продолжения ознакомьтесь с юридическими документами и подтвердите согласие',
   },
   dashboard: {
     welcome: 'Добро пожаловать',
@@ -736,4 +744,5 @@ export const ru = {
     saveChanges: 'Сохранить изменения',
     defaultUser: 'Пользователь',
   },
+  legal: legalRu,
 } as const;

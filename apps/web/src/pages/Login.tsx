@@ -22,11 +22,17 @@ export function Login() {
   const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [phone, setPhone] = useState('');
+  // T4: ro'yxatdan o'tishda huquqiy hujjatlarga rozilik MAJBURIY
+  const [agree, setAgree] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setInfo(null);
+    if (mode === 'register' && !agree) {
+      setError(t('login.agreeRequired'));
+      return;
+    }
     setLoading(true);
     try {
       if (mode === 'login') {
@@ -157,6 +163,26 @@ export function Login() {
                     {t('login.forgotLink')}
                   </button>
                 </div>
+              )}
+
+              {/* T4: huquqiy hujjatlarga rozilik — ro'yxatdan o'tishda MAJBURIY */}
+              {mode === 'register' && (
+                <label className="flex items-start gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={agree}
+                    onChange={(e) => setAgree(e.target.checked)}
+                    required
+                    className="mt-0.5 w-4 h-4 shrink-0 accent-[#FF6B1A] cursor-pointer"
+                  />
+                  <span className="text-[12px] leading-relaxed text-[var(--c-muted)]">
+                    {t('login.agreePrefix')}{' '}
+                    <Link to="/terms" target="_blank" rel="noopener noreferrer" className="text-[#3DF2FF] hover:underline">{t('login.agreeTerms')}</Link>{' '}
+                    {t('login.agreeAnd')}{' '}
+                    <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#3DF2FF] hover:underline">{t('login.agreePrivacy')}</Link>
+                    {t('login.agreeSuffix') ? ` ${t('login.agreeSuffix')}` : ''}
+                  </span>
+                </label>
               )}
 
               <div className="space-y-4 pt-2">

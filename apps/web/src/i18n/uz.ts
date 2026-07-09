@@ -1,4 +1,5 @@
 // O'zbekcha tarjimalar (asosiy til).
+import { legalUz } from './legal';
 export const uz = {
   common: {
     save: 'Saqlash',
@@ -70,6 +71,13 @@ export const uz = {
     toLogin: 'Mavjud hisob bilan kirish',
     passwordUpdated: 'Parol yangilandi. Endi yangi parol bilan kiring.',
     rights: '© 2026 Smeta AI. Barcha huquqlar himoyalangan.',
+    // T4: huquqiy hujjatlarga rozilik
+    agreePrefix: 'Men',
+    agreeTerms: 'Foydalanuvchi kelishuvi',
+    agreeAnd: 'va',
+    agreePrivacy: 'Maxfiylik siyosati',
+    agreeSuffix: 'bilan tanishdim va roziman',
+    agreeRequired: "Davom etish uchun huquqiy hujjatlar bilan tanishib, rozilik bildiring",
   },
   dashboard: {
     welcome: 'Xush kelibsiz',
@@ -739,4 +747,5 @@ export const uz = {
     saveChanges: "O'zgarishlarni saqlash",
     defaultUser: 'Foydalanuvchi',
   },
+  legal: legalUz,
 } as const;

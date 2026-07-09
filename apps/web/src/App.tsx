@@ -3,6 +3,7 @@ import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
+import { Privacy, Terms } from './pages/Legal';
 import { Dashboard } from './pages/Dashboard';
 import { Projects } from './pages/Projects';
 import { ProjectDetail } from './pages/ProjectDetail';
@@ -24,6 +25,8 @@ export function App() {
       {/* Ochiq sahifalar */}
       <Route path="/" element={<Landing />} />
       <Route path="/kirish" element={<Login />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
 
       {/* Himoyalangan ilova */}
       <Route
