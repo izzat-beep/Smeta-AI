@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { Project, ProjectFinance } from '@smeta/shared';
 import { api, ApiError } from '../lib/api';
 import { fmtMoney, fmtDate, fmtNumber } from '../lib/format';
+import { useCurrency } from '../lib/currency';
 import { Payment } from '../lib/payments';
 import PaymentModal from '../components/PaymentModal';
 import { GeneralExpenses } from '../components/GeneralExpenses';
@@ -45,6 +46,8 @@ interface SalesData {
 
 export function Sales() {
   const { t } = useTranslation();
+  // Global UZS/USD almashtirgich — moliya kartalari shu valyutada ko'rsatiladi
+  const { fmt } = useCurrency();
   const [data, setData] = useState<SalesData | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [building, setBuilding] = useState<string>(''); // '' = barcha binolar
@@ -163,12 +166,13 @@ export function Sales() {
       {finance && (
         <div className="space-y-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {/* fmt() — global UZS/USD almashtirgichga mos ko'rsatadi (API UZS'da beradi) */}
             <FinCard label={t('sales.finUnits')} value={`${finance.soldUnits}/${finance.totalUnits}`} color="text-[#5555E7]" icon="lucide:building" />
-            <FinCard label={t('sales.finPurchase')} value={fmtMoney(finance.purchasePrice, 'UZS')} color="text-[var(--c-muted)]" icon="lucide:tag" />
-            <FinCard label={t('sales.finIncoming')} value={fmtMoney(finance.incoming, 'UZS')} color="text-[#10B981]" icon="lucide:wallet" />
-            <FinCard label={t('sales.finRemaining')} value={fmtMoney(finance.remaining, 'UZS')} color="text-[#F97316]" icon="lucide:clock" />
-            <FinCard label={t('sales.finExpenses')} value={fmtMoney(finance.expenses, 'UZS')} color="text-[#E11919]" icon="lucide:hammer" />
-            <FinCard label={t('sales.finProfit')} value={fmtMoney(finance.profit, 'UZS')} color={finance.profit >= 0 ? 'text-[#26D926]' : 'text-[#E11919]'} icon="lucide:trending-up" />
+            <FinCard label={t('sales.finPurchase')} value={fmt(finance.purchasePrice)} color="text-[var(--c-muted)]" icon="lucide:tag" />
+            <FinCard label={t('sales.finIncoming')} value={fmt(finance.incoming)} color="text-[#10B981]" icon="lucide:wallet" />
+            <FinCard label={t('sales.finRemaining')} value={fmt(finance.remaining)} color="text-[#F97316]" icon="lucide:clock" />
+            <FinCard label={t('sales.finExpenses')} value={fmt(finance.expenses)} color="text-[#E11919]" icon="lucide:hammer" />
+            <FinCard label={t('sales.finProfit')} value={fmt(finance.profit)} color={finance.profit >= 0 ? 'text-[#26D926]' : 'text-[#E11919]'} icon="lucide:trending-up" />
           </div>
           <p className="text-[10px] text-[var(--c-muted2)]">{t('sales.financeNote')} (1 USD = {fmtNumber(finance.rate)} UZS)</p>
         </div>

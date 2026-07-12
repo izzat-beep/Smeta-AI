@@ -8,6 +8,9 @@ import { useCurrency } from '../lib/currency';
 import { useCart } from '../lib/cart';
 import type { Material } from '@smeta/shared';
 
+// Qo'llab-quvvatlash va hamkorlik arizalari shu manzilga boradi
+const SUPPORT_EMAIL = 'ibrohimjonoffizzat@gmail.com';
+
 export function Materials() {
   const { t } = useTranslation();
   const [categories, setCategories] = useState<string[]>([]);
@@ -156,9 +159,13 @@ export function Materials() {
             <h3 className="text-xl font-black text-white mb-3">{t('materials.quickCalcTitle')}</h3>
             <p className="text-sm leading-relaxed mb-8">{t('materials.quickCalcDesc')}</p>
           </div>
-          <button className="w-full py-3 bg-[var(--c-bg)] border border-[#5555E7]/50 rounded-xl text-[#5555E7] font-medium hover:bg-[#5555E7]/5 transition-colors">
+          {/* Ishlaydigan tugma: kalkulyator sahifasiga o'tadi */}
+          <Link
+            to="/app/kalkulyator"
+            className="block w-full py-3 text-center bg-[var(--c-bg)] border border-[#5555E7]/50 rounded-xl text-[#5555E7] font-medium hover:bg-[#5555E7]/5 transition-colors"
+          >
             {t('materials.goToCalc')}
-          </button>
+          </Link>
         </div>
 
         <div className="lg:col-span-8 p-8 rounded-2xl bg-[var(--c-panel)]/40 border border-white/10 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-8">
@@ -179,9 +186,13 @@ export function Materials() {
                   +12
                 </div>
               </div>
-              <button className="px-6 py-3 bg-[#06B6D4] rounded-xl text-white font-bold hover:bg-[#05a1bc] transition-colors">
+              {/* Ishlaydigan tugma: hamkorlik arizasi — tayyor mavzu bilan email ochadi */}
+              <a
+                href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(t('materials.applySubject'))}`}
+                className="px-6 py-3 bg-[#06B6D4] rounded-xl text-white font-bold hover:bg-[#05a1bc] transition-colors"
+              >
                 {t('materials.apply')}
-              </button>
+              </a>
             </div>
           </div>
           <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-[#06B6D4]/10 to-transparent pointer-events-none"></div>
@@ -189,77 +200,49 @@ export function Materials() {
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer — faqat ishlaydigan linklar (keraksizlari olib tashlangan) */}
       <footer className="pt-16 border-t border-[var(--c-border)]/40">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
           <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-[#5555E7] rounded-lg flex items-center justify-center">
-                <img src="/assets/materials/IMG_11.svg" alt="Logo" className="w-6 h-6" />
-              </div>
-              <span className="font-oxanium text-2xl font-bold text-[#5555E7]">Smeta AI</span>
-            </div>
-            <p className="text-sm leading-relaxed max-w-xs">
-              Qurilish kompaniyalari va mutaxassislari uchun eng zamonaviy smeta va loyiha boshqaruvi tizimi.
-            </p>
+            {/* Yangi to'liq logo (PNG) */}
+            <img src="/logo-full.png" alt="Smeta AI" className="h-14 w-auto" />
+            <p className="text-sm leading-relaxed max-w-xs">{t('materials.footerDesc')}</p>
           </div>
 
           <div>
-            <h4 className="font-oxanium text-white text-base mb-6">Mahsulot</h4>
+            <h4 className="font-oxanium text-white text-base mb-6">{t('materials.footerProduct')}</h4>
             <ul className="space-y-3 text-sm">
               <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Biz haqimizda
-                </a>
+                <Link to="/#biz-haqimizda" className="hover:text-white transition-colors">
+                  {t('landing.nav.about')}
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Xizmatlar
-                </a>
+                <Link to="/terms" className="hover:text-white transition-colors">
+                  {t('legal.terms.title')}
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Yordam
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Maxfiylik siyosati
-                </a>
+                <Link to="/privacy" className="hover:text-white transition-colors">
+                  {t('legal.privacy.title')}
+                </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-oxanium text-white text-base mb-6">Kompaniya</h4>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Biz haqimizda
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Blog
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Vakansiyalar
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-oxanium text-white text-base mb-6">Yordam</h4>
-            <div className="flex items-center gap-3 mb-6">
-              <button className="w-10 h-10 rounded-full border border-[#22D3EE] flex items-center justify-center text-[#22D3EE] hover:bg-[#22D3EE]/10 transition-colors">
+            <h4 className="font-oxanium text-white text-base mb-6">{t('materials.footerHelp')}</h4>
+            {/* Qo'llab-quvvatlash — bosilganda tayyor mavzuli email ochiladi */}
+            <a
+              href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(t('materials.supportSubject'))}`}
+              className="flex items-center gap-3 mb-6 group"
+            >
+              <span className="w-10 h-10 rounded-full border border-[#22D3EE] flex items-center justify-center text-[#22D3EE] group-hover:bg-[#22D3EE]/10 transition-colors">
                 <Icon icon="lucide:message-square" className="w-4.5 h-4.5" />
-              </button>
-              <span className="text-sm">24/7 Qo'llab-quvvatlash</span>
-            </div>
-            <p className="text-xs leading-relaxed opacity-60">Toshkent sh., Yunusobod tumani, 12-uy</p>
+              </span>
+              <span className="text-sm group-hover:text-white transition-colors">{t('materials.support247')}</span>
+            </a>
+            <p className="text-xs leading-relaxed opacity-60">Toshkent, O'zbekiston</p>
           </div>
         </div>
 
@@ -268,7 +251,6 @@ export function Materials() {
           <div className="flex gap-8">
             <span>UZS (SO'M)</span>
             <span>USD (DOLLAR)</span>
-            <span>METRIC (M/KG)</span>
           </div>
         </div>
       </footer>

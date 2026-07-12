@@ -1,6 +1,7 @@
-// Landing sahifasi (Vazifa 4): to'liq ikki tilli (UZ/RU, i18n orqali —
-// hardcoded matn yo'q), FAQ accordion, Biz haqimizda, ishlaydigan anchor
-// navigatsiya (#imkoniyatlar, #biz-haqimizda, #narxlar, #mijozlar, #faq, #kontakt).
+// Landing sahifasi: to'liq ikki tilli (UZ/RU), FAQ accordion, Biz haqimizda,
+// ishlaydigan anchor navigatsiya. Dizayn: suzuvchi pill-navbar + GSAP
+// aksentlari (SplitText sarlavha, parallaks, magnit CTA, 3D tarif kartalari,
+// narx count-up) — asl layout STRUKTURASI o'zgarmagan (faqat qo'shimcha).
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
@@ -11,20 +12,17 @@ import { setLanguage, type Lang } from '../i18n';
 import {
   Spotlight,
   GridBackground,
+  TextGenerateEffect,
   Meteors,
+  SpotlightCard,
   InfiniteMovingCards,
   Reveal,
   Counter,
 } from '../components/aceternity';
-// T5 (brief v3): GSAP dizayn tizimi — yagona easing tili (power3.out / elastic)
 import { gsap, EASE_IN, MM_DESKTOP } from '../lib/gsapSetup';
 import { useSplitTextI18n } from '../lib/useSplitTextI18n';
 import { MagneticButton } from '../components/motion/MagneticButton';
 import { CursorBlob } from '../components/motion/CursorBlob';
-import { RevealHeading } from '../components/motion/RevealHeading';
-import { FeatureDeck } from '../components/motion/FeatureDeck';
-import { PricingCards, type PricingPlan } from '../components/motion/PricingCards';
-import { VideoShowcase } from '../components/motion/VideoShowcase';
 
 // Vizual konstantalar (matnlar i18n'da)
 const FEATURE_META = [
@@ -59,9 +57,12 @@ const NAV_ANCHORS = [
 ] as const;
 
 export function Landing() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const heroRef = useRef<HTMLElement>(null);
+  const h1Ref = useRef<HTMLHeadingElement>(null);
+  const pricingRef = useRef<HTMLElement>(null);
 
   // /#faq kabi tashqi linklar (masalan dashboard footeridan) ishlashi uchun:
   // sahifa ochilganda hash bo'lsa o'sha bo'limga scroll qilamiz.
@@ -71,6 +72,116 @@ export function Landing() {
       if (el) window.setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 60);
     }
   }, [location.hash]);
+
+  // H1 — SplitText qator-mask reveal (i18n-xavfsiz: revert -> rAF -> qayta qurish).
+  // 'lines' turi gradient span'ni butunligicha saqlaydi.
+  useSplitTextI18n(
+    h1Ref,
+    (split) => {
+      split.lines.forEach((line) => {
+        const mask = document.createElement('div');
+        mask.style.overflow = 'hidden';
+        mask.style.display = 'block';
+        line.parentNode?.insertBefore(mask, line);
+        mask.appendChild(line);
+      });
+      gsap.from(split.lines, { yPercent: 110, duration: 0.9, ease: EASE_IN, stagger: 0.12, delay: 0.15 });
+    },
+    { type: 'lines' },
+  );
+
+  // Hero parallaks (faqat desktop, sichqonchaga maks ±12px) — layoutga tegmaydi.
+  useGSAP(
+    () => {
+      const root = heroRef.current;
+      if (!root) return;
+      const mm = gsap.matchMedia();
+      mm.add(MM_DESKTOP, () => {
+        const layers = gsap.utils.toArray<HTMLElement>('[data-depth]', root);
+        const movers = layers.map((el) => ({
+          depth: Number(el.dataset.depth ?? 0.5),
+          x: gsap.quickTo(el, 'x', { duration: 0.8, ease: 'power3.out' }),
+          y: gsap.quickTo(el, 'y', { duration: 0.8, ease: 'power3.out' }),
+        }));
+        const onMove = (e: MouseEvent) => {
+          const nx = e.clientX / window.innerWidth - 0.5;
+          const ny = e.clientY / window.innerHeight - 0.5;
+          movers.forEach((m) => {
+            m.x(nx * 24 * m.depth);
+            m.y(ny * 24 * m.depth);
+          });
+        };
+        window.addEventListener('mousemove', onMove);
+        return () => window.removeEventListener('mousemove', onMove);
+      });
+      return () => mm.revert();
+    },
+    { scope: heroRef },
+  );
+
+  // Tarif kartalari: 3D tilt (desktop) + narx count-up (til almashganda qayta).
+  useGSAP(
+    () => {
+      const root = pricingRef.current;
+      if (!root) return;
+      const mm = gsap.matchMedia();
+
+      const runCounters = (instant: boolean) => {
+        gsap.utils.toArray<HTMLElement>('.price-num', root).forEach((el) => {
+          const target = Number(el.dataset.value ?? 0);
+          if (!target) return;
+          if (instant) {
+            el.textContent = target.toLocaleString('ru-RU');
+            return;
+          }
+          const obj = { v: 0 };
+          gsap.to(obj, {
+            v: target,
+            duration: 1.2,
+            ease: 'power2.out',
+            snap: { v: 1 },
+            scrollTrigger: { trigger: el, start: 'top 90%', once: true },
+            onUpdate: () => {
+              el.textContent = Math.round(obj.v).toLocaleString('ru-RU');
+            },
+          });
+        });
+      };
+
+      mm.add(MM_DESKTOP, () => {
+        const cards = gsap.utils.toArray<HTMLElement>('.price-card', root);
+        gsap.set(cards, { transformPerspective: 1200 });
+        const cleanups = cards.map((card) => {
+          const rx = gsap.quickTo(card, 'rotationX', { duration: 0.5, ease: 'power3.out' });
+          const ry = gsap.quickTo(card, 'rotationY', { duration: 0.5, ease: 'power3.out' });
+          const onMove = (e: MouseEvent) => {
+            const r = card.getBoundingClientRect();
+            card.style.willChange = 'transform';
+            rx(-((e.clientY - r.top) / r.height - 0.5) * 8);
+            ry(((e.clientX - r.left) / r.width - 0.5) * 8);
+          };
+          const onLeave = () => {
+            rx(0);
+            ry(0);
+            card.style.willChange = 'auto';
+          };
+          card.addEventListener('mousemove', onMove);
+          card.addEventListener('mouseleave', onLeave);
+          return () => {
+            card.removeEventListener('mousemove', onMove);
+            card.removeEventListener('mouseleave', onLeave);
+          };
+        });
+        runCounters(false);
+        return () => cleanups.forEach((fn) => fn());
+      });
+      mm.add('(max-width: 768px) and (prefers-reduced-motion: no-preference)', () => runCounters(false));
+      mm.add('(prefers-reduced-motion: reduce)', () => runCounters(true));
+
+      return () => mm.revert();
+    },
+    { scope: pricingRef, dependencies: [i18n.language] },
+  );
 
   // i18n massivlari
   const arr = <T,>(key: string): T[] => t(key, { returnObjects: true }) as T[];
@@ -83,86 +194,156 @@ export function Landing() {
 
   return (
     <div className="min-h-screen bg-[var(--c-bg)] text-white font-sans overflow-x-hidden">
-      {/* Navigation */}
+      {/* Navigation — suzuvchi pill (1.png uslubi): to'liq yumaloq, glass,
+          markazda linklar, o'ngda dumaloq CTA tugma */}
       <motion.nav
-        initial={{ y: -40, opacity: 0 }}
+        initial={{ y: -60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="fixed top-0 left-0 right-0 z-50 bg-[var(--c-bg)]/60 backdrop-blur-xl border-b border-[var(--c-border)]/40"
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="fixed top-4 left-0 right-0 z-50 px-3"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <img src="/logo.svg" alt="Smeta AI" className="h-12 sm:h-14 w-auto" />
+        <div className="mx-auto max-w-4xl bg-white/95 backdrop-blur-2xl border border-black/5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.35)] pl-3 pr-2 py-2 flex items-center justify-between gap-2">
+          <Link to="/" className="flex items-center shrink-0 overflow-hidden h-10" aria-label="Smeta AI">
+            {/* To'q ko'k logo — oq pill ustida (1.png uslubi). PNG'da shaffof
+                hoshiya keng, shuning uchun kattaroq o'lchab konteynerda kesamiz */}
+            <img src="/logo-full.png" alt="Smeta AI" className="h-24 w-auto -my-7" />
           </Link>
+
           <div className="hidden md:flex items-center gap-1">
             {NAV_ANCHORS.map((l) => (
-              <a key={l.key} href={l.href} className="nav-underline px-4 py-2 text-sm font-medium text-[var(--c-muted)] hover:text-white transition-colors">
+              <a key={l.key} href={l.href} className="nav-underline px-3.5 py-2 text-sm font-semibold text-[#4b5563] hover:text-[#16181D] transition-colors rounded-full">
                 {t(`landing.nav.${l.key}`)}
               </a>
             ))}
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <LangSwitcher />
-            <Link to="/kirish" className="hidden sm:block px-4 py-2 text-sm font-medium text-[#22D3EE] border border-[#22D3EE] rounded-lg hover:bg-[#22D3EE]/10 transition-colors">{t('landing.login')}</Link>
-            <Link to="/kirish" className="hidden sm:block px-4 py-2 text-sm font-medium bg-[#FF6B1A] rounded-lg hover:bg-[#e55a10] transition-colors">{t('landing.register')}</Link>
-            {/* Mobil hamburger */}
+
+          <div className="flex items-center gap-2 shrink-0">
+            <NavLangSwitcher />
+            <Link
+              to="/kirish"
+              className="hidden sm:flex items-center gap-2 pl-4 pr-1.5 py-1.5 bg-[#FF6B1A] hover:bg-[#e55a10] text-white rounded-full text-sm font-semibold transition-colors group"
+            >
+              {t('landing.login')}
+              <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
+                <Icon icon="lucide:arrow-right" className="w-4 h-4" />
+              </span>
+            </Link>
+            {/* Mobil hamburger — dumaloq */}
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="md:hidden w-11 h-11 flex items-center justify-center rounded-lg text-white hover:bg-white/5"
+              className="md:hidden w-10 h-10 flex items-center justify-center rounded-full bg-black/5 text-[#16181D] hover:bg-black/10"
               aria-label="Menyu"
             >
-              <Icon icon={menuOpen ? 'lucide:x' : 'lucide:menu'} className="w-6 h-6" />
+              <Icon icon={menuOpen ? 'lucide:x' : 'lucide:menu'} className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Mobil menyu paneli */}
+        {/* Mobil menyu paneli — pill ostidan ochiladi (oq) */}
         {menuOpen && (
-          <div className="md:hidden border-t border-[var(--c-border)]/40 bg-[var(--c-bg)]/95 backdrop-blur-xl px-4 py-4 space-y-1">
+          <div className="md:hidden mx-auto max-w-4xl mt-2 bg-white/95 backdrop-blur-2xl border border-black/5 rounded-3xl px-4 py-4 space-y-1 shadow-2xl">
             {NAV_ANCHORS.map((l) => (
-              <a key={l.key} href={l.href} onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-sm font-medium text-[var(--c-muted)] hover:bg-white/5 hover:text-white transition-colors">
+              <a key={l.key} href={l.href} onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-sm font-semibold text-[#4b5563] hover:bg-black/5 hover:text-[#16181D] transition-colors">
                 {t(`landing.nav.${l.key}`)}
               </a>
             ))}
             <div className="grid grid-cols-2 gap-3 pt-3">
-              <Link to="/kirish" onClick={() => setMenuOpen(false)} className="px-4 py-3 text-center text-sm font-medium text-[#22D3EE] border border-[#22D3EE] rounded-xl">{t('landing.login')}</Link>
-              <Link to="/kirish" onClick={() => setMenuOpen(false)} className="px-4 py-3 text-center text-sm font-medium bg-[#FF6B1A] rounded-xl">{t('landing.register')}</Link>
+              <Link to="/kirish" onClick={() => setMenuOpen(false)} className="px-4 py-3 text-center text-sm font-bold text-[#5555E7] border border-[#5555E7]/40 rounded-full">{t('landing.login')}</Link>
+              <Link to="/kirish" onClick={() => setMenuOpen(false)} className="px-4 py-3 text-center text-sm font-bold text-white bg-[#FF6B1A] rounded-full">{t('landing.register')}</Link>
             </div>
           </div>
         )}
       </motion.nav>
 
-      {/* Hero — GSAP master timeline (T5.1): SplitText chars + fade-up + scale-in,
-          jami ~1.5s; perspective konteynerda 3 parallaks qatlam (grid, blob,
-          preview) sichqonchaga ±12px reaksiya; ScrambleText — "AI" aksentida. */}
-      <HeroSection />
+      {/* Hero — asl layout + qo'shimcha GSAP: SplitText h1, parallaks, blob */}
+      <section ref={heroRef} className="relative pt-36 pb-20 lg:pt-52 lg:pb-32 overflow-hidden">
+        <CursorBlob />
+        <Spotlight className="-top-40 left-0 md:-top-20 md:left-60" fill="#5555E7" />
+        <div data-depth="0.3" className="absolute inset-0"><GridBackground /></div>
+        <div data-depth="0.6" className="absolute top-0 left-1/2 -translate-x-1/2 w-[576px] h-[525px] bg-[#5555E7]/10 rounded-full blur-[120px] -z-10" />
 
-      {/* Imkoniyatlar — stacked card deck (T5.4): scroll'da kartalar ustma-ust
-          yig'iladi (pin+scrub); mobil/reduced'da oddiy ro'yxat. */}
-      <section id="imkoniyatlar" className="py-24 bg-[var(--c-panel)]/30 scroll-mt-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <RevealHeading className="text-4xl md:text-5xl font-bold font-display mb-4">{t('landing.featuresTitle')}</RevealHeading>
-            <p className="text-[var(--c-muted)] max-w-lg mx-auto">{t('landing.featuresSub')}</p>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#22D3EE]/5 border border-[#22D3EE]/30 rounded-full backdrop-blur-md mb-8"
+          >
+            <Icon icon="lucide:cpu" className="w-4 h-4 text-[#22D3EE]" />
+            <span className="text-[12px] font-semibold text-[#22D3EE]">{t('landing.badge')}</span>
+          </motion.div>
 
-          <FeatureDeck
-            items={features.map((f, i) => {
-              const m = FEATURE_META[i] ?? FEATURE_META[1];
-              return {
-                icon: <Icon icon={m.icon} className="w-7 h-7" style={{ color: m.color }} />,
-                title: f.title,
-                desc: f.desc,
-              };
-            })}
-          />
+          <h1
+            ref={h1Ref}
+            className="text-4xl sm:text-5xl md:text-7xl font-extrabold font-display leading-tight mb-6 tracking-tight break-words"
+          >
+            {t('landing.heroTitle1')}<br />
+            <span className="bg-gradient-to-r from-[#FF6B1A] to-[#FB923C] bg-clip-text text-transparent">{t('landing.heroAccent')}</span> {t('landing.heroTitle2')}
+          </h1>
+
+          <p className="max-w-2xl mx-auto text-lg md:text-xl text-[var(--c-muted)] font-display leading-relaxed mb-10">
+            <TextGenerateEffect words={t('landing.heroSub')} />
+          </p>
+
+          <Reveal delay={0.4}>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+              {/* Magnit CTA'lar (desktop; touch/reduced'da oddiy tugma) */}
+              <MagneticButton className="w-full sm:w-auto">
+                <Link to="/kirish" className="block w-full px-8 py-4 bg-[#FF6B1A] rounded-xl text-lg font-medium text-white text-center shadow-[0_10px_30px_rgba(255,107,26,0.3)] focus-visible:outline-2 focus-visible:outline-[#22D3EE]">
+                  {t('landing.tryFree')}
+                </Link>
+              </MagneticButton>
+              <MagneticButton className="w-full sm:w-auto">
+                <Link to="/kirish" className="w-full px-8 py-4 bg-[var(--c-bg)] border border-[#22D3EE]/30 rounded-xl text-lg font-medium text-[#22D3EE] flex items-center justify-center gap-3 hover:bg-[#22D3EE]/5 transition-colors focus-visible:outline-2 focus-visible:outline-[#22D3EE]">
+                  {t('landing.login')} <Icon icon="lucide:arrow-right" className="w-5 h-5" />
+                </Link>
+              </MagneticButton>
+            </div>
+          </Reveal>
+
+          {/* Dashboard preview — parallaks qatlam */}
+          <motion.div
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.5 }}
+            className="relative max-w-5xl mx-auto"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-[#F97316]/20 to-[#06B6D4]/20 blur-[40px] rounded-[32px] -z-10" />
+            {/* data-depth ichki qatlamda — framer (tashqi) bilan transform to'qnashmasin */}
+            <div data-depth="1" className="bg-[var(--c-panel)]/60 border border-white/10 rounded-[32px] p-4 backdrop-blur-2xl shadow-2xl">
+              <img src="/assets/landing/IMG_6.webp" alt="Dashboard" className="w-full h-auto rounded-2xl" />
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Video ko'rgazma (T5.5) — hozircha poster placeholder; video asset
-          qo'shilganda src berilsa scroll-scrub avtomatik ishlaydi */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8">
-        <VideoShowcase poster="/assets/landing/IMG_6.webp" />
+      {/* Imkoniyatlar */}
+      <section id="imkoniyatlar" className="py-24 bg-[var(--c-panel)]/30 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold font-display mb-4">{t('landing.featuresTitle')}</h2>
+              <p className="text-[var(--c-muted)] max-w-lg mx-auto">{t('landing.featuresSub')}</p>
+            </div>
+          </Reveal>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {features.map((f, i) => {
+              const m = FEATURE_META[i] ?? FEATURE_META[1];
+              return (
+                <Reveal key={f.title} delay={i * 0.08} className={m.big ? 'md:col-span-2' : ''}>
+                  <SpotlightCard className="h-full p-8">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-6" style={{ background: `${m.color}1a`, border: `1px solid ${m.color}33` }}>
+                      <Icon icon={m.icon} className="w-7 h-7" style={{ color: m.color }} />
+                    </div>
+                    <h3 className="text-2xl font-bold font-display mb-4">{f.title}</h3>
+                    <p className="text-[var(--c-muted)] leading-relaxed">{f.desc}</p>
+                  </SpotlightCard>
+                </Reveal>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
       {/* Stats */}
@@ -219,29 +400,61 @@ export function Landing() {
         </div>
       </section>
 
-      {/* Narxlar */}
-      {/* Narxlar — 3D tarif kartalari (T5.2): tilt, flip-in, count-up, popular float */}
-      <section id="narxlar" className="py-24 scroll-mt-20">
+      {/* Narxlar — asl kartalar + 3D tilt va narx count-up (GSAP, qo'shimcha) */}
+      <section id="narxlar" ref={pricingRef} className="py-24 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <RevealHeading className="text-4xl md:text-5xl font-bold font-display mb-4">{t('landing.pricingTitle')}</RevealHeading>
-            <p className="text-[var(--c-muted)]">{t('landing.pricingSub')}</p>
+          <Reveal>
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold font-display mb-4">{t('landing.pricingTitle')}</h2>
+              <p className="text-[var(--c-muted)]">{t('landing.pricingSub')}</p>
+            </div>
+          </Reveal>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center" style={{ perspective: '1200px' }}>
+            {plans.map((p, i) => {
+              const popular = i === 1;
+              const priceValue = PLAN_PRICE_VALUES[i];
+              return (
+                <Reveal key={p.name} delay={i * 0.1}>
+                  <div className={`price-card glass-card rounded-2xl p-8 relative ${popular ? 'border-[#FF6B1A]/40 shadow-[0_0_40px_rgba(255,107,26,0.12)] md:scale-105 z-10 bg-[var(--c-panel)]/60' : 'bg-[var(--c-panel)]/30'}`}>
+                    {popular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#FF6B1A] text-white text-[12px] font-semibold px-4 py-1 rounded-full">{t('landing.popular')}</div>
+                    )}
+                    <div className="text-[var(--c-muted)] font-display font-medium mb-4">{p.name}</div>
+                    <div className="flex items-baseline gap-2 mb-8">
+                      {priceValue !== null ? (
+                        <>
+                          <span className="price-num text-3xl font-bold font-display" data-value={priceValue}>
+                            {priceValue.toLocaleString('ru-RU')}
+                          </span>
+                          <span className="text-[var(--c-muted)]">{t('landing.perMonth')}</span>
+                        </>
+                      ) : (
+                        <span className="text-3xl font-bold font-display">{t('landing.contactUs')}</span>
+                      )}
+                    </div>
+                    <ul className="space-y-4 mb-10">
+                      {p.items.map((it) => (
+                        <li key={it} className="flex items-center gap-3 text-sm text-white/90">
+                          <Icon icon="lucide:circle-check-big" className="w-5 h-5 text-[#22D3EE] shrink-0" />
+                          {it}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link to="/kirish" className={`block text-center w-full py-3 rounded-xl font-bold transition-all ${popular ? 'bg-[#FF6B1A] hover:scale-105 shadow-[0_4px_15px_rgba(255,107,26,0.3)]' : 'bg-[var(--c-border)] hover:bg-[var(--c-border)]/80'}`}>
+                      {t('landing.start')}
+                    </Link>
+                  </div>
+                </Reveal>
+              );
+            })}
           </div>
-          <PricingCards
-            plans={plans.map((p, i): PricingPlan => ({
-              name: p.name,
-              priceValue: PLAN_PRICE_VALUES[i],
-              items: p.items,
-              popular: i === 1,
-            }))}
-          />
         </div>
       </section>
 
       {/* Mijozlar */}
       <section id="mijozlar" className="py-24 bg-[var(--c-panel)]/20 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-          <RevealHeading className="text-3xl md:text-4xl font-bold font-display text-center">{t('landing.customersTitle')}</RevealHeading>
+          <Reveal><h2 className="text-3xl md:text-4xl font-bold font-display text-center">{t('landing.customersTitle')}</h2></Reveal>
         </div>
         <InfiniteMovingCards items={testimonials} speed={36} />
       </section>
@@ -251,7 +464,7 @@ export function Landing() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
             <div className="text-center mb-12">
-              <RevealHeading className="text-4xl md:text-5xl font-bold font-display mb-4">{t('landing.faqTitle')}</RevealHeading>
+              <h2 className="text-4xl md:text-5xl font-bold font-display mb-4">{t('landing.faqTitle')}</h2>
               <p className="text-[var(--c-muted)]">{t('landing.faqSub')}</p>
             </div>
           </Reveal>
@@ -355,143 +568,17 @@ export function Landing() {
   );
 }
 
-// Hero (T5.1): master timeline + 3D parallaks + ScrambleText.
-function HeroSection() {
-  const { t, i18n } = useTranslation();
-  const sectionRef = useRef<HTMLElement>(null);
-  const line1Ref = useRef<HTMLSpanElement>(null);
-  const accentRef = useRef<HTMLSpanElement>(null);
-
-  // H1 birinchi qatori — SplitText chars (i18n-xavfsiz: revert->rAF->rebuild)
-  useSplitTextI18n(
-    line1Ref,
-    (split) => {
-      gsap.from(split.chars, {
-        yPercent: 60,
-        autoAlpha: 0,
-        duration: 0.7,
-        ease: EASE_IN,
-        stagger: 0.02,
-        delay: 0.15,
-      });
-    },
-    { type: 'chars' },
-  );
-
-  useGSAP(
-    () => {
-      const root = sectionRef.current;
-      if (!root) return;
-      const mm = gsap.matchMedia();
-
-      // Kirish xoreografiyasi (~1.5s) — reduced-motion'da umuman ishlamaydi
-      mm.add('(prefers-reduced-motion: no-preference)', () => {
-        const tl = gsap.timeline({ defaults: { ease: EASE_IN } });
-        tl.from('.hero-badge', { scale: 0.85, autoAlpha: 0, duration: 0.5 }, 0)
-          .from('.hero-line2', { y: 26, autoAlpha: 0, duration: 0.7 }, 0.45)
-          .from('.hero-sub', { y: 22, autoAlpha: 0, duration: 0.6 }, 0.65)
-          .from('.hero-cta', { scale: 0.92, autoAlpha: 0, duration: 0.5, stagger: 0.08 }, 0.8)
-          .from('.hero-preview', { y: 56, autoAlpha: 0, duration: 0.8 }, 0.9);
-
-        // ScrambleText — saytdagi 2 ta ruxsatdan biri ("AI" aksenti)
-        const accent = accentRef.current;
-        if (accent) {
-          tl.to(accent, {
-            duration: 1,
-            scrambleText: { text: accent.textContent ?? '', chars: '01▮▯AI', speed: 0.4 },
-          }, 0.5);
-        }
-      });
-
-      // 3D parallaks qatlamlar — faqat desktop, sichqonchaga maks ±12px
-      mm.add(MM_DESKTOP, () => {
-        const layers = gsap.utils.toArray<HTMLElement>('[data-depth]', root);
-        const movers = layers.map((el) => ({
-          depth: Number(el.dataset.depth ?? 0.5),
-          x: gsap.quickTo(el, 'x', { duration: 0.8, ease: 'power3.out' }),
-          y: gsap.quickTo(el, 'y', { duration: 0.8, ease: 'power3.out' }),
-        }));
-        const onMove = (e: MouseEvent) => {
-          const nx = e.clientX / window.innerWidth - 0.5;
-          const ny = e.clientY / window.innerHeight - 0.5;
-          movers.forEach((m) => {
-            m.x(nx * 24 * m.depth); // maks ±12px (depth<=1)
-            m.y(ny * 24 * m.depth);
-          });
-        };
-        window.addEventListener('mousemove', onMove);
-        return () => window.removeEventListener('mousemove', onMove);
-      });
-
-      return () => mm.revert();
-    },
-    // Til almashganda hero qayta ijro etiladi (SplitText hook bilan sinxron)
-    { scope: sectionRef, dependencies: [i18n.language] },
-  );
-
-  return (
-    <section ref={sectionRef} className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden" style={{ perspective: '1000px' }}>
-      <CursorBlob />
-      <Spotlight className="-top-40 left-0 md:-top-20 md:left-60" fill="#5555E7" />
-      <div data-depth="0.3" className="absolute inset-0"><GridBackground /></div>
-      <div data-depth="0.6" className="absolute top-0 left-1/2 -translate-x-1/2 w-[576px] h-[525px] bg-[#5555E7]/10 rounded-full blur-[120px] -z-10" />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-        <div className="hero-badge inline-flex items-center gap-2 px-4 py-1.5 bg-[#22D3EE]/5 border border-[#22D3EE]/30 rounded-full backdrop-blur-md mb-8">
-          <Icon icon="lucide:cpu" className="w-4 h-4 text-[#22D3EE]" />
-          <span className="text-[12px] font-semibold text-[#22D3EE]">{t('landing.badge')}</span>
-        </div>
-
-        <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold font-display leading-tight mb-6 tracking-tight break-words">
-          <span ref={line1Ref} className="block">{t('landing.heroTitle1')}</span>
-          <span className="hero-line2 block">
-            {/* key={til}: ScrambleText matn tugunini o'zgartiradi — til almashganda
-                React toza tugun bilan qayta o'rnatishi uchun remount qilamiz */}
-            <span key={i18n.language} ref={accentRef} className="bg-gradient-to-r from-[#FF6B1A] to-[#FB923C] bg-clip-text text-transparent">{t('landing.heroAccent')}</span>{' '}
-            {t('landing.heroTitle2')}
-          </span>
-        </h1>
-
-        <p className="hero-sub max-w-2xl mx-auto text-lg md:text-xl text-[var(--c-muted)] font-display leading-relaxed mb-10">
-          {t('landing.heroSub')}
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
-          <MagneticButton className="hero-cta w-full sm:w-auto">
-            <Link to="/kirish" className="block w-full px-8 py-4 bg-[#FF6B1A] rounded-xl text-lg font-medium text-white shadow-[0_10px_30px_rgba(255,107,26,0.3)] focus-visible:outline-2 focus-visible:outline-[#22D3EE]">
-              {t('landing.tryFree')}
-            </Link>
-          </MagneticButton>
-          <MagneticButton className="hero-cta w-full sm:w-auto">
-            <Link to="/kirish" className="w-full px-8 py-4 bg-[var(--c-bg)] border border-[#22D3EE]/30 rounded-xl text-lg font-medium text-[#22D3EE] flex items-center justify-center gap-3 hover:bg-[#22D3EE]/5 transition-colors focus-visible:outline-2 focus-visible:outline-[#22D3EE]">
-              {t('landing.login')} <Icon icon="lucide:arrow-right" className="w-5 h-5" />
-            </Link>
-          </MagneticButton>
-        </div>
-
-        {/* Dashboard preview — parallaks qatlam */}
-        <div data-depth="1" className="hero-preview relative max-w-5xl mx-auto">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#F97316]/20 to-[#06B6D4]/20 blur-[40px] rounded-[32px] -z-10" />
-          <div className="bg-[var(--c-panel)]/60 border border-white/10 rounded-[32px] p-4 backdrop-blur-2xl shadow-2xl">
-            <img src="/assets/landing/IMG_6.webp" alt="Dashboard" className="w-full h-auto rounded-2xl" />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// UZ/RU almashtirgich — app'dagi bilan bir xil i18n holati (localStorage: smeta_lang)
-function LangSwitcher() {
+// UZ/RU almashtirgich — OQ pill navbar uchun (app bilan bir xil i18n holati)
+function NavLangSwitcher() {
   const { i18n } = useTranslation();
   const current = (i18n.language === 'ru' ? 'ru' : 'uz') as Lang;
   return (
-    <div className="flex bg-[var(--c-border)]/50 border border-[var(--c-border)]/50 rounded-full p-0.5 text-[11px] font-bold uppercase">
+    <div className="flex bg-black/5 border border-black/10 rounded-full p-0.5 text-[11px] font-bold uppercase">
       {(['uz', 'ru'] as Lang[]).map((l) => (
         <button
           key={l}
           onClick={() => l !== current && setLanguage(l)}
-          className={`px-2.5 py-1 rounded-full transition-colors ${current === l ? 'bg-[#5555E7] text-white' : 'text-[var(--c-muted)] hover:text-white'}`}
+          className={`px-2.5 py-1 rounded-full transition-colors ${current === l ? 'bg-[#5555E7] text-white' : 'text-[#4b5563] hover:text-[#16181D]'}`}
         >
           {l === 'uz' ? 'UZ' : 'RU'}
         </button>

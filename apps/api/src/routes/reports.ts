@@ -25,7 +25,15 @@ function ymKey(d: Date): string {
 async function summaryHandler(req: any, res: any) {
   const tenantId = req.user!.tenantId;
   const q = z
-    .object({ projectId: z.string().optional(), from: z.string().optional(), to: z.string().optional() })
+    .object({
+      projectId: z.string().optional(),
+      from: z.string().optional(),
+      to: z.string().optional(),
+      // 'YYYY-MM' — reja (BudgetPlan) qidiruvi uchun ANIQ davr. MUHIM: from
+      // ISO'dan ymKey olish UTC serverda bir oy surilib ketadi (timezone),
+      // shuning uchun frontend davri shu parametr bilan yuboriladi.
+      period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),
+    })
     .parse(req.query);
 
   // Sana oralig'i — standart joriy oy.
@@ -33,6 +41,7 @@ async function summaryHandler(req: any, res: any) {
   const from = q.from ? new Date(q.from) : new Date(now.getFullYear(), now.getMonth(), 1);
   const to = q.to ? new Date(q.to) : new Date(now.getFullYear(), now.getMonth() + 1, 1);
   const projectId = q.projectId && q.projectId.trim() ? q.projectId.trim() : undefined;
+  const period = q.period ?? ymKey(from);
   const range = { from, to, projectId };
 
   // Oldingi teng uzunlikdagi davr (foiz o'zgarish uchun).
@@ -45,27 +54,29 @@ async function summaryHandler(req: any, res: any) {
     monthlyExpenseSeries(tenantId, 6, projectId ?? undefined),
     resourceUsage(tenantId, projectId ?? undefined),
     prisma.budgetPlan.findMany({
-      where: { tenantId, projectId: projectId ?? null, period: ymKey(from) },
+      where: { tenantId, projectId: projectId ?? null, period },
     }),
     tenantRate(tenantId),
   ]);
   const planToUzs = (amount: number, currency: string) => (currency === 'USD' ? amount * rate : amount);
 
-  const planMap = new Map<string, number>();
-  for (const p of plans) planMap.set(p.category, planToUzs(toNum(p.plannedAmount), p.currency));
+  const planMap = new Map<string, { amount: number; id: string }>();
+  for (const p of plans) planMap.set(p.category, { amount: planToUzs(toNum(p.plannedAmount), p.currency), id: p.id });
 
   // Reja vs Fakt: kategoriya bo'yicha reja, fakt, farq (fakt - reja).
+  // planId — rejani o'chirish/tahrirlash uchun (boshqaruv imkoniyati).
   const planFakt = CATEGORIES.map((category) => {
-    const planned = planMap.get(category) ?? 0;
+    const plan = planMap.get(category);
+    const planned = plan?.amount ?? 0;
     const fakt = cur.faktByCategory[category];
-    return { category, planned, fakt, diff: fakt - planned };
+    return { category, planned, fakt, diff: fakt - planned, planId: plan?.id ?? null };
   });
 
   res.json({
     currency: 'UZS',
     from: from.toISOString(),
     to: to.toISOString(),
-    period: ymKey(from),
+    period,
     projectId: projectId ?? null,
     // Kartalar
     totalExpense: cur.totalExpense,

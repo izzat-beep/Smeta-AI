@@ -67,7 +67,8 @@ export function Reports() {
   const load = useCallback(async () => {
     setError(null);
     const { from, to } = ymRange(period);
-    const qs = `from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}${projectId ? `&projectId=${encodeURIComponent(projectId)}` : ''}`;
+    // period ANIQ yuboriladi — UTC serverda ISO'dan oy hisoblashda surilish bo'lmasin
+    const qs = `from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&period=${period}${projectId ? `&projectId=${encodeURIComponent(projectId)}` : ''}`;
     try {
       const [sum, inc, exp] = await Promise.all([
         api.get<ReportsSummary>(`/reports/summary?${qs}`),
@@ -410,6 +411,18 @@ function PlanFaktTable({
     }
   }
 
+  // Rejani o'chirish — qator boshqaruvi (kiritish/tahrirlash/o'chirish to'liq)
+  async function deletePlan(row: PlanFaktRow) {
+    if (!row.planId) return;
+    if (!confirm(t('reports.confirmDeletePlan'))) return;
+    try {
+      await api.delete(`/budget-plans/${row.planId}`);
+      onSaved();
+    } catch (err) {
+      onError(err instanceof ApiError ? err.message : t('common.error'));
+    }
+  }
+
   return (
     <div className="glass-panel rounded-2xl overflow-hidden">
       <div className="p-6 border-b border-[var(--c-border)]/50 flex items-center justify-between gap-3">
@@ -431,7 +444,8 @@ function PlanFaktTable({
           </thead>
           <tbody className="divide-y divide-[var(--c-border)]/30">
             {CATEGORIES.map((cat) => {
-              const row = rows.find((r) => r.category === cat) ?? { category: cat, planned: 0, fakt: 0, diff: 0 };
+              const row: PlanFaktRow =
+                rows.find((r) => r.category === cat) ?? { category: cat, planned: 0, fakt: 0, diff: 0, planId: null };
               const over = row.planned > 0 && row.fakt > row.planned;
               const under = row.planned > 0 && row.fakt <= row.planned;
               return (
@@ -453,21 +467,33 @@ function PlanFaktTable({
                           <Icon icon={saving ? 'lucide:loader' : 'lucide:check'} className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} />
                         </button>
                       </div>
-                    ) : row.planned > 0 ? (
+                    ) : row.planId ? (
                       fmt(row.planned)
                     ) : (
                       <span className="text-[var(--c-muted)]/50">—</span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-sm font-semibold text-white">{fmt(row.fakt)}</td>
-                  <td className={`px-6 py-4 text-sm font-bold ${row.planned === 0 ? 'text-[var(--c-muted)]/50' : over ? 'text-red-400' : under ? 'text-emerald-400' : 'text-[var(--c-muted)]'}`}>
-                    {row.planned === 0 ? '—' : `${row.diff >= 0 ? '+' : '−'}${fmt(Math.abs(row.diff))}`}
+                  <td className={`px-6 py-4 text-sm font-bold ${!row.planId ? 'text-[var(--c-muted)]/50' : over ? 'text-red-400' : under ? 'text-emerald-400' : 'text-[var(--c-muted)]'}`}>
+                    {!row.planId ? '—' : `${row.diff >= 0 ? '+' : '−'}${fmt(Math.abs(row.diff))}`}
                   </td>
                   <td className="px-6 py-4 text-right">
                     {editing !== cat && (
-                      <button onClick={() => beginEdit(row)} className="text-[12px] text-[#22D3EE] hover:underline whitespace-nowrap">
-                        {row.planned > 0 ? t('common.edit') : t('reports.enterPlan')}
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => beginEdit(row)} className="text-[12px] text-[#22D3EE] hover:underline whitespace-nowrap px-2 py-1">
+                          {row.planId ? t('common.edit') : t('reports.enterPlan')}
+                        </button>
+                        {/* Reja mavjud bo'lsa — o'chirish */}
+                        {row.planId && (
+                          <button
+                            onClick={() => deletePlan(row)}
+                            aria-label={t('common.delete')}
+                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-[#E11919] hover:bg-[#E11919]/10"
+                          >
+                            <Icon icon="lucide:trash-2" className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     )}
                   </td>
                 </tr>

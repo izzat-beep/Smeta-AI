@@ -376,6 +376,7 @@ export interface PlanFaktRow {
   planned: number;
   fakt: number;
   diff: number; // fakt - planned
+  planId: string | null; // rejani o'chirish/tahrirlash uchun
 }
 
 // GET /api/reports/summary javobi
