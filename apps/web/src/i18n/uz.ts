@@ -631,6 +631,7 @@ export const uz = {
     nav: { features: 'Imkoniyatlar', about: 'Biz haqimizda', pricing: 'Narxlar', customers: 'Mijozlar', faq: 'FAQ', contact: 'Kontakt' },
     login: 'Kirish',
     register: "Ro'yxatdan o'tish",
+    themeToggle: 'Tungi/kunduzgi rejim',
     badge: '2026-yil texnologiyasi bilan jihozlangan',
     heroTitle1: 'Qurilish smetalarini',
     heroAccent: 'AI yordamida',

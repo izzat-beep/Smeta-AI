@@ -61,13 +61,18 @@ export function TextGenerateEffect({ words, className }: { words: string; classN
   const [scope, animate] = useAnimate();
   const wordArr = words.split(' ');
   useEffect(() => {
+    // `words` o'zgarganda (til almashishi) yangi span'lar opacity-0 bilan
+    // qayta render bo'ladi — animatsiya ham qayta ishga tushishi SHART,
+    // aks holda matn butunlay ko'rinmay qoladi. Avval nolga qaytarib,
+    // so'ng qaytadan ochamiz (eski inline-stillar aralashib ketmasin).
+    animate('span', { opacity: 0, filter: 'blur(8px)' }, { duration: 0 });
     animate(
       'span',
       { opacity: 1, filter: 'blur(0px)' },
       { duration: 0.6, delay: stagger(0.12) },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scope.current]);
+  }, [words]);
   return (
     <span ref={scope} className={className}>
       {wordArr.map((w, i) => (

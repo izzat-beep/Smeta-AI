@@ -129,6 +129,10 @@ html.light .border-white\/20 { border-color: rgba(22, 24, 29, 0.18); }
 /* Sana input kalendari light rejimda */
 html.light input[type="date"] { color-scheme: light; }
 
+/* Brend logosi (to'q ko'k PNG): dark fonda oq ko'rinadi, light'da asl rangda */
+.logo-invertible { filter: brightness(0) invert(1); }
+html.light .logo-invertible { filter: none; }
+
 .text-gradient-orange,
 .hero-gradient-text {
   background: linear-gradient(135deg, #ff8c00 0%, #ff4d00 100%);

@@ -628,6 +628,7 @@ export const ru = {
     nav: { features: 'Возможности', about: 'О нас', pricing: 'Тарифы', customers: 'Клиенты', faq: 'FAQ', contact: 'Контакты' },
     login: 'Войти',
     register: 'Регистрация',
+    themeToggle: 'Тёмная/светлая тема',
     badge: 'Технологии 2026 года',
     heroTitle1: 'Строительные сметы',
     heroAccent: 'с помощью AI',

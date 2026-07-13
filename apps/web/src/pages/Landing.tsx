@@ -21,6 +21,7 @@ import {
 } from '../components/aceternity';
 import { gsap, EASE_IN, MM_DESKTOP } from '../lib/gsapSetup';
 import { useSplitTextI18n } from '../lib/useSplitTextI18n';
+import { useTheme } from '../lib/theme';
 import { MagneticButton } from '../components/motion/MagneticButton';
 import { CursorBlob } from '../components/motion/CursorBlob';
 
@@ -58,6 +59,8 @@ const NAV_ANCHORS = [
 
 export function Landing() {
   const { t, i18n } = useTranslation();
+  const { theme, toggle } = useTheme();
+  const dark = theme === 'dark';
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const heroRef = useRef<HTMLElement>(null);
@@ -85,7 +88,9 @@ export function Landing() {
         line.parentNode?.insertBefore(mask, line);
         mask.appendChild(line);
       });
-      gsap.from(split.lines, { yPercent: 110, duration: 0.9, ease: EASE_IN, stagger: 0.12, delay: 0.15 });
+      // Tween qaytariladi — hook intro tugashi bilan splitni revert qiladi
+      // (matn hech qachon mask ichida yashirin qolib ketmaydi).
+      return gsap.from(split.lines, { yPercent: 110, duration: 0.9, ease: EASE_IN, stagger: 0.12, delay: 0.15 });
     },
     { type: 'lines' },
   );
@@ -202,23 +207,49 @@ export function Landing() {
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         className="fixed top-4 left-0 right-0 z-50 px-3"
       >
-        <div className="mx-auto max-w-4xl bg-white/95 backdrop-blur-2xl border border-black/5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.35)] pl-3 pr-2 py-2 flex items-center justify-between gap-2">
+        {/* Pill temaga bo'ysunadi: dark rejimda qorong'i glass, light'da oq
+            (Settings'dagi tanlov html.light klassi orqali shu yerga ham keladi) */}
+        <div
+          className={`mx-auto max-w-4xl backdrop-blur-2xl border rounded-full pl-3 pr-2 py-2 flex items-center justify-between gap-2 transition-colors duration-300 ${
+            dark
+              ? 'bg-[#16181D]/90 border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.55)]'
+              : 'bg-white/95 border-black/5 shadow-[0_8px_32px_rgba(0,0,0,0.35)]'
+          }`}
+        >
           <Link to="/" className="flex items-center shrink-0 overflow-hidden h-10" aria-label="Smeta AI">
-            {/* To'q ko'k logo — oq pill ustida (1.png uslubi). PNG'da shaffof
-                hoshiya keng, shuning uchun kattaroq o'lchab konteynerda kesamiz */}
-            <img src="/logo-full.png" alt="Smeta AI" className="h-24 w-auto -my-7" />
+            {/* To'q ko'k logo — light pill ustida asl rangda, dark pill ustida
+                oq (logo-invertible). PNG'da shaffof hoshiya keng, shuning
+                uchun kattaroq o'lchab konteynerda kesamiz */}
+            <img src="/logo-full.png" alt="Smeta AI" className="logo-invertible h-24 w-auto -my-7" />
           </Link>
 
           <div className="hidden md:flex items-center gap-1">
             {NAV_ANCHORS.map((l) => (
-              <a key={l.key} href={l.href} className="nav-underline px-3.5 py-2 text-sm font-semibold text-[#4b5563] hover:text-[#16181D] transition-colors rounded-full">
+              <a
+                key={l.key}
+                href={l.href}
+                className={`nav-underline px-3.5 py-2 text-sm font-semibold transition-colors rounded-full ${
+                  dark ? 'text-[#BCC0C7] hover:text-white' : 'text-[#4b5563] hover:text-[#16181D]'
+                }`}
+              >
                 {t(`landing.nav.${l.key}`)}
               </a>
             ))}
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <NavLangSwitcher />
+            {/* Tema almashtirgich — navbar'dagi dark/light rejim tugmasi */}
+            <button
+              onClick={toggle}
+              className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${
+                dark ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-black/5 text-[#16181D] hover:bg-black/10'
+              }`}
+              aria-label={t('landing.themeToggle')}
+              title={t('landing.themeToggle')}
+            >
+              <Icon icon={dark ? 'lucide:sun' : 'lucide:moon'} className="w-4 h-4" />
+            </button>
+            <NavLangSwitcher dark={dark} />
             <Link
               to="/kirish"
               className="hidden sm:flex items-center gap-2 pl-4 pr-1.5 py-1.5 bg-[#FF6B1A] hover:bg-[#e55a10] text-white rounded-full text-sm font-semibold transition-colors group"
@@ -231,7 +262,9 @@ export function Landing() {
             {/* Mobil hamburger — dumaloq */}
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="md:hidden w-10 h-10 flex items-center justify-center rounded-full bg-black/5 text-[#16181D] hover:bg-black/10"
+              className={`md:hidden w-10 h-10 flex items-center justify-center rounded-full ${
+                dark ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-black/5 text-[#16181D] hover:bg-black/10'
+              }`}
               aria-label="Menyu"
             >
               <Icon icon={menuOpen ? 'lucide:x' : 'lucide:menu'} className="w-5 h-5" />
@@ -239,11 +272,24 @@ export function Landing() {
           </div>
         </div>
 
-        {/* Mobil menyu paneli — pill ostidan ochiladi (oq) */}
+        {/* Mobil menyu paneli — pill ostidan ochiladi (temaga mos) */}
         {menuOpen && (
-          <div className="md:hidden mx-auto max-w-4xl mt-2 bg-white/95 backdrop-blur-2xl border border-black/5 rounded-3xl px-4 py-4 space-y-1 shadow-2xl">
+          <div
+            className={`md:hidden mx-auto max-w-4xl mt-2 backdrop-blur-2xl border rounded-3xl px-4 py-4 space-y-1 shadow-2xl ${
+              dark ? 'bg-[#16181D]/95 border-white/10' : 'bg-white/95 border-black/5'
+            }`}
+          >
             {NAV_ANCHORS.map((l) => (
-              <a key={l.key} href={l.href} onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-sm font-semibold text-[#4b5563] hover:bg-black/5 hover:text-[#16181D] transition-colors">
+              <a
+                key={l.key}
+                href={l.href}
+                onClick={() => setMenuOpen(false)}
+                className={`block px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
+                  dark
+                    ? 'text-[#BCC0C7] hover:bg-white/10 hover:text-white'
+                    : 'text-[#4b5563] hover:bg-black/5 hover:text-[#16181D]'
+                }`}
+              >
                 {t(`landing.nav.${l.key}`)}
               </a>
             ))}
@@ -568,17 +614,23 @@ export function Landing() {
   );
 }
 
-// UZ/RU almashtirgich — OQ pill navbar uchun (app bilan bir xil i18n holati)
-function NavLangSwitcher() {
+// UZ/RU almashtirgich — pill navbar uchun, temaga mos (app bilan bir xil i18n holati)
+function NavLangSwitcher({ dark }: { dark: boolean }) {
   const { i18n } = useTranslation();
   const current = (i18n.language === 'ru' ? 'ru' : 'uz') as Lang;
   return (
-    <div className="flex bg-black/5 border border-black/10 rounded-full p-0.5 text-[11px] font-bold uppercase">
+    <div className={`flex rounded-full p-0.5 text-[11px] font-bold uppercase border ${dark ? 'bg-white/10 border-white/15' : 'bg-black/5 border-black/10'}`}>
       {(['uz', 'ru'] as Lang[]).map((l) => (
         <button
           key={l}
           onClick={() => l !== current && setLanguage(l)}
-          className={`px-2.5 py-1 rounded-full transition-colors ${current === l ? 'bg-[#5555E7] text-white' : 'text-[#4b5563] hover:text-[#16181D]'}`}
+          className={`px-2.5 py-1 rounded-full transition-colors ${
+            current === l
+              ? 'bg-[#5555E7] text-white'
+              : dark
+                ? 'text-[#BCC0C7] hover:text-white'
+                : 'text-[#4b5563] hover:text-[#16181D]'
+          }`}
         >
           {l === 'uz' ? 'UZ' : 'RU'}
         </button>

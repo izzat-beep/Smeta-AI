@@ -106,7 +106,7 @@ export function Materials() {
 
         <div className="flex items-center gap-4 overflow-x-auto pb-2 no-scrollbar">
           <div className="flex items-center gap-2 shrink-0">
-            <img src="/assets/materials/IMG_18.svg" alt="" className="w-4 h-4" />
+            <img src="/assets/materials/IMG_18.svg" alt="" className="h-9 w-auto object-contain" />
             <span className="text-sm font-medium">{t('materials.filter')}</span>
           </div>
           <div className="flex gap-2">
@@ -204,8 +204,12 @@ export function Materials() {
       <footer className="pt-16 border-t border-[var(--c-border)]/40">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
           <div className="space-y-6">
-            {/* Yangi to'liq logo (PNG) */}
-            <img src="/logo-full.png" alt="Smeta AI" className="h-14 w-auto" />
+            {/* To'liq logo (PNG): shaffof hoshiyasi keng, shu sabab katta
+                o'lchab konteynerda kesamiz — ko'rinadigan belgi yirik chiqadi.
+                Dark temada oq, light'da asl to'q ko'k (logo-invertible). */}
+            <div className="overflow-hidden h-16 w-fit">
+              <img src="/logo-full.png" alt="Smeta AI" className="logo-invertible h-40 w-auto -my-12" />
+            </div>
             <p className="text-sm leading-relaxed max-w-xs">{t('materials.footerDesc')}</p>
           </div>
 
