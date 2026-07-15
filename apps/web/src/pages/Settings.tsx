@@ -89,10 +89,16 @@ export function Settings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function changeLang(next: Lang) {
+  async function changeLang(next: Lang) {
     if (next === lang) return;
+    // setLanguage() URL prefiksini almashtirish uchun sahifani qayta yuklaydi;
+    // shu sabab profilga saqlashni AVVAL yuboramiz (aks holda reload so'rovni
+    // uzib yuboradi). Sekin tarmoqda 800ms dan ortiq kutmaymiz.
+    await Promise.race([
+      api.patch('/settings', { language: next }).catch(() => {}),
+      new Promise((r) => setTimeout(r, 800)),
+    ]);
     setLanguage(next);
-    api.patch('/settings', { language: next }).catch(() => {});
   }
 
   async function handleSave() {

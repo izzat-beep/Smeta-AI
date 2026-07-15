@@ -129,10 +129,15 @@ function LanguageSwitcher() {
   const { i18n } = useTranslation();
   const current = (i18n.language === 'ru' ? 'ru' : 'uz') as Lang;
 
-  function change(lang: Lang) {
+  async function change(lang: Lang) {
     if (lang === current) return;
+    // setLanguage() URL til prefiksini almashtirish uchun sahifani qayta
+    // yuklaydi — profilga saqlashni avval yuboramiz (reload uzib yubormasin).
+    await Promise.race([
+      api.patch('/settings', { language: lang }).catch(() => {}),
+      new Promise((r) => setTimeout(r, 800)),
+    ]);
     setLanguage(lang);
-    api.patch('/settings', { language: lang }).catch(() => {});
   }
 
   return (

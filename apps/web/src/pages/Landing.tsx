@@ -319,7 +319,11 @@ export function Landing() {
             <span className="text-[12px] font-semibold text-[#22D3EE]">{t('landing.badge')}</span>
           </motion.div>
 
+          {/* key={language}: til almashganda React h1'ni to'liq qayta mount
+              qiladi — SplitText revert qilgan DOM tugunlari React fiber bilan
+              desinxron bo'lib matn eski tilda "osilib" qolishining oldini oladi */}
           <h1
+            key={i18n.language}
             ref={h1Ref}
             className="text-4xl sm:text-5xl md:text-7xl font-extrabold font-display leading-tight mb-6 tracking-tight break-words"
           >

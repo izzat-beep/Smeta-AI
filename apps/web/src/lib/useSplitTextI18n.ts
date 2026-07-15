@@ -51,8 +51,12 @@ export function useSplitTextI18n(
     };
     const create = () => {
       destroy(); // bitta elementga hech qachon ikki split bo'lmasin
+      // ref.current'ni HAR SAFAR yangi o'qiymiz: h1 key={language} bilan
+      // qayta mount bo'lsa, yangi (to'g'ri tildagi) elementni olamiz.
+      const current = ref.current;
+      if (!current) return;
       ctx = gsap.context(() => {
-        split = new SplitText(el, { type: type as any });
+        split = new SplitText(current, { type: type as any });
         const anim = buildRef.current(split!, ctx!);
         // Intro tugadi — splitni butunlay qaytaramiz: matn tabiiy holatda
         // ko'rinadi va React DOM'ni qayta to'liq boshqaradi.
