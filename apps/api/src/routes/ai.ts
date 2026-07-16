@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import Anthropic from '@anthropic-ai/sdk';
 import { prisma } from '../prisma.js';
@@ -6,6 +7,34 @@ import { ah } from '../util.js';
 import { config } from '../config.js';
 
 export const aiRouter = Router();
+
+// ─── Chat rate-limit (audit #2: cheklovsiz AI xarajatining oldini olish) ──────
+// Ikki qatlam: (1) tenant bo'yicha kunlik chegara — asosiy xarajat to'sig'i,
+// (2) foydalanuvchi bo'yicha soatlik chegara — burst/skript hujumidan himoya.
+// express-rate-limit (in-memory) — voice.ts bilan bir xil uslub.
+const chatDailyLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000,
+  max: config.ai.chat.dailyLimit,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: any) => `tenant:${req.user?.tenantId ?? req.ip}`,
+  message: {
+    error: 'ai_daily_limit',
+    message: `Kunlik AI suhbat limiti (${config.ai.chat.dailyLimit}) tugadi. Ertaga qayta urinib ko'ring yoki tarifni yangilang.`,
+  },
+});
+
+const chatHourlyLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: config.ai.chat.hourlyLimit,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: any) => `user:${req.user?.sub ?? req.ip}`,
+  message: {
+    error: 'ai_hourly_limit',
+    message: `Soatlik AI suhbat limiti (${config.ai.chat.hourlyLimit}) tugadi. Biroz keyinroq urinib ko'ring.`,
+  },
+});
 
 const SYSTEM_PROMPT = `Sen "Smeta AI" — O'zbekistondagi qurilish kompaniyalari, pudratchilar va muhandislar uchun mo'ljallangan aqlli smeta yordamchisisan.
 
@@ -57,12 +86,39 @@ aiRouter.get(
 
 const chatSchema = z.object({
   sessionId: z.string().optional().nullable(),
-  message: z.string().min(1),
+  // Xabar uzunligi cheklangan — 1 MB gacha promptlar orqali xarajat portlashini to'sadi.
+  message: z
+    .string()
+    .min(1)
+    .max(config.ai.chat.maxMessageChars, {
+      message: `Xabar juda uzun (maksimal ${config.ai.chat.maxMessageChars} belgi).`,
+    }),
 });
+
+// Claude'ga yuboriladigan suhbat tarixini cheklaydi: avval oxirgi N xabar,
+// so'ng taxminiy token budjeti (belgi bo'yicha) — eng eskilari kesiladi.
+// Anthropic API birinchi xabar 'user' bo'lishini talab qiladi, shu bois
+// boshidagi 'assistant' xabarlar olib tashlanadi.
+export function trimHistory(
+  messages: { role: 'user' | 'assistant'; content: string }[],
+): { role: 'user' | 'assistant'; content: string }[] {
+  let out = messages.slice(-config.ai.chat.historyLimit);
+  let totalChars = out.reduce((sum, m) => sum + m.content.length, 0);
+  while (out.length > 1 && totalChars > config.ai.chat.historyMaxChars) {
+    totalChars -= out[0].content.length;
+    out = out.slice(1);
+  }
+  while (out.length > 1 && out[0].role !== 'user') {
+    out = out.slice(1);
+  }
+  return out;
+}
 
 // Stream chat (Server-Sent Events)
 aiRouter.post(
   '/chat',
+  chatHourlyLimiter,
+  chatDailyLimiter,
   ah(async (req, res) => {
     const tenantId = req.user!.tenantId;
     const { sessionId, message } = chatSchema.parse(req.body);
@@ -84,12 +140,15 @@ aiRouter.post(
     // Foydalanuvchi xabarini saqlash
     await prisma.chatMessage.create({ data: { sessionId: session.id, role: 'user', content: message } });
 
-    // Tarixni yuklash
+    // Tarixni yuklash — so'ng Claude'ga yuborishdan oldin oxirgi N xabar +
+    // token budjeti bilan kesamiz (uzun sessiyada har so'rov narxi o'smasin).
     const history = await prisma.chatMessage.findMany({
       where: { sessionId: session.id },
       orderBy: { createdAt: 'asc' },
     });
-    const messages = history.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+    const messages = trimHistory(
+      history.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+    );
 
     // SSE sarlavhalari
     res.setHeader('Content-Type', 'text/event-stream');
@@ -108,7 +167,7 @@ aiRouter.post(
       try {
         const stream = client.messages.stream({
           model: config.ai.model,
-          max_tokens: 2048,
+          max_tokens: config.ai.chat.maxTokens,
           system: SYSTEM_PROMPT,
           messages,
         });

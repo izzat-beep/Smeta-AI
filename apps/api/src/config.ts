@@ -85,6 +85,22 @@ export const config = {
     // STT (nutqni matnga) uchun OpenAI Whisper. Bo'sh bo'lsa demo rejim (brauzer STT).
     openaiKey: process.env.OPENAI_API_KEY ?? '',
     whisperModel: process.env.WHISPER_MODEL ?? 'whisper-1',
+    // ─── AI chat cheklovlari (xarajat portlashini oldini olish — audit #2) ───
+    // Barcha qiymatlar .env orqali sozlanadi; standart qiymatlar xavfsiz.
+    chat: {
+      // Bitta xabar maksimal uzunligi (belgi). Ortiqcha uzun promptlarni to'sadi.
+      maxMessageChars: Number(process.env.AI_CHAT_MAX_MESSAGE_CHARS ?? 4000),
+      // Claude'ga yuboriladigan suhbat tarixidan oxirgi nechta xabar olinadi.
+      historyLimit: Number(process.env.AI_CHAT_HISTORY_LIMIT ?? 20),
+      // Suhbat tarixi uchun taxminiy token budjeti (belgi bo'yicha; ~4 belgi = 1 token).
+      historyMaxChars: Number(process.env.AI_CHAT_HISTORY_MAX_CHARS ?? 24000),
+      // Tenant (akkaunt) bo'yicha bir kunlik maksimal chat so'rovlari — asosiy xarajat to'sig'i.
+      dailyLimit: Number(process.env.AI_CHAT_DAILY_LIMIT ?? 100),
+      // Foydalanuvchi bo'yicha bir soatlik maksimal chat so'rovlari — burst/abuse himoyasi.
+      hourlyLimit: Number(process.env.AI_CHAT_HOURLY_LIMIT ?? 40),
+      // Claude javobi uchun maksimal token — javob uzunligini (va narxini) cheklaydi.
+      maxTokens: Number(process.env.AI_CHAT_MAX_TOKENS ?? 2048),
+    },
   },
   cors: {
     origins: buildCorsOrigins(),
