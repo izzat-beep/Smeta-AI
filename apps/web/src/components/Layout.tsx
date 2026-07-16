@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import { useCart } from '../lib/cart';
 import { setLanguage, type Lang } from '../i18n';
 import { api } from '../lib/api';
 import { NotificationBell } from './NotificationBell';
+import { PageLoader } from './PageLoader';
 
 const NAV = [
   { to: '/app', key: 'nav.dashboard', icon: 'lucide:layout-dashboard', end: true },
@@ -117,7 +118,11 @@ export function Layout() {
 
         {/* Faqat shu konteyner scroll bo'ladi; route almashganda qisqa fade (T5.6) */}
         <div key={location.pathname} className="route-fade flex-1 overflow-y-auto custom-scrollbar">
-          <Outlet />
+          {/* Ichki Suspense: lazy sahifa yuklanayotganda sidebar/header joyida
+              qoladi — butun ekran emas, faqat kontent maydoni indikator ko'rsatadi */}
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
     </div>

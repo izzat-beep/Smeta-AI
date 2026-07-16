@@ -633,11 +633,12 @@ export const uz = {
     register: "Ro'yxatdan o'tish",
     themeToggle: 'Tungi/kunduzgi rejim',
     badge: '2026-yil texnologiyasi bilan jihozlangan',
-    heroTitle1: 'Qurilish smetalarini',
-    heroAccent: 'AI yordamida',
-    heroTitle2: 'hisoblang',
-    heroSub: 'Smeta AI — muhandislar, pudratchilar va hunarmandlar uchun intellektual kalkulyator. Murakkab loyihalarni soniyalarda hisoblang.',
-    tryFree: "Bepul sinab ko'ring",
+    // Hero — Aziza pozitsiyalash hujjatidagi rasmiy shior №1 va UVP (2026-07-16)
+    heroTitle1: 'Smeta — 3 daqiqada.',
+    heroAccent: "O'zbekcha.",
+    heroTitle2: 'Aniq.',
+    heroSub: "Smeta AI — qurilish smetangizni o'zbek tilida, O'zbekiston narxlari bilan, 3 daqiqada tayyorlab beradigan yagona AI platforma. Birinchi loyihangiz — bepul.",
+    tryFree: 'Birinchi loyiha bepul',
     featuresTitle: 'Hammasi bitta tizimda',
     featuresSub: "Rejalashtirishdan to'liq hisobotgacha bo'lgan barcha jarayonlarni avtomatlashtiring.",
     features: [
