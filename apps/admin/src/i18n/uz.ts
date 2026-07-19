@@ -13,6 +13,7 @@ export const uz = {
     users: 'Foydalanuvchilar',
     products: 'Mahsulotlarim',
     orders: 'Buyurtmalar',
+    security: 'Xavfsizlik',
   },
   header: {
     title: 'Boshqaruv markazi', superAdmin: 'Super Admin', admin: 'Admin', vendor: 'Sotuvchi',
@@ -21,6 +22,22 @@ export const uz = {
   login: {
     title: 'Admin Panel', subtitle: 'Smeta AI boshqaruv markazi',
     email: 'Login (email)', password: 'Parol', submit: 'Kirish', loading: 'Kuting...',
+    code: 'Ikki bosqichli kod', codeHint: 'Authenticator ilovangizdagi 6 xonali kod', verify: 'Tasdiqlash',
+  },
+  security: {
+    title: 'Ikki bosqichli himoya (2FA)',
+    subtitle: 'Authenticator ilova orqali hisobingizga qo\'shimcha himoya qo\'shing.',
+    status: 'Holat', statusOn: 'Yoqilgan', statusOff: 'O\'chirilgan',
+    enable: '2FA ni yoqish', disable: '2FA ni o\'chirish',
+    setupTitle: 'Authenticator ilovaga ulang',
+    setupHint: 'Google Authenticator, Authy yoki 1Password da "kalit qo\'lda kiritish" orqali quyidagi maxfiy kalitni kiriting, so\'ng ilovadagi 6 xonali kodni tasdiqlang.',
+    secretLabel: 'Maxfiy kalit',
+    codeLabel: 'Ilovadagi 6 xonali kod',
+    confirm: 'Tasdiqlash va yoqish',
+    disableHint: 'O\'chirish uchun ilovadagi joriy 6 xonali kodni kiriting.',
+    enabledMsg: '2FA yoqildi ✓', disabledMsg: '2FA o\'chirildi',
+    copy: 'Nusxa olish', copied: 'Nusxa olindi ✓',
+    startSetup: 'Sozlashni boshlash',
   },
   changePw: {
     title: 'Parolni o\'zgartiring',

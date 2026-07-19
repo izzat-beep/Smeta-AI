@@ -10,6 +10,7 @@ interface MeResponse {
   vendor?: Vendor;
   mustChangePassword?: boolean;
   tokens?: { accessToken: string };
+  twoFactorRequired?: boolean;
 }
 
 interface AdminAuthState {
@@ -20,7 +21,7 @@ interface AdminAuthState {
   loading: boolean;
   isVendor: boolean;
   isSuperadmin: boolean;
-  login: (login: string, password: string) => Promise<void>;
+  login: (login: string, password: string, code?: string) => Promise<{ twoFactorRequired?: boolean }>;
   logout: () => void;
   refreshMe: () => Promise<void>;
 }
@@ -64,10 +65,18 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function login(loginId: string, password: string) {
-    const res = await api.post<MeResponse>('/auth/login', { email: loginId, login: loginId, password });
+  async function login(loginId: string, password: string, code?: string) {
+    const res = await api.post<MeResponse>('/auth/login', {
+      email: loginId,
+      login: loginId,
+      password,
+      ...(code ? { code } : {}),
+    });
+    // 2FA yoqilgan — server kod so'ramoqda. Token berilmagan, holat o'zgarmaydi.
+    if (res.twoFactorRequired) return { twoFactorRequired: true };
     if (res.tokens) tokenStore.set(res.tokens.accessToken);
     apply(res);
+    return {};
   }
 
   function logout() {

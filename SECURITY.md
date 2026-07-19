@@ -100,6 +100,7 @@ Cookie'lar subdomen bo'yicha izolyatsiya qilingan (`smeta_rt` — mijoz ilovasi,
 | **H10** | Web frontend CSP'sida `script-src 'unsafe-inline'` bor edi — XSS yuz bersa CSP inline skriptni to'smasdi. | `'unsafe-inline'` olib tashlandi; ikkita zarur inline skript (gtag config, tema FOUC) **SHA-256 hash** bo'yicha ruxsat etiladi, qolgani `'self'` + GTM host. Hash hisoblagich: `apps/web/scripts/csp-hashes.mjs`. `style-src 'unsafe-inline'` (Tailwind) hozircha qoladi. |
 | **H11** | `JWT_REFRESH_SECRET` o'qilardi-yu, hech qayerda ishlatilmasdi (chalg'ituvchi/o'lik konfiguratsiya). | Endi refresh token DB hash'i uchun **HMAC-SHA256 kaliti** sifatida ishlatiladi (`auth.ts`, avval kalitsiz SHA-256 edi) — DB sizib ketsa hash'lar sirsiz qayta hisoblanmaydi. Eski tokenlar uchun **legacy fallback** (o'qishda) — sessiyalar uzilmaydi, ≤7 kunda o'z-o'zidan migratsiya bo'ladi. |
 | **H12** | CI/CD yo'q edi — dependency zaifliklari va build/test regressiyalari avtomatik ushlanmasdi. | `.github/workflows/ci.yml`: har push/PR'da build (shared/api/web/admin) + xavfsizlik testlari + `npm audit --omit=dev --audit-level=high` (yuqori/kritik prod-zaiflikda yiqiladi). `.github/dependabot.yml`: haftalik npm + GitHub Actions yangilanishlari. |
+| **H13** | Admin panelda 2FA yo'q edi — parol o'g'irlansa hisob to'liq ochiq. | Platforma adminlari uchun **TOTP 2FA** (RFC 6238, dependency'siz `src/totp.ts`, RFC test vektorlari bilan sinaladi). Sir DB'da **AES-256-GCM** bilan shifrlanadi (`src/totpCrypto.ts`, kalit JWT_SECRET'dan HKDF). Login'da noto'g'ri kod ham lockout'ga hisoblanadi. Setup/enable/disable route'lari (`/api/admin/2fa/*`) + admin frontend (login kod maydoni, "Xavfsizlik" sahifasi). Migratsiya `20260719130000_admin_2fa`. **Eslatma:** JWT_SECRET rotatsiya qilinsa saqlangan 2FA sirlari o'qilmaydi — adminlar qayta ulaydi. QR rasm hozircha yo'q (qo'lda kalit kiritish); vendorlar 2FA'siz (kelajakda). |
 
 Regression testlar: `apps/api/tests/security.test.ts` (`npm run test -w @smeta/api`) —
 URL sxemasi va admin parol siyosati uchun 12 test.
@@ -116,7 +117,7 @@ o'rnatilmagan bo'lsa boshlanmaydi — bu ataylab qilingan.
 - [x] ~~CSP `script-src 'unsafe-inline'`~~ olib tashlandi (H10). Qolgani: `style-src 'unsafe-inline'` (Tailwind/inline stillar) uchun hash/nonce.
 - [x] ~~CI/CD dependency-skan~~ (H12: GitHub Actions `npm audit` + Dependabot).
 - [ ] Legacy refresh-hash fallback'ini (`auth.ts`) 2026-08 dan keyin olib tashlash (barcha eski tokenlar muddati o'tgach).
-- [ ] Admin panel uchun **2FA**.
+- [x] ~~Admin panel uchun **2FA**~~ (H13, TOTP). Qolgani: QR rasm, vendor 2FA, backup-kodlar.
 - [ ] Expired refresh-token yozuvlarini davriy tozalash (cron).
 - [ ] Muvaffaqiyatsiz login urinishlarini DB'ga yozib, hisob bloklash (account lockout).
 - [ ] Refresh token'larни davriy tozalash (expired yozuvlar uchun cron).

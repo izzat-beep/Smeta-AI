@@ -11,6 +11,7 @@ import { Users } from './pages/Users';
 import { Vendors } from './pages/Vendors';
 import { VendorProducts } from './pages/VendorProducts';
 import { VendorOrders } from './pages/VendorOrders';
+import { Security } from './pages/Security';
 
 // Bosh sahifa rolga qarab: vendor -> mahsulotlar, admin -> statistika.
 function IndexRoute() {
@@ -37,6 +38,7 @@ export function App() {
         <Route path="hisob-fakturalar" element={<Invoices />} />
         <Route path="foydalanuvchilar" element={<Users />} />
         <Route path="sotuvchilar" element={<Vendors />} />
+        <Route path="xavfsizlik" element={<Security />} />
         {/* Vendor kabineti */}
         <Route path="mahsulotlar" element={<VendorProducts />} />
         <Route path="buyurtmalar" element={<VendorOrders />} />

@@ -11,6 +11,8 @@ export function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [needCode, setNeedCode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +21,12 @@ export function Login() {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
+      const res = await login(email, password, needCode ? code : undefined);
+      if (res.twoFactorRequired) {
+        // Parol to'g'ri — endi 2FA kodini so'raymiz.
+        setNeedCode(true);
+        return;
+      }
       navigate('/');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('common.error'));
@@ -46,22 +53,46 @@ export function Login() {
         )}
 
         <form onSubmit={submit} className="space-y-5">
-          <div className="space-y-2">
-            <label className="block text-[12px] font-medium uppercase opacity-80 text-[#BCC0C7]">{t('login.email')}</label>
-            <div className="flex items-center bg-[#16181D]/40 border border-[#343841]/30 rounded-xl px-4 py-3 focus-within:border-[#5555E7]/40">
-              <Icon icon="lucide:mail" className="w-4 h-4 mr-3 opacity-70 text-[#BCC0C7]" />
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="bg-transparent outline-none w-full text-sm text-white" />
+          {!needCode ? (
+            <>
+              <div className="space-y-2">
+                <label className="block text-[12px] font-medium uppercase opacity-80 text-[#BCC0C7]">{t('login.email')}</label>
+                <div className="flex items-center bg-[#16181D]/40 border border-[#343841]/30 rounded-xl px-4 py-3 focus-within:border-[#5555E7]/40">
+                  <Icon icon="lucide:mail" className="w-4 h-4 mr-3 opacity-70 text-[#BCC0C7]" />
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="bg-transparent outline-none w-full text-sm text-white" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-[12px] font-medium uppercase opacity-80 text-[#BCC0C7]">{t('login.password')}</label>
+                <div className="flex items-center bg-[#16181D]/40 border border-[#343841]/30 rounded-xl px-4 py-3 focus-within:border-[#5555E7]/40">
+                  <Icon icon="lucide:lock" className="w-4 h-4 mr-3 opacity-70 text-[#BCC0C7]" />
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="bg-transparent outline-none w-full text-sm text-white" />
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-2">
+              <label className="block text-[12px] font-medium uppercase opacity-80 text-[#BCC0C7]">{t('login.code')}</label>
+              <div className="flex items-center bg-[#16181D]/40 border border-[#343841]/30 rounded-xl px-4 py-3 focus-within:border-[#5555E7]/40">
+                <Icon icon="lucide:shield-check" className="w-4 h-4 mr-3 opacity-70 text-[#BCC0C7]" />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                  autoFocus
+                  required
+                  placeholder="000000"
+                  className="bg-transparent outline-none w-full text-sm text-white tracking-[0.4em] font-mono"
+                />
+              </div>
+              <p className="text-[11px] text-[#BCC0C7]/70">{t('login.codeHint')}</p>
             </div>
-          </div>
-          <div className="space-y-2">
-            <label className="block text-[12px] font-medium uppercase opacity-80 text-[#BCC0C7]">{t('login.password')}</label>
-            <div className="flex items-center bg-[#16181D]/40 border border-[#343841]/30 rounded-xl px-4 py-3 focus-within:border-[#5555E7]/40">
-              <Icon icon="lucide:lock" className="w-4 h-4 mr-3 opacity-70 text-[#BCC0C7]" />
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="bg-transparent outline-none w-full text-sm text-white" />
-            </div>
-          </div>
+          )}
           <button disabled={loading} className="w-full h-12 bg-[#5555E7] hover:bg-[#4444d6] text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-60">
-            {loading ? t('login.loading') : t('login.submit')}
+            {loading ? t('login.loading') : needCode ? t('login.verify') : t('login.submit')}
             {!loading && <Icon icon="lucide:arrow-right" className="w-4 h-4" />}
           </button>
         </form>

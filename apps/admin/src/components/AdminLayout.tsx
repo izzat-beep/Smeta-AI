@@ -12,6 +12,7 @@ const STAFF_NAV = [
   { to: '/sotuvchilar', key: 'nav.vendors', icon: 'lucide:store' },
   { to: '/hisob-fakturalar', key: 'nav.invoices', icon: 'lucide:receipt' },
   { to: '/foydalanuvchilar', key: 'nav.users', icon: 'lucide:users' },
+  { to: '/xavfsizlik', key: 'nav.security', icon: 'lucide:shield-check' },
 ];
 
 const VENDOR_NAV = [
