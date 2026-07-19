@@ -6,7 +6,9 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: smeta
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-smeta}
+      # Default YO'Q — .env da o'rnatilmasa deploy shu yerda to'xtaydi
+      # (aks holda DB 'smeta'/'smeta' zaif parol bilan ishga tushardi).
+      POSTGRES_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD .env faylida majburiy - kuchli parol qoying}"
       POSTGRES_DB: smeta
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -22,7 +24,7 @@ services:
       dockerfile: apps/api/Dockerfile
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://smeta:${DB_PASSWORD:-smeta}@db:5432/smeta?schema=public
+      DATABASE_URL: "postgresql://smeta:${DB_PASSWORD:?DB_PASSWORD .env faylida majburiy}@db:5432/smeta?schema=public"
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
