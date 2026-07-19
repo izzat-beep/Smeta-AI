@@ -17,6 +17,8 @@ import {
 } from '../auth.js';
 import * as s from '../serialize.js';
 import { isLocked, lockRemainingSeconds, nextFailedState, CLEARED_STATE, needsClear } from '../lockout.js';
+import { verifyTOTP, generateSecret, otpauthURL } from '../totp.js';
+import { encryptSecret, decryptSecret } from '../totpCrypto.js';
 import { PLAN_PRICES } from '@smeta/shared';
 import { allowedNextStatuses, notifyOrderStatus, notifyCustomerMessage } from '../notify.js';
 import { buildNotificationsRouter } from './notifications.js';
@@ -38,7 +40,7 @@ adminRouter.post(
   '/auth/login',
   adminLoginLimiter,
   ah(async (req, res) => {
-    const body = z.object({ email: z.string().optional(), login: z.string().optional(), password: z.string() }).parse(req.body);
+    const body = z.object({ email: z.string().optional(), login: z.string().optional(), password: z.string(), code: z.string().optional() }).parse(req.body);
     const identifier = (body.email ?? body.login ?? '').trim();
     const fail = (reason: string) => {
       // eslint-disable-next-line no-console
@@ -66,6 +68,24 @@ adminRouter.post(
         await prisma.adminUser.update({ where: { id: admin.id }, data: next });
         if (next.lockedUntil) return locked(lockRemainingSeconds(next));
         return fail('bad_password');
+      }
+      // 2FA — yoqilgan bo'lsa TOTP kodi talab qilinadi. Kod kelmagan bo'lsa
+      // token BERILMAYDI, frontend'ga "kod kerak" signali qaytadi.
+      if (admin.totpEnabled) {
+        if (!body.code) return res.json({ twoFactorRequired: true });
+        let codeOk = false;
+        try {
+          codeOk = !!admin.totpSecret && verifyTOTP(decryptSecret(admin.totpSecret), body.code);
+        } catch {
+          codeOk = false;
+        }
+        if (!codeOk) {
+          // Noto'g'ri kod ham lockout'ga hisoblanadi (6-raqamli kodni brute-force qilmasin).
+          const next = nextFailedState(admin);
+          await prisma.adminUser.update({ where: { id: admin.id }, data: next });
+          if (next.lockedUntil) return locked(lockRemainingSeconds(next));
+          return fail('bad_2fa');
+        }
       }
       if (needsClear(admin)) await prisma.adminUser.update({ where: { id: admin.id }, data: CLEARED_STATE });
       const accessToken = signAdminAccess({ sub: admin.id, role: admin.role });
@@ -200,6 +220,72 @@ adminRouter.get(
     const admin = await prisma.adminUser.findUnique({ where: { id: req.admin!.sub } });
     if (!admin) return res.status(404).json({ error: 'not_found', message: 'Topilmadi' });
     res.json({ role: admin.role, admin: s.adminUser(admin) });
+  }),
+);
+
+// ═══════════════════════════════════════════════════════════════════════
+//  2FA (TOTP) — platforma adminlari uchun (vendorlar emas)
+// ═══════════════════════════════════════════════════════════════════════
+
+// 1) Setup: yangi sir yaratadi (hali YOQILMAYDI), otpauth URL qaytaradi.
+//    Sir shifrlangan holda saqlanadi; totpEnabled=true bo'lgach kuchga kiradi.
+adminRouter.post(
+  '/2fa/setup',
+  requireStaff,
+  ah(async (req, res) => {
+    const admin = await prisma.adminUser.findUnique({ where: { id: req.admin!.sub } });
+    if (!admin) return res.status(404).json({ error: 'not_found', message: 'Topilmadi' });
+    if (admin.totpEnabled) {
+      return res.status(400).json({ error: 'already_enabled', message: '2FA allaqachon yoqilgan. Avval o\'chiring.' });
+    }
+    const secret = generateSecret();
+    await prisma.adminUser.update({ where: { id: admin.id }, data: { totpSecret: encryptSecret(secret) } });
+    res.json({ secret, otpauthUrl: otpauthURL(secret, admin.email) });
+  }),
+);
+
+// 2) Enable: setup'dagi sir bo'yicha kodni tekshirib, 2FA'ni yoqadi.
+adminRouter.post(
+  '/2fa/enable',
+  requireStaff,
+  ah(async (req, res) => {
+    const { code } = z.object({ code: z.string().min(6) }).parse(req.body);
+    const admin = await prisma.adminUser.findUnique({ where: { id: req.admin!.sub } });
+    if (!admin || !admin.totpSecret) {
+      return res.status(400).json({ error: 'no_setup', message: 'Avval 2FA sozlashni boshlang (setup).' });
+    }
+    if (admin.totpEnabled) return res.json({ ok: true });
+    let ok = false;
+    try {
+      ok = verifyTOTP(decryptSecret(admin.totpSecret), code);
+    } catch {
+      ok = false;
+    }
+    if (!ok) return res.status(400).json({ error: 'bad_code', message: 'Kod noto\'g\'ri. Qaytadan urinib ko\'ring.' });
+    await prisma.adminUser.update({ where: { id: admin.id }, data: { totpEnabled: true } });
+    res.json({ ok: true });
+  }),
+);
+
+// 3) Disable: joriy TOTP kodini tasdiqlab, 2FA'ni o'chiradi va sirni tozalaydi.
+adminRouter.post(
+  '/2fa/disable',
+  requireStaff,
+  ah(async (req, res) => {
+    const { code } = z.object({ code: z.string().min(6) }).parse(req.body);
+    const admin = await prisma.adminUser.findUnique({ where: { id: req.admin!.sub } });
+    if (!admin || !admin.totpEnabled || !admin.totpSecret) {
+      return res.status(400).json({ error: 'not_enabled', message: '2FA yoqilmagan.' });
+    }
+    let ok = false;
+    try {
+      ok = verifyTOTP(decryptSecret(admin.totpSecret), code);
+    } catch {
+      ok = false;
+    }
+    if (!ok) return res.status(400).json({ error: 'bad_code', message: 'Kod noto\'g\'ri.' });
+    await prisma.adminUser.update({ where: { id: admin.id }, data: { totpEnabled: false, totpSecret: null } });
+    res.json({ ok: true });
   }),
 );
 

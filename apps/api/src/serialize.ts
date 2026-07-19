@@ -311,6 +311,8 @@ export function adminUser(a: any) {
     email: a.email,
     fullName: a.fullName,
     role: a.role,
+    // 2FA holati (sir HECH QACHON chiqmaydi — faqat yoqilgan/yo'qligini bildiramiz).
+    totpEnabled: !!a.totpEnabled,
     createdAt: iso(a.createdAt),
   };
 }

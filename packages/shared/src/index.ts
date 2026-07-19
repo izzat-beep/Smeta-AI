@@ -77,6 +77,7 @@ export interface AdminUser {
   email: string;
   fullName: string;
   role: AdminRole;
+  totpEnabled?: boolean;
   createdAt: string;
 }
 
