@@ -30,7 +30,9 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       WHISPER_MODEL: ${WHISPER_MODEL:-whisper-1}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@smeta.ai}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin1234}
+      # Default YO'Q — .env da o'rnatilmasa deploy shu yerda to'xtaydi.
+      # (bootstrap.ts ham productionda zaif/namuna parolni rad etadi.)
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:?ADMIN_PASSWORD .env faylida majburiy - kuchli parol qoying}"
       # CORS: brauzer so'rovlari ruxsat etilishi uchun DOMAIN api konteynerига ham
       # berilishi SHART. Aks holda ruxsat etilgan originlar ro'yxati bo'sh bo'lib,
       # https://DOMAIN dan kelgan har bir so'rov 403 "ruxsat etilmagan origin" bo'ladi.

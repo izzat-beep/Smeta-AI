@@ -29,9 +29,11 @@ docker compose -f docker-compose.prod.yml up -d --build
 ```
 Bir necha daqiqada Caddy avtomatik bepul SSL oladi. Tayyor:
 - **https://smeta.uz** — mijoz ilovasi
-- **https://admin.smeta.uz** — admin (`admin@smeta.ai` / `admin1234`)
+- **https://admin.smeta.uz** — admin panel
 
-> Admin paroli birinchi ishga tushishda yaratiladi. O'zgartirish: `.env` ga `ADMIN_EMAIL` / `ADMIN_PASSWORD` qo'shing.
+> Admin akkaunti birinchi ishga tushishda `.env` dagi `ADMIN_EMAIL` / `ADMIN_PASSWORD`
+> bilan yaratiladi. `ADMIN_PASSWORD` **majburiy** (kamida 10 belgi, namuna parollar
+> rad etiladi) — o'rnatilmasa deploy boshlanmaydi.
 
 ## 5. (Ixtiyoriy) Demo ma'lumot qo'shish
 ```bash

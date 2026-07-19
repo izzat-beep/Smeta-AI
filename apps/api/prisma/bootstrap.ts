@@ -6,15 +6,30 @@ import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { adminPasswordProblems } from '../src/adminCreds.js';
 
 dotenv.config({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../.env') });
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // Super admin (kodda saqlanadi — saytda ko'rsatilmaydi). Prodda ADMIN_EMAIL/ADMIN_PASSWORD bilan almashtiring.
+  // Super admin. Dev'da default qulaylik uchun qoladi; productionda esa
+  // ADMIN_PASSWORD majburiy va kuchli bo'lishi shart (fail-fast, aks holda
+  // repodagi ochiq parol bilan superadmin akkaunti yaratilib qolardi).
   const adminEmail = process.env.ADMIN_EMAIL ?? 'superadmin@smeta-ai.uz';
   const adminPassword = process.env.ADMIN_PASSWORD ?? 'Smeta@Admin2026';
+
+  if (process.env.NODE_ENV === 'production') {
+    const problems = adminPasswordProblems(process.env.ADMIN_PASSWORD);
+    if (problems.length) {
+      console.error(
+        '\n  ❌ Xavfsizlik: bootstrap to\'xtatildi:\n' +
+          problems.map((p) => `     • ${p}`).join('\n') +
+          '\n  .env faylida ADMIN_PASSWORD ni kuchli parolga o\'rnating va qayta deploy qiling.\n',
+      );
+      process.exit(1);
+    }
+  }
 
   // Admin (upsert — mavjud bo'lsa tegmaydi/yangilaydi)
   await prisma.adminUser.upsert({
