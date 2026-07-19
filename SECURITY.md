@@ -84,9 +84,27 @@ Cookie'lar subdomen bo'yicha izolyatsiya qilingan (`smeta_rt` — mijoz ilovasi,
 
 ---
 
+## 4.1. Qo'shimcha hardening (2026-07-19 audit)
+
+| ID | Zaiflik | Tuzatish |
+|----|---------|----------|
+| **H1** | `docker-compose.prod.yml` da `ADMIN_PASSWORD` default `admin1234`, `bootstrap.ts` da `Smeta@Admin2026` — repoda ochiq parol bilan superadmin yaratilishi mumkin edi. | Compose'da default olib tashlandi (`${ADMIN_PASSWORD:?...}` — o'rnatilmasa deploy to'xtaydi). `bootstrap.ts` productionda **fail-fast**: parol yo'q, namuna/dev parol yoki 10 belgidan qisqa bo'lsa chiqib ketadi (`src/adminCreds.ts`). `render.yaml` va `.env.prod.example` ga `ADMIN_EMAIL`/`ADMIN_PASSWORD` qo'shildi. |
+| **H2** | `POST /auth/register` rate-limitsiz — ommaviy soxta tenant (spam, tenant-boshiga AI limitlarini ko'paytirish). | `registerLimiter`: IP bo'yicha 1 soatda 5 urinish. |
+| **H3** | `forgot-password` faqat IP bo'yicha cheklangan — IP almashtirib bitta akkaunt telefonini brute-force qilish mumkin edi. | Qo'shimcha `forgotEmailLimiter`: bitta email bo'yicha 1 soatda 5 urinish (IP'dan qat'i nazar). **Qoldiq risk (dizayn):** email+telefonni bilgan hujumchi parolni tiklay oladi — email/SMS tasdiqlash xizmati qo'shilganda bu oqim almashtirilishi kerak. |
+| **H4** | `avatarUrl`/`logoUrl`/`imageUrl` istalgan satrni qabul qilardi (`javascript:`, `data:` sxemalar, cheksiz uzunlik) va `<img src>` orqali render qilinadi. | Yagona `optionalHttpUrl` zod sxemasi (`util.ts`): faqat `http(s)`, maks 2048 belgi; `''` → `null` (tozalash). `settings.ts`, `materials.ts`, `admin.ts` (vendor/product) ga qo'llandi. |
+| **H5** | Frontend HTML javoblarida HSTS yo'q edi (helmet faqat API'ga qo'yadi). | Caddyfile'da ikkala saytga `Strict-Transport-Security: max-age=31536000; includeSubDomains`. |
+
+Regression testlar: `apps/api/tests/security.test.ts` (`npm run test -w @smeta/api`) —
+URL sxemasi va admin parol siyosati uchun 12 test.
+
+**Eslatma (breaking change):** endi production deploy `.env`da `ADMIN_PASSWORD`
+o'rnatilmagan bo'lsa boshlanmaydi — bu ataylab qilingan.
+
+---
+
 ## 5. Qolgan tavsiyalar (kelajak uchun)
 
-- [ ] **HSTS preload** va Caddy'da TLS minimal versiyasini sozlash.
+- [x] ~~HSTS~~ (H5, 2026-07-19). Qolgani: **preload** va Caddy'da TLS minimal versiyasini sozlash.
 - [ ] Muvaffaqiyatsiz login urinishlarini DB'ga yozib, hisob bloklash (account lockout).
 - [ ] Refresh token'larни davriy tozalash (expired yozuvlar uchun cron).
 - [ ] CSP'dagi `'unsafe-inline'` (style/script) ni nonce/hash bilan almashtirish — hozir
