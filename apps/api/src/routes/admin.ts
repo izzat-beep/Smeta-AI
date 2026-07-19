@@ -16,6 +16,7 @@ import {
   requireAdminRole,
 } from '../auth.js';
 import * as s from '../serialize.js';
+import { isLocked, lockRemainingSeconds, nextFailedState, CLEARED_STATE, needsClear } from '../lockout.js';
 import { PLAN_PRICES } from '@smeta/shared';
 import { allowedNextStatuses, notifyOrderStatus, notifyCustomerMessage } from '../notify.js';
 import { buildNotificationsRouter } from './notifications.js';
@@ -44,13 +45,29 @@ adminRouter.post(
       console.warn(`[admin-auth] Muvaffaqiyatsiz login — id=${identifier} ip=${req.ip} reason=${reason} time=${new Date().toISOString()}`);
       return res.status(401).json({ error: 'unauthorized', message: 'Login yoki parol noto\'g\'ri' });
     };
+    const locked = (remainingSec: number) => {
+      const min = Math.max(1, Math.ceil(remainingSec / 60));
+      // eslint-disable-next-line no-console
+      console.warn(`[admin-auth] Bloklangan akkaunt — id=${identifier} ip=${req.ip} time=${new Date().toISOString()}`);
+      return res.status(429).json({
+        error: 'account_locked',
+        message: `Ko'p muvaffaqiyatsiz urinish. Hisob vaqtincha bloklandi — ${min} daqiqadan so'ng qayta urinib ko'ring.`,
+      });
+    };
     if (!identifier) return fail('empty');
 
     // 1) Platforma admini (AdminUser)
     const admin = await prisma.adminUser.findUnique({ where: { email: identifier } });
     if (admin) {
+      if (isLocked(admin)) return locked(lockRemainingSeconds(admin));
       const ok = await bcrypt.compare(body.password, admin.passwordHash);
-      if (!ok) return fail('bad_password');
+      if (!ok) {
+        const next = nextFailedState(admin);
+        await prisma.adminUser.update({ where: { id: admin.id }, data: next });
+        if (next.lockedUntil) return locked(lockRemainingSeconds(next));
+        return fail('bad_password');
+      }
+      if (needsClear(admin)) await prisma.adminUser.update({ where: { id: admin.id }, data: CLEARED_STATE });
       const accessToken = signAdminAccess({ sub: admin.id, role: admin.role });
       const refresh = await issueRefreshToken({ kind: 'admin', subjectId: admin.id, role: admin.role });
       setRefreshCookie(res, 'admin', refresh);
@@ -60,9 +77,16 @@ adminRouter.post(
     // 2) Vendor (material sotuvchi)
     const v = await prisma.vendor.findUnique({ where: { login: identifier } });
     if (v) {
+      if (isLocked(v)) return locked(lockRemainingSeconds(v));
       const ok = await bcrypt.compare(body.password, v.passwordHash);
-      if (!ok) return fail('bad_password');
+      if (!ok) {
+        const next = nextFailedState(v);
+        await prisma.vendor.update({ where: { id: v.id }, data: next });
+        if (next.lockedUntil) return locked(lockRemainingSeconds(next));
+        return fail('bad_password');
+      }
       if (v.status === 'BLOCKED') return res.status(403).json({ error: 'forbidden', message: 'Hisobingiz bloklangan. Administrator bilan bog\'laning.' });
+      if (needsClear(v)) await prisma.vendor.update({ where: { id: v.id }, data: CLEARED_STATE });
       const accessToken = signAdminAccess({ sub: v.id, role: 'VENDOR' });
       const refresh = await issueRefreshToken({ kind: 'admin', subjectId: v.id, role: 'VENDOR' });
       setRefreshCookie(res, 'admin', refresh);
@@ -441,6 +465,9 @@ adminRouter.patch(
     if (body.password) {
       data.passwordHash = await bcrypt.hash(body.password, 12);
       data.mustChangePassword = true;
+      // Parol tiklanganda lockout ham tozalanadi.
+      data.failedLoginAttempts = 0;
+      data.lockedUntil = null;
     }
     // Sotuvchi bloklansa — barcha eski sessiyalarini bekor qilamiz.
     if (body.status === 'BLOCKED') {

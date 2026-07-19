@@ -147,6 +147,10 @@ model User {
   position     String?
   avatarUrl    String?
   language     String?  @default("uz") // interfeys tili: uz | ru
+  // Account lockout (brute-force himoyasi): ketma-ket muvaffaqiyatsiz
+  // urinishlar soni va vaqtinchalik blok muddati.
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -165,6 +169,8 @@ model AdminUser {
   fullName     String
   passwordHash String
   role         AdminRole @default(SUPPORT)
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
   createdAt    DateTime  @default(now())
 }
 
@@ -262,6 +268,8 @@ model Vendor {
   logoUrl            String?
   status             VendorStatus @default(ACTIVE)
   mustChangePassword Boolean      @default(true)
+  failedLoginAttempts Int         @default(0)
+  lockedUntil         DateTime?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 

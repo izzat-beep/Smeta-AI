@@ -15,8 +15,19 @@ import {
   requireAuth,
 } from '../auth.js';
 import * as s from '../serialize.js';
+import { isLocked, lockRemainingSeconds, nextFailedState, CLEARED_STATE, needsClear } from '../lockout.js';
 
 export const authRouter = Router();
+
+// Bloklangan akkaunt uchun umumiy javob (429). Blok mavjud akkaunt borligini
+// oshkor qiladi — bu qoldiq risk lockout.ts va SECURITY.md'da hujjatlashtirilgan.
+function lockedResponse(res: any, remainingSec: number) {
+  const min = Math.max(1, Math.ceil(remainingSec / 60));
+  return res.status(429).json({
+    error: 'account_locked',
+    message: `Ko'p muvaffaqiyatsiz urinish. Hisob vaqtincha bloklandi — ${min} daqiqadan so'ng qayta urinib ko'ring.`,
+  });
+}
 
 // Login uchun rate limiting: IP bo'yicha 15 daqiqada 5 urinish.
 const loginLimiter = rateLimit({
@@ -114,11 +125,24 @@ authRouter.post(
       logFailedLogin(req, body.email, 'user_not_found');
       return res.status(401).json({ error: 'unauthorized', message: 'Email yoki parol noto\'g\'ri' });
     }
+
+    // Blok holatida parol tekshirilmaydi.
+    if (isLocked(u)) {
+      logFailedLogin(req, body.email, 'account_locked');
+      return lockedResponse(res, lockRemainingSeconds(u));
+    }
+
     const ok = await bcrypt.compare(body.password, u.passwordHash);
     if (!ok) {
-      logFailedLogin(req, body.email, 'bad_password');
+      const next = nextFailedState(u);
+      await prisma.user.update({ where: { id: u.id }, data: next });
+      logFailedLogin(req, body.email, next.lockedUntil ? 'bad_password_locked' : 'bad_password');
+      if (next.lockedUntil) return lockedResponse(res, lockRemainingSeconds(next));
       return res.status(401).json({ error: 'unauthorized', message: 'Email yoki parol noto\'g\'ri' });
     }
+
+    // Muvaffaqiyatli login — hisoblagichni tozalaymiz (kerak bo'lsa).
+    if (needsClear(u)) await prisma.user.update({ where: { id: u.id }, data: CLEARED_STATE });
 
     const accessToken = signTenantAccess({ sub: u.id, tenantId: u.tenantId, role: u.role });
     const refresh = await issueRefreshToken({ kind: 'tenant', subjectId: u.id, tenantId: u.tenantId, role: u.role });
@@ -180,7 +204,9 @@ authRouter.post(
     }
 
     const passwordHash = await bcrypt.hash(body.newPassword, 12);
-    await prisma.user.update({ where: { id: u.id }, data: { passwordHash } });
+    // Parol tiklanganda lockout ham tozalanadi (aks holda foydalanuvchi
+    // parolni yangilab ham bloklangan bo'lib qolardi).
+    await prisma.user.update({ where: { id: u.id }, data: { passwordHash, ...CLEARED_STATE } });
     // Parol o'zgargach barcha eski sessiyalarni bekor qilamiz.
     await prisma.refreshToken.updateMany({ where: { userId: u.id, revokedAt: null }, data: { revokedAt: new Date() } });
     res.json({ ok: true, message: 'Parol muvaffaqiyatli yangilandi. Endi yangi parol bilan kiring.' });
