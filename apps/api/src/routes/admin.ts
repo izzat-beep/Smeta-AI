@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { prisma, toNum } from '../prisma.js';
-import { ah } from '../util.js';
+import { ah, optionalHttpUrl } from '../util.js';
 import {
   signAdminAccess,
   issueRefreshToken,
@@ -401,7 +401,7 @@ adminRouter.post(
         login: z.string().min(3),
         password: z.string().min(6),
         shopName: z.string().optional().nullable(),
-        logoUrl: z.string().optional().nullable(),
+        logoUrl: optionalHttpUrl,
       })
       .parse(req.body);
     const existing = await prisma.vendor.findUnique({ where: { login: body.login } });
@@ -430,7 +430,7 @@ adminRouter.patch(
         name: z.string().min(2).optional(),
         phone: z.string().optional().nullable(),
         shopName: z.string().optional().nullable(),
-        logoUrl: z.string().optional().nullable(),
+        logoUrl: optionalHttpUrl,
         status: z.enum(['ACTIVE', 'BLOCKED']).optional(),
         password: z.string().min(6).optional(), // parolni tiklash
       })
@@ -498,7 +498,7 @@ const vendorProductSchema = z.object({
   priceUzs: z.number().nonnegative().optional(),
   priceUsd: z.number().nonnegative().optional(),
   stock: z.number().nonnegative().optional(),
-  imageUrl: z.string().optional().nullable(),
+  imageUrl: optionalHttpUrl,
   isActive: z.boolean().optional(),
 });
 

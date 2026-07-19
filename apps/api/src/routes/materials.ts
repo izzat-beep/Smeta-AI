@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../prisma.js';
-import { ah } from '../util.js';
+import { ah, optionalHttpUrl } from '../util.js';
 import { requireRole } from '../auth.js';
 import * as s from '../serialize.js';
 
@@ -64,7 +64,7 @@ const upsertSchema = z.object({
   priceUsd: z.number().nonnegative().optional(),
   stock: z.number().nonnegative().optional(),
   rating: z.number().min(0).max(5).optional(),
-  imageUrl: z.string().optional().nullable(),
+  imageUrl: optionalHttpUrl,
 });
 
 materialsRouter.post(

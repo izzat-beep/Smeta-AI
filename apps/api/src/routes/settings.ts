@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../prisma.js';
-import { ah } from '../util.js';
+import { ah, optionalHttpUrl } from '../util.js';
 import * as s from '../serialize.js';
 
 export const settingsRouter = Router();
@@ -19,7 +19,7 @@ const updateSchema = z.object({
   fullName: z.string().min(2).optional(),
   phone: z.string().optional().nullable(),
   position: z.string().optional().nullable(),
-  avatarUrl: z.string().optional().nullable(),
+  avatarUrl: optionalHttpUrl,
   language: z.enum(['uz', 'ru']).optional(),
   company: z
     .object({
