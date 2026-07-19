@@ -93,6 +93,8 @@ Cookie'lar subdomen bo'yicha izolyatsiya qilingan (`smeta_rt` — mijoz ilovasi,
 | **H3** | `forgot-password` faqat IP bo'yicha cheklangan — IP almashtirib bitta akkaunt telefonini brute-force qilish mumkin edi. | Qo'shimcha `forgotEmailLimiter`: bitta email bo'yicha 1 soatda 5 urinish (IP'dan qat'i nazar). **Qoldiq risk (dizayn):** email+telefonni bilgan hujumchi parolni tiklay oladi — email/SMS tasdiqlash xizmati qo'shilganda bu oqim almashtirilishi kerak. |
 | **H4** | `avatarUrl`/`logoUrl`/`imageUrl` istalgan satrni qabul qilardi (`javascript:`, `data:` sxemalar, cheksiz uzunlik) va `<img src>` orqali render qilinadi. | Yagona `optionalHttpUrl` zod sxemasi (`util.ts`): faqat `http(s)`, maks 2048 belgi; `''` → `null` (tozalash). `settings.ts`, `materials.ts`, `admin.ts` (vendor/product) ga qo'llandi. |
 | **H5** | Frontend HTML javoblarida HSTS yo'q edi (helmet faqat API'ga qo'yadi). | Caddyfile'da ikkala saytga `Strict-Transport-Security: max-age=31536000; includeSubDomains`. |
+| **H6** | `DB_PASSWORD` default `smeta` edi (compose'da `:-smeta`, `DATABASE_URL`da ham) — konteyner tarmog'iga kirgan hujumchi ma'lum parol bilan DB'ga to'liq kirardi. | Compose'da default olib tashlandi (`${DB_PASSWORD:?...}` — o'rnatilmasa deploy to'xtaydi); `.env.prod.example` bo'shatildi + `openssl rand -base64 24` ko'rsatmasi. **BREAKING:** prod deploy `.env`da `DB_PASSWORD` talab qiladi. |
+| **H7** | AI chat SSE xatosida (`ai.ts`) `err.message` productionda ham clientga uzatilardi (upstream xabari, kalit holati sizishi). | Productionda umumiy xabar; to'liq xato faqat `console.error`. Dev'da batafsil qoladi. |
 
 Regression testlar: `apps/api/tests/security.test.ts` (`npm run test -w @smeta/api`) —
 URL sxemasi va admin parol siyosati uchun 12 test.
