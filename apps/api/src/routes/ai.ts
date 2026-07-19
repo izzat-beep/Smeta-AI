@@ -177,7 +177,13 @@ aiRouter.post(
         });
         await stream.finalMessage();
       } catch (err: any) {
-        const msg = `Kechirasiz, AI xizmatiga ulanishda xatolik yuz berdi: ${err?.message ?? 'noma\'lum'}. ANTHROPIC_API_KEY to'g'ri sozlanganini tekshiring.`;
+        // To'liq xato faqat server logiga — ichki tafsilotlar (upstream xabari,
+        // kalit holati) clientga sizmasin. Foydalanuvchiga umumiy xabar.
+        // eslint-disable-next-line no-console
+        console.error('[ai/chat] Claude stream xatosi:', err);
+        const msg = config.isProd
+          ? "Kechirasiz, AI xizmatiga hozir ulanib bo'lmadi. Biroz o'tib qayta urinib ko'ring."
+          : `Kechirasiz, AI xizmatiga ulanishda xatolik yuz berdi: ${err?.message ?? 'noma\'lum'}. ANTHROPIC_API_KEY to'g'ri sozlanganini tekshiring.`;
         full = msg;
         send('delta', { text: msg });
       }
