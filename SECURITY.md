@@ -98,6 +98,8 @@ Cookie'lar subdomen bo'yicha izolyatsiya qilingan (`smeta_rt` — mijoz ilovasi,
 | **H8** | Account lockout yo'q edi — IP rate-limit'ni chetlab (proxy/botnet bilan IP almashtirib) sekin brute-force qilish mumkin edi. | `User`/`AdminUser`/`Vendor`ga `failedLoginAttempts`+`lockedUntil` (migratsiya `20260719120000_login_lockout`). 10 ketma-ket xatodan so'ng akkaunt 15 daqiqaga bloklanadi (avto-ochiladi), muvaffaqiyatli login yoki parol tiklash hisoblagichni tozalaydi (`src/lockout.ts`). Chegara/muddat `.env` orqali sozlanadi. **Qoldiq risk:** mavjud akkauntni qasddan bloklab qo'yish (lockout-DoS) — yuqori chegara + avto-ochilish yumshatadi. |
 | **H9** | API konteyneri `root` user'da ishlardi. | `apps/api/Dockerfile` endi `USER node` (uid 1000) bilan ishlaydi; `/app` egaligi shu user'ga o'tkaziladi. |
 | **H10** | Web frontend CSP'sida `script-src 'unsafe-inline'` bor edi — XSS yuz bersa CSP inline skriptni to'smasdi. | `'unsafe-inline'` olib tashlandi; ikkita zarur inline skript (gtag config, tema FOUC) **SHA-256 hash** bo'yicha ruxsat etiladi, qolgani `'self'` + GTM host. Hash hisoblagich: `apps/web/scripts/csp-hashes.mjs`. `style-src 'unsafe-inline'` (Tailwind) hozircha qoladi. |
+| **H11** | `JWT_REFRESH_SECRET` o'qilardi-yu, hech qayerda ishlatilmasdi (chalg'ituvchi/o'lik konfiguratsiya). | Endi refresh token DB hash'i uchun **HMAC-SHA256 kaliti** sifatida ishlatiladi (`auth.ts`, avval kalitsiz SHA-256 edi) — DB sizib ketsa hash'lar sirsiz qayta hisoblanmaydi. Eski tokenlar uchun **legacy fallback** (o'qishda) — sessiyalar uzilmaydi, ≤7 kunda o'z-o'zidan migratsiya bo'ladi. |
+| **H12** | CI/CD yo'q edi — dependency zaifliklari va build/test regressiyalari avtomatik ushlanmasdi. | `.github/workflows/ci.yml`: har push/PR'da build (shared/api/web/admin) + xavfsizlik testlari + `npm audit --omit=dev --audit-level=high` (yuqori/kritik prod-zaiflikda yiqiladi). `.github/dependabot.yml`: haftalik npm + GitHub Actions yangilanishlari. |
 
 Regression testlar: `apps/api/tests/security.test.ts` (`npm run test -w @smeta/api`) —
 URL sxemasi va admin parol siyosati uchun 12 test.
@@ -112,6 +114,10 @@ o'rnatilmagan bo'lsa boshlanmaydi — bu ataylab qilingan.
 - [x] ~~HSTS~~ (H5, 2026-07-19). Qolgani: **preload** va Caddy'da TLS minimal versiyasini sozlash.
 - [x] ~~Account lockout~~ (H8, 2026-07-19).
 - [x] ~~CSP `script-src 'unsafe-inline'`~~ olib tashlandi (H10). Qolgani: `style-src 'unsafe-inline'` (Tailwind/inline stillar) uchun hash/nonce.
+- [x] ~~CI/CD dependency-skan~~ (H12: GitHub Actions `npm audit` + Dependabot).
+- [ ] Legacy refresh-hash fallback'ini (`auth.ts`) 2026-08 dan keyin olib tashlash (barcha eski tokenlar muddati o'tgach).
+- [ ] Admin panel uchun **2FA**.
+- [ ] Expired refresh-token yozuvlarini davriy tozalash (cron).
 - [ ] Muvaffaqiyatsiz login urinishlarini DB'ga yozib, hisob bloklash (account lockout).
 - [ ] Refresh token'larни davriy tozalash (expired yozuvlar uchun cron).
 - [ ] CSP'dagi `'unsafe-inline'` (style/script) ni nonce/hash bilan almashtirish — hozir
