@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  build-test:
+    name: Build, test, audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install (npm ci)
+        run: npm ci
+
+      - name: Build shared
+        run: npm run build -w @smeta/shared
+
+      - name: Prisma generate
+        run: npm run db:generate -w @smeta/api
+
+      - name: Build API (typecheck)
+        run: npm run build -w @smeta/api
+
+      - name: Security tests
+        run: npm run test -w @smeta/api
+
+      - name: Build web
+        run: npm run build -w @smeta/web
+
+      - name: Build admin
+        run: npm run build -w @smeta/admin
+
+  audit:
+    name: Dependency audit (production)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # Faqat production dependency'lar; yuqori/kritik zaiflik topilsa CI yiqiladi.
+      # (Dev-only tooling zaifliklari alohida — build'ni to'smaydi.)
+      - name: npm audit (omit dev)
+        run: npm audit --omit=dev --audit-level=high
