@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { optionalHttpUrl } from '../src/util.js';
 import { adminPasswordProblems } from '../src/adminCreds.js';
 import { isLocked, nextFailedState, needsClear, lockRemainingSeconds, LOCKOUT } from '../src/lockout.js';
+import { hmacHashToken, legacyHashToken } from '../src/auth.js';
 
 // ─── URL maydonlari (avatarUrl/logoUrl/imageUrl) ─────────────────────────────
 
@@ -100,4 +101,22 @@ test('needsClear: toza holatda false, iflos holatda true', () => {
   assert.equal(needsClear({ failedLoginAttempts: 0, lockedUntil: null }), false);
   assert.equal(needsClear({ failedLoginAttempts: 1, lockedUntil: null }), true);
   assert.equal(needsClear({ failedLoginAttempts: 0, lockedUntil: new Date() }), true);
+});
+
+// ─── Refresh token HMAC hashing (JWT_REFRESH_SECRET endi ishlatiladi) ────────
+
+test('hmacHashToken: deterministik (bir xil kirish -> bir xil hash)', () => {
+  assert.equal(hmacHashToken('token-abc', 'sir'), hmacHashToken('token-abc', 'sir'));
+});
+
+test('hmacHashToken: kalit HMAC natijasiga ta\'sir qiladi', () => {
+  assert.notEqual(hmacHashToken('token-abc', 'sir1'), hmacHashToken('token-abc', 'sir2'));
+});
+
+test('hmacHashToken: legacy (kalitsiz) SHA-256 dan farq qiladi', () => {
+  assert.notEqual(hmacHashToken('token-abc', 'sir'), legacyHashToken('token-abc'));
+});
+
+test('hmacHashToken: 64 belgili hex qaytaradi', () => {
+  assert.match(hmacHashToken('x', 'y'), /^[0-9a-f]{64}$/);
 });

@@ -33,8 +33,30 @@ export function signAdminAccess(payload: Omit<AdminTokenPayload, 'kind'>) {
 // ─── Refresh tokenlar (opaque + DB, rotatsiya, reuse-detection) ──────────────
 const REFRESH_BYTES = 48;
 
-function hashToken(raw: string): string {
+// Refresh token DB'da HMAC-SHA256 hash ko'rinishida saqlanadi. Kalit —
+// JWT_REFRESH_SECRET (endi haqiqiy vazifaga ega): DB sizib ketsa ham hash'lar
+// sirsiz qayta hisoblab bo'lmaydi (defense-in-depth).
+export function hmacHashToken(raw: string, secret: string): string {
+  return crypto.createHmac('sha256', secret).update(raw).digest('hex');
+}
+
+// Legacy (kalitsiz) SHA-256 — 2026-07-19 dan oldin berilgan tokenlar uchun.
+// Eski sessiyalar uzilmasligi uchun o'qishda fallback qilinadi. Refresh
+// tokenlar ≤7 kunda muddati o'tgani sabab bu fallbackni 2026-08 dan keyin
+// olib tashlash mumkin.
+export function legacyHashToken(raw: string): string {
   return crypto.createHash('sha256').update(raw).digest('hex');
+}
+
+function hashToken(raw: string): string {
+  return hmacHashToken(raw, config.jwt.refreshSecret);
+}
+
+// Raw tokenni DB'dan topadi: avval yangi HMAC hash, topilmasa legacy SHA-256.
+async function findTokenRecord(raw: string) {
+  const rec = await prisma.refreshToken.findUnique({ where: { tokenHash: hashToken(raw) } });
+  if (rec) return rec;
+  return prisma.refreshToken.findUnique({ where: { tokenHash: legacyHashToken(raw) } });
 }
 
 function refreshExpiry(): Date {
@@ -81,7 +103,7 @@ export interface RotateResult {
 // - Muddati o'tgan → invalid.
 export async function rotateRefreshToken(raw: string): Promise<RotateResult> {
   if (!raw) return { status: 'invalid' };
-  const rec = await prisma.refreshToken.findUnique({ where: { tokenHash: hashToken(raw) } });
+  const rec = await findTokenRecord(raw);
   if (!rec) return { status: 'invalid' };
 
   if (rec.revokedAt) {
@@ -120,7 +142,7 @@ export async function rotateRefreshToken(raw: string): Promise<RotateResult> {
 // Logout — berilgan tokenni (va uning oilasini) bekor qiladi.
 export async function revokeRefreshToken(raw: string | undefined): Promise<void> {
   if (!raw) return;
-  const rec = await prisma.refreshToken.findUnique({ where: { tokenHash: hashToken(raw) } });
+  const rec = await findTokenRecord(raw);
   if (!rec) return;
   await prisma.refreshToken.updateMany({
     where: { familyId: rec.familyId, revokedAt: null },
