@@ -40,6 +40,20 @@ function logFailedLogin(req: any, email: string, reason: string) {
   );
 }
 
+// Ro'yxatdan o'tishga rate-limit: IP bo'yicha 1 soatda 5 ta urinish.
+// Ommaviy soxta tenant yaratishni (spam, tenant-boshiga beriladigan AI
+// limitlarini ko'paytirib olishni, DB to'ldirishni) to'sadi.
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'too_many_requests',
+    message: "Juda ko'p ro'yxatdan o'tish urinishi. Bir soatdan so'ng qayta urinib ko'ring.",
+  },
+});
+
 const registerSchema = z.object({
   fullName: z.string().min(2),
   email: z.string().email(),
@@ -50,6 +64,7 @@ const registerSchema = z.object({
 
 authRouter.post(
   '/register',
+  registerLimiter,
   ah(async (req, res) => {
     const body = registerSchema.parse(req.body);
     const existing = await prisma.user.findUnique({ where: { email: body.email } });
@@ -129,9 +144,22 @@ const forgotLimiter = rateLimit({
   message: { error: 'too_many_requests', message: 'Juda ko\'p urinish. Keyinroq qayta urinib ko\'ring.' },
 });
 
+// Qo'shimcha qatlam: bitta EMAIL bo'yicha 1 soatda 5 urinish — hujumchi IP
+// almashtirib (proxy/botnet) bitta akkaunt telefonini brute-force qilolmasin.
+const forgotEmailLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) =>
+    `forgot:${String((req.body as { email?: string } | undefined)?.email ?? req.ip).trim().toLowerCase()}`,
+  message: { error: 'too_many_requests', message: 'Juda ko\'p urinish. Keyinroq qayta urinib ko\'ring.' },
+});
+
 authRouter.post(
   '/forgot-password',
   forgotLimiter,
+  forgotEmailLimiter,
   ah(async (req, res) => {
     const body = forgotSchema.parse(req.body);
     const u = await prisma.user.findUnique({ where: { email: body.email }, include: { tenant: true } });
