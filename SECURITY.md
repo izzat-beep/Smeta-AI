@@ -95,6 +95,9 @@ Cookie'lar subdomen bo'yicha izolyatsiya qilingan (`smeta_rt` — mijoz ilovasi,
 | **H5** | Frontend HTML javoblarida HSTS yo'q edi (helmet faqat API'ga qo'yadi). | Caddyfile'da ikkala saytga `Strict-Transport-Security: max-age=31536000; includeSubDomains`. |
 | **H6** | `DB_PASSWORD` default `smeta` edi (compose'da `:-smeta`, `DATABASE_URL`da ham) — konteyner tarmog'iga kirgan hujumchi ma'lum parol bilan DB'ga to'liq kirardi. | Compose'da default olib tashlandi (`${DB_PASSWORD:?...}` — o'rnatilmasa deploy to'xtaydi); `.env.prod.example` bo'shatildi + `openssl rand -base64 24` ko'rsatmasi. **BREAKING:** prod deploy `.env`da `DB_PASSWORD` talab qiladi. |
 | **H7** | AI chat SSE xatosida (`ai.ts`) `err.message` productionda ham clientga uzatilardi (upstream xabari, kalit holati sizishi). | Productionda umumiy xabar; to'liq xato faqat `console.error`. Dev'da batafsil qoladi. |
+| **H8** | Account lockout yo'q edi — IP rate-limit'ni chetlab (proxy/botnet bilan IP almashtirib) sekin brute-force qilish mumkin edi. | `User`/`AdminUser`/`Vendor`ga `failedLoginAttempts`+`lockedUntil` (migratsiya `20260719120000_login_lockout`). 10 ketma-ket xatodan so'ng akkaunt 15 daqiqaga bloklanadi (avto-ochiladi), muvaffaqiyatli login yoki parol tiklash hisoblagichni tozalaydi (`src/lockout.ts`). Chegara/muddat `.env` orqali sozlanadi. **Qoldiq risk:** mavjud akkauntni qasddan bloklab qo'yish (lockout-DoS) — yuqori chegara + avto-ochilish yumshatadi. |
+| **H9** | API konteyneri `root` user'da ishlardi. | `apps/api/Dockerfile` endi `USER node` (uid 1000) bilan ishlaydi; `/app` egaligi shu user'ga o'tkaziladi. |
+| **H10** | Web frontend CSP'sida `script-src 'unsafe-inline'` bor edi — XSS yuz bersa CSP inline skriptni to'smasdi. | `'unsafe-inline'` olib tashlandi; ikkita zarur inline skript (gtag config, tema FOUC) **SHA-256 hash** bo'yicha ruxsat etiladi, qolgani `'self'` + GTM host. Hash hisoblagich: `apps/web/scripts/csp-hashes.mjs`. `style-src 'unsafe-inline'` (Tailwind) hozircha qoladi. |
 
 Regression testlar: `apps/api/tests/security.test.ts` (`npm run test -w @smeta/api`) —
 URL sxemasi va admin parol siyosati uchun 12 test.
@@ -107,6 +110,8 @@ o'rnatilmagan bo'lsa boshlanmaydi — bu ataylab qilingan.
 ## 5. Qolgan tavsiyalar (kelajak uchun)
 
 - [x] ~~HSTS~~ (H5, 2026-07-19). Qolgani: **preload** va Caddy'da TLS minimal versiyasini sozlash.
+- [x] ~~Account lockout~~ (H8, 2026-07-19).
+- [x] ~~CSP `script-src 'unsafe-inline'`~~ olib tashlandi (H10). Qolgani: `style-src 'unsafe-inline'` (Tailwind/inline stillar) uchun hash/nonce.
 - [ ] Muvaffaqiyatsiz login urinishlarini DB'ga yozib, hisob bloklash (account lockout).
 - [ ] Refresh token'larни davriy tozalash (expired yozuvlar uchun cron).
 - [ ] CSP'dagi `'unsafe-inline'` (style/script) ni nonce/hash bilan almashtirish — hozir
