@@ -6,6 +6,8 @@
 
 # Mijoz ilovasi: https://DOMAIN
 {$DOMAIN} {
+	# HSTS: brauzer 1 yil davomida faqat HTTPS ishlatadi (subdomenlar bilan).
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
 	@api path /api/*
 	handle @api {
 		reverse_proxy api:4000
@@ -17,6 +19,7 @@
 
 # Admin panel: https://admin.DOMAIN
 admin.{$DOMAIN} {
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
 	@api path /api/*
 	handle @api {
 		reverse_proxy api:4000
