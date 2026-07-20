@@ -94,10 +94,17 @@ export default function ProjectDetailScreen() {
               <Text className="text-muted text-sm">{t('projectDetail.noEstimates')}</Text>
             ) : (
               project.estimates.map((e) => (
-                <View key={e.id} className="rounded-xl border border-border/40 bg-black/20 p-3 flex-row justify-between items-center">
+                <Pressable
+                  key={e.id}
+                  onPress={() => router.push(`/smeta/${e.id}`)}
+                  className="rounded-xl border border-border/40 bg-black/20 p-3 flex-row justify-between items-center active:bg-white/5"
+                >
                   <Text className="text-white text-sm flex-1" numberOfLines={1}>{e.title}</Text>
-                  <Text className="text-muted text-sm">{formatMoney(e.total, e.currency)}</Text>
-                </View>
+                  <View className="flex-row items-center gap-1">
+                    <Text className="text-muted text-sm">{formatMoney(e.total, e.currency)}</Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+                  </View>
+                </Pressable>
               ))
             )}
           </View>

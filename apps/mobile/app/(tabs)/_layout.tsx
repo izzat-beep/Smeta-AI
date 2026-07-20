@@ -33,6 +33,13 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="business-outline" size={size} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="kalkulyator"
+        options={{
+          title: t('tabs.calculator'),
+          tabBarIcon: ({ color, size }) => <Ionicons name="calculator-outline" size={size} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

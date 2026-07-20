@@ -6,6 +6,8 @@ import type {
   ProjectSummary,
   ProjectFinance,
   Estimate,
+  EstimateItemType,
+  Currency,
 } from '@smeta/shared';
 
 // Query string quruvchi (bo'sh/undefined qiymatlarni tashlab).
@@ -33,4 +35,28 @@ export const projectsApi = {
   detail: (id: string) => api.get<ProjectDetail>(`/projects/${id}`),
   summary: (id: string) => api.get<ProjectSummary>(`/projects/${id}/summary`),
   finance: (id: string) => api.get<ProjectFinance>(`/projects/${id}/finance`),
+};
+
+// ─── Smeta (estimates) ───────────────────────────────────────────────────────
+export interface CreateEstimateItem {
+  materialId?: string | null;
+  name: string;
+  type?: EstimateItemType;
+  qty: number;
+  unit?: string;
+  unitPrice: number;
+}
+export interface CreateEstimateInput {
+  title: string;
+  projectId?: string | null;
+  currency?: Currency;
+  taxRate?: number;
+  items: CreateEstimateItem[];
+}
+
+export const estimatesApi = {
+  list: (projectId?: string) => api.get<Estimate[]>(`/estimates${qs({ projectId })}`),
+  detail: (id: string) => api.get<Estimate>(`/estimates/${id}`),
+  create: (input: CreateEstimateInput) => api.post<Estimate>('/estimates', input),
+  remove: (id: string) => api.delete<void>(`/estimates/${id}`),
 };
