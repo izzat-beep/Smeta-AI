@@ -1,7 +1,7 @@
 import '../global.css';
 import { useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { Slot, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -35,7 +35,9 @@ function AuthGate() {
       </View>
     );
   }
-  return <Slot />;
+  return (
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.ink } }} />
+  );
 }
 
 export default function RootLayout() {
