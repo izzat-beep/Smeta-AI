@@ -70,6 +70,17 @@ export default function ProjectDetailScreen() {
             />
           </View>
 
+          <Pressable
+            onPress={() => router.push(`/xarajatlar?projectId=${projectId}`)}
+            className="flex-row items-center justify-between rounded-2xl border border-border/40 bg-black/20 p-4 active:bg-white/5"
+          >
+            <View className="flex-row items-center gap-2">
+              <Ionicons name="wallet-outline" size={18} color={colors.purple} />
+              <Text className="text-white text-sm font-medium">{t('expenses.title')}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+          </Pressable>
+
           {summary && summary.budgetUsedPercent !== null ? (
             <View className="rounded-2xl border border-border/40 bg-black/20 p-4">
               <View className="flex-row justify-between mb-2">

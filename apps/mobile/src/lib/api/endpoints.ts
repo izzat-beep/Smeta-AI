@@ -8,6 +8,8 @@ import type {
   Estimate,
   EstimateItemType,
   Currency,
+  ExpenseItem,
+  ExpenseCategory,
 } from '@smeta/shared';
 
 // Query string quruvchi (bo'sh/undefined qiymatlarni tashlab).
@@ -59,4 +61,23 @@ export const estimatesApi = {
   detail: (id: string) => api.get<Estimate>(`/estimates/${id}`),
   create: (input: CreateEstimateInput) => api.post<Estimate>('/estimates', input),
   remove: (id: string) => api.delete<void>(`/estimates/${id}`),
+};
+
+// ─── Umumiy xarajatlar (GeneralExpenses) ─────────────────────────────────────
+export interface AddExpenseInput {
+  label: string;
+  amount: number;
+  currency?: Currency;
+  category?: ExpenseCategory;
+  projectId?: string | null;
+  spentAt?: string | null;
+  note?: string | null;
+}
+
+export const expensesApi = {
+  list: (params?: { projectId?: string; from?: string; to?: string }) =>
+    api.get<ExpenseItem[]>(`/expenses/list${qs(params)}`),
+  add: (input: AddExpenseInput) => api.post<ExpenseItem>('/expenses/add', input),
+  update: (id: number, patch: Partial<AddExpenseInput>) => api.patch<ExpenseItem>(`/expenses/${id}`, patch),
+  remove: (id: number) => api.delete<void>(`/expenses/${id}`),
 };
