@@ -7,5 +7,8 @@ module.exports = function (api) {
       ['babel-preset-expo', { jsxImportSource: 'nativewind' }],
       'nativewind/babel',
     ],
+    // react-native-reanimated/plugin OXIRGI bo'lishi SHART (NativeWind css-interop
+    // ham shu plaginga tayanadi). Reanimated yengil o'tishlar uchun ham ishlatiladi.
+    plugins: ['react-native-reanimated/plugin'],
   };
 };

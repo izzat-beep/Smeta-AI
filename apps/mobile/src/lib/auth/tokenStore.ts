@@ -1,24 +1,57 @@
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-// Tokenlar Keychain (iOS) / Keystore (Android) da — expo-secure-store.
-// Web'dagi localStorage'dan xavfsizroq. Refresh token endi mobil'da cookie
-// emas, body'dan keladi (G1) va shu yerda saqlanadi.
+// Tokenlar native'da Keychain (iOS) / Keystore (Android) da — expo-secure-store.
+// Web'da (Chrome "simulyator") SecureStore mavjud emas — localStorage'ga tushamiz.
+// Refresh token mobil'da cookie emas, body'dan keladi (G1) va shu yerda saqlanadi.
 const ACCESS_KEY = 'smeta_access';
 const REFRESH_KEY = 'smeta_refresh';
+const isWeb = Platform.OS === 'web';
+
+async function setItem(key: string, value: string): Promise<void> {
+  if (isWeb) {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      /* private mode / SSR — jim o'tamiz */
+    }
+    return;
+  }
+  await SecureStore.setItemAsync(key, value);
+}
+
+async function getItem(key: string): Promise<string | null> {
+  if (isWeb) {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+  return SecureStore.getItemAsync(key);
+}
+
+async function removeItem(key: string): Promise<void> {
+  if (isWeb) {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
+  await SecureStore.deleteItemAsync(key);
+}
 
 export const tokenStore = {
-  async getAccess(): Promise<string | null> {
-    return SecureStore.getItemAsync(ACCESS_KEY);
-  },
-  async getRefresh(): Promise<string | null> {
-    return SecureStore.getItemAsync(REFRESH_KEY);
-  },
+  getAccess: () => getItem(ACCESS_KEY),
+  getRefresh: () => getItem(REFRESH_KEY),
   async set(access: string, refresh?: string): Promise<void> {
-    await SecureStore.setItemAsync(ACCESS_KEY, access);
-    if (refresh !== undefined) await SecureStore.setItemAsync(REFRESH_KEY, refresh);
+    await setItem(ACCESS_KEY, access);
+    if (refresh !== undefined) await setItem(REFRESH_KEY, refresh);
   },
   async clear(): Promise<void> {
-    await SecureStore.deleteItemAsync(ACCESS_KEY);
-    await SecureStore.deleteItemAsync(REFRESH_KEY);
+    await removeItem(ACCESS_KEY);
+    await removeItem(REFRESH_KEY);
   },
 };
