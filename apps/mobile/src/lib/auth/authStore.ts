@@ -1,0 +1,79 @@
+import { create } from 'zustand';
+import type { User, Tenant } from '@smeta/shared';
+import { api } from '@/lib/api/client';
+import { tokenStore } from '@/lib/auth/tokenStore';
+
+// Mobil login/register javobi — web AuthResponse + mobil uchun refreshToken (G1).
+interface MobileAuthResponse {
+  user: User;
+  tenant: Tenant;
+  tokens: { accessToken: string; refreshToken?: string };
+}
+
+interface AuthState {
+  user: User | null;
+  tenant: Tenant | null;
+  status: 'loading' | 'authenticated' | 'unauthenticated';
+  isOwner: boolean;
+  bootstrap: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (input: RegisterInput) => Promise<void>;
+  logout: () => Promise<void>;
+}
+
+export interface RegisterInput {
+  fullName: string;
+  email: string;
+  password: string;
+  companyName: string;
+  phone?: string;
+}
+
+function applyTokens(res: MobileAuthResponse): Promise<void> {
+  return tokenStore.set(res.tokens.accessToken, res.tokens.refreshToken);
+}
+
+export const useAuth = create<AuthState>((set) => ({
+  user: null,
+  tenant: null,
+  status: 'loading',
+  isOwner: false,
+
+  // Ilova ochilganda — saqlangan token bilan sessiyani tiklashga urinish.
+  async bootstrap() {
+    const access = await tokenStore.getAccess();
+    if (!access) {
+      const ok = await api.tryRefresh();
+      if (!ok) {
+        set({ status: 'unauthenticated' });
+        return;
+      }
+    }
+    try {
+      const me = await api.get<{ user: User; tenant: Tenant }>('/auth/me');
+      set({ user: me.user, tenant: me.tenant, status: 'authenticated', isOwner: me.user.role === 'OWNER' });
+    } catch {
+      await tokenStore.clear();
+      set({ status: 'unauthenticated', user: null, tenant: null });
+    }
+  },
+
+  async login(email, password) {
+    const res = await api.post<MobileAuthResponse>('/auth/login', { email, password });
+    await applyTokens(res);
+    set({ user: res.user, tenant: res.tenant, status: 'authenticated', isOwner: res.user.role === 'OWNER' });
+  },
+
+  async register(input) {
+    const res = await api.post<MobileAuthResponse>('/auth/register', input);
+    await applyTokens(res);
+    set({ user: res.user, tenant: res.tenant, status: 'authenticated', isOwner: res.user.role === 'OWNER' });
+  },
+
+  async logout() {
+    const refreshToken = await tokenStore.getRefresh();
+    await api.post('/auth/logout', { refreshToken }).catch(() => undefined);
+    await tokenStore.clear();
+    set({ user: null, tenant: null, status: 'unauthenticated', isOwner: false });
+  },
+}));
