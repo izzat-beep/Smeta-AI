@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Request } from 'express';
 import bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
@@ -18,6 +19,25 @@ import * as s from '../serialize.js';
 import { isLocked, lockRemainingSeconds, nextFailedState, CLEARED_STATE, needsClear } from '../lockout.js';
 
 export const authRouter = Router();
+
+// ─── Mobil klient qo'llab-quvvatlash (G1) ───────────────────────────────────
+// React Native'da cookie-jar ishonchsiz, shuning uchun 'X-Client: mobile'
+// header'li so'rovlarda refresh token cookie o'rniga JSON body orqali
+// oladi/beradi. Web (cookie) oqimi butunlay o'zgarmaydi.
+function isMobile(req: Request): boolean {
+  return req.get('X-Client') === 'mobile';
+}
+// tokens obyektiga mobil bo'lsa refreshToken ham qo'shadi.
+function tokensPayload(req: Request, accessToken: string, refresh: string) {
+  return isMobile(req) ? { accessToken, refreshToken: refresh } : { accessToken };
+}
+// Refresh tokenni cookie'dan yoki (mobil) body'dan oladi.
+function readRefresh(req: Request): string | undefined {
+  const fromCookie = req.cookies?.[REFRESH_COOKIE.tenant] as string | undefined;
+  if (fromCookie) return fromCookie;
+  const fromBody = (req.body as { refreshToken?: unknown } | undefined)?.refreshToken;
+  return typeof fromBody === 'string' && fromBody ? fromBody : undefined;
+}
 
 // Bloklangan akkaunt uchun umumiy javob (429). Blok mavjud akkaunt borligini
 // oshkor qiladi — bu qoldiq risk lockout.ts va SECURITY.md'da hujjatlashtirilgan.
@@ -109,7 +129,7 @@ authRouter.post(
     const accessToken = signTenantAccess({ sub: u.id, tenantId: tenant.id, role: u.role });
     const refresh = await issueRefreshToken({ kind: 'tenant', subjectId: u.id, tenantId: tenant.id, role: u.role });
     setRefreshCookie(res, 'tenant', refresh);
-    res.status(201).json({ user: s.user(u), tenant: s.tenant(tenant), tokens: { accessToken } });
+    res.status(201).json({ user: s.user(u), tenant: s.tenant(tenant), tokens: tokensPayload(req, accessToken, refresh) });
   }),
 );
 
@@ -147,7 +167,7 @@ authRouter.post(
     const accessToken = signTenantAccess({ sub: u.id, tenantId: u.tenantId, role: u.role });
     const refresh = await issueRefreshToken({ kind: 'tenant', subjectId: u.id, tenantId: u.tenantId, role: u.role });
     setRefreshCookie(res, 'tenant', refresh);
-    res.json({ user: s.user(u), tenant: s.tenant(u.tenant), tokens: { accessToken } });
+    res.json({ user: s.user(u), tenant: s.tenant(u.tenant), tokens: tokensPayload(req, accessToken, refresh) });
   }),
 );
 
@@ -213,11 +233,11 @@ authRouter.post(
   }),
 );
 
-// Refresh — token httpOnly cookie'dan olinadi, rotatsiya qilinadi.
+// Refresh — token cookie'dan (web) yoki body'dan (mobil, G1) olinadi, rotatsiya qilinadi.
 authRouter.post(
   '/refresh',
   ah(async (req, res) => {
-    const raw = req.cookies?.[REFRESH_COOKIE.tenant] as string | undefined;
+    const raw = readRefresh(req);
     const result = await rotateRefreshToken(raw ?? '');
     if (result.status !== 'ok' || result.record?.kind !== 'tenant') {
       clearRefreshCookie(res, 'tenant');
@@ -233,15 +253,15 @@ authRouter.post(
       tenantId: result.record.tenantId!,
       role: result.record.role,
     });
-    res.json({ tokens: { accessToken } });
+    res.json({ tokens: tokensPayload(req, accessToken, result.token!) });
   }),
 );
 
-// Logout — refresh oilasini bekor qilib, cookie'ni tozalaymiz.
+// Logout — refresh oilasini bekor qilib, cookie'ni tozalaymiz (mobil body'dan).
 authRouter.post(
   '/logout',
   ah(async (req, res) => {
-    const raw = req.cookies?.[REFRESH_COOKIE.tenant] as string | undefined;
+    const raw = readRefresh(req);
     await revokeRefreshToken(raw);
     clearRefreshCookie(res, 'tenant');
     res.json({ ok: true });
