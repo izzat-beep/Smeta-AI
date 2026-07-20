@@ -10,6 +10,8 @@ import type {
   Currency,
   ExpenseItem,
   ExpenseCategory,
+  Material,
+  Order,
 } from '@smeta/shared';
 
 // Query string quruvchi (bo'sh/undefined qiymatlarni tashlab).
@@ -80,4 +82,34 @@ export const expensesApi = {
   add: (input: AddExpenseInput) => api.post<ExpenseItem>('/expenses/add', input),
   update: (id: number, patch: Partial<AddExpenseInput>) => api.patch<ExpenseItem>(`/expenses/${id}`, patch),
   remove: (id: number) => api.delete<void>(`/expenses/${id}`),
+};
+
+// ─── Materiallar marketplace + buyurtmalar ───────────────────────────────────
+export const materialsApi = {
+  list: (params?: { q?: string; category?: string }) => api.get<Material[]>(`/materials${qs(params)}`),
+  categories: () => api.get<string[]>('/materials/categories'),
+  detail: (id: string) => api.get<Material>(`/materials/${id}`),
+};
+
+export interface CreateOrderItem {
+  materialId?: string | null;
+  name: string;
+  unit?: string;
+  unitPrice: number;
+  qty: number;
+}
+export interface CreateOrderInput {
+  customerName: string;
+  customerPhone: string;
+  address?: string | null;
+  note?: string | null;
+  currency?: Currency;
+  projectId?: string | null;
+  items: CreateOrderItem[];
+}
+
+export const ordersApi = {
+  list: () => api.get<Order[]>('/orders'),
+  detail: (id: string) => api.get<Order>(`/orders/${id}`),
+  create: (input: CreateOrderInput) => api.post<Order>('/orders', input),
 };

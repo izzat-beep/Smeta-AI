@@ -40,6 +40,13 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="calculator-outline" size={size} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="materiallar"
+        options={{
+          title: t('tabs.materials'),
+          tabBarIcon: ({ color, size }) => <Ionicons name="cube-outline" size={size} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }
