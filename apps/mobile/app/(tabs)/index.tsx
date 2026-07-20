@@ -27,7 +27,7 @@ export default function DashboardScreen() {
         onPress={() => void logout()}
         className="h-12 items-center justify-center rounded-xl border border-danger/40 bg-danger/10"
       >
-        <Text className="text-danger font-semibold">{t('common.cancel')} · Logout</Text>
+        <Text className="text-danger font-semibold">{t('common.logout')}</Text>
       </Pressable>
     </ScrollView>
   );

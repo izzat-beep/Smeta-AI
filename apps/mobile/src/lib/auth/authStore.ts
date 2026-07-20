@@ -18,7 +18,14 @@ interface AuthState {
   bootstrap: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
+  forgotPassword: (input: ForgotInput) => Promise<void>;
   logout: () => Promise<void>;
+}
+
+export interface ForgotInput {
+  email: string;
+  phone: string;
+  newPassword: string;
 }
 
 export interface RegisterInput {
@@ -68,6 +75,12 @@ export const useAuth = create<AuthState>((set) => ({
     const res = await api.post<MobileAuthResponse>('/auth/register', input);
     await applyTokens(res);
     set({ user: res.user, tenant: res.tenant, status: 'authenticated', isOwner: res.user.role === 'OWNER' });
+  },
+
+  // Parolni tiklash — token bermaydi; muvaffaqiyatdan so'ng foydalanuvchi
+  // yangi parol bilan login qiladi.
+  async forgotPassword(input) {
+    await api.post('/auth/forgot-password', input);
   },
 
   async logout() {
