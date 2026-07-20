@@ -183,6 +183,22 @@ export const uz = {
     DELIVERED: 'Yetkazildi',
     CANCELLED: 'Bekor qilindi',
   },
+  settings: {
+    title: 'Sozlamalar',
+    profile: 'Profil',
+    fullName: 'To‘liq ism',
+    phone: 'Telefon',
+    position: 'Lavozim',
+    email: 'Email',
+    company: 'Kompaniya',
+    role: 'Rol',
+    save: 'Saqlash',
+    saved: 'Saqlandi ✓',
+    language: 'Til',
+    currency: 'Valyuta',
+    orders: 'Buyurtmalarim',
+    logout: 'Chiqish',
+  },
 };
 
 // Tarjima tuzilishi (qiymatlar string) — ru.ts shu shaklga mos bo'lishi shart.

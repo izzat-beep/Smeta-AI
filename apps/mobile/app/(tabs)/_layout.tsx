@@ -47,6 +47,13 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="cube-outline" size={size} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="sozlamalar"
+        options={{
+          title: t('tabs.settings'),
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

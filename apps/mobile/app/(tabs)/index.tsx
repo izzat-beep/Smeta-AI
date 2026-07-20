@@ -4,8 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/auth/authStore';
 import { useDashboard } from '@/lib/hooks/useProjects';
+import { useMoney } from '@/lib/hooks/useMoney';
 import { Loading, ErrorState } from '@/components/States';
-import { formatMoneyShort } from '@/lib/format';
 import { colors } from '@/theme/tokens';
 import type { Project } from '@smeta/shared';
 
@@ -23,6 +23,7 @@ export default function DashboardScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const user = useAuth((s) => s.user);
+  const money = useMoney();
   const { data, isLoading, isError, refetch, isRefetching } = useDashboard();
 
   if (isLoading) return <Loading />;
@@ -42,7 +43,7 @@ export default function DashboardScreen() {
       </View>
 
       <View className="flex-row gap-3">
-        <StatCard icon="wallet-outline" label={t('dashboard.totalExpenses')} value={formatMoneyShort(stats.totalExpenses, 'UZS')} />
+        <StatCard icon="wallet-outline" label={t('dashboard.totalExpenses')} value={money.formatShort(stats.totalExpenses)} />
         <StatCard icon="business-outline" label={t('dashboard.activeObjects')} value={String(stats.activeObjects)} />
       </View>
       <View className="flex-row gap-3">

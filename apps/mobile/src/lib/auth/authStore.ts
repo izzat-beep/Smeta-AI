@@ -16,6 +16,7 @@ interface AuthState {
   status: 'loading' | 'authenticated' | 'unauthenticated';
   isOwner: boolean;
   bootstrap: () => Promise<void>;
+  refreshMe: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   forgotPassword: (input: ForgotInput) => Promise<void>;
@@ -62,6 +63,16 @@ export const useAuth = create<AuthState>((set) => ({
     } catch {
       await tokenStore.clear();
       set({ status: 'unauthenticated', user: null, tenant: null });
+    }
+  },
+
+  // Profil o'zgargach (sozlamalar) yoki qayta yuklashda /auth/me dan yangilash.
+  async refreshMe() {
+    try {
+      const me = await api.get<{ user: User; tenant: Tenant }>('/auth/me');
+      set({ user: me.user, tenant: me.tenant, isOwner: me.user.role === 'OWNER' });
+    } catch {
+      /* jim — sessiya bootstrap alohida boshqaradi */
     }
   },
 

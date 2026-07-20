@@ -9,6 +9,7 @@ import { I18nextProvider } from 'react-i18next';
 import i18n from '@/i18n';
 import { queryClient } from '@/lib/query';
 import { useAuth } from '@/lib/auth/authStore';
+import { useSettings } from '@/lib/settingsStore';
 import { colors } from '@/theme/tokens';
 
 // Auth-gate: sessiya holatiga qarab (auth) va (tabs) guruhlari orasida
@@ -42,10 +43,12 @@ function AuthGate() {
 
 export default function RootLayout() {
   const bootstrap = useAuth((s) => s.bootstrap);
+  const hydrateSettings = useSettings((s) => s.hydrate);
 
   useEffect(() => {
     void bootstrap();
-  }, [bootstrap]);
+    void hydrateSettings(); // saqlangan til/valyutani yuklash
+  }, [bootstrap, hydrateSettings]);
 
   return (
     <SafeAreaProvider>

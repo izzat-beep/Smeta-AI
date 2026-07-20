@@ -113,3 +113,15 @@ export const ordersApi = {
   detail: (id: string) => api.get<Order>(`/orders/${id}`),
   create: (input: CreateOrderInput) => api.post<Order>('/orders', input),
 };
+
+// ─── Sozlamalar / profil ─────────────────────────────────────────────────────
+export interface UpdateProfileInput {
+  fullName?: string;
+  phone?: string | null;
+  position?: string | null;
+  language?: 'uz' | 'ru';
+}
+
+export const settingsApi = {
+  update: (input: UpdateProfileInput) => api.patch<unknown>('/settings', input),
+};

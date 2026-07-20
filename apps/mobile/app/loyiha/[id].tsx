@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useProject, useProjectSummary } from '@/lib/hooks/useProjects';
+import { useMoney } from '@/lib/hooks/useMoney';
 import { Loading, ErrorState } from '@/components/States';
 import { formatMoney, formatDate } from '@/lib/format';
 import { colors } from '@/theme/tokens';
@@ -25,6 +26,7 @@ export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const projectId = typeof id === 'string' ? id : '';
 
+  const money = useMoney();
   const { data: project, isLoading, isError, refetch, isRefetching } = useProject(projectId);
   const { data: summary } = useProjectSummary(projectId);
 
@@ -58,14 +60,14 @@ export default function ProjectDetailScreen() {
           </View>
 
           <View className="flex-row gap-3">
-            <Kpi label={t('projectDetail.budget')} value={formatMoney(summary?.budget ?? project.value, 'UZS')} />
-            <Kpi label={t('projectDetail.expenses')} value={formatMoney(summary?.totalExpenses ?? 0, 'UZS')} accent={colors.danger} />
+            <Kpi label={t('projectDetail.budget')} value={money.format(summary?.budget ?? project.value)} />
+            <Kpi label={t('projectDetail.expenses')} value={money.format(summary?.totalExpenses ?? 0)} accent={colors.danger} />
           </View>
           <View className="flex-row gap-3">
-            <Kpi label={t('projectDetail.income')} value={formatMoney(summary?.totalIncome ?? 0, 'UZS')} accent={colors.success} />
+            <Kpi label={t('projectDetail.income')} value={money.format(summary?.totalIncome ?? 0)} accent={colors.success} />
             <Kpi
               label={t('projectDetail.profit')}
-              value={formatMoney(summary?.netProfit ?? 0, 'UZS')}
+              value={money.format(summary?.netProfit ?? 0)}
               accent={(summary?.netProfit ?? 0) >= 0 ? colors.success : colors.danger}
             />
           </View>
