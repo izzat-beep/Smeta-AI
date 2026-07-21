@@ -2,11 +2,11 @@
 // Hech narsani o'CHIRMAYDI. Faqat admin foydalanuvchi va global materiallar
 // katalogi mavjud bo'lmasa yaratadi. (To'liq demo ma'lumot uchun seed.ts ni ishlating.)
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { adminPasswordProblems } from '../src/adminCreds.js';
+import { hashPassword } from '../src/password.js';
 
 dotenv.config({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../.env') });
 
@@ -38,7 +38,7 @@ async function main() {
     create: {
       email: adminEmail,
       fullName: 'Bosh Administrator',
-      passwordHash: await bcrypt.hash(adminPassword, 10),
+      passwordHash: await hashPassword(adminPassword),
       role: 'SUPERADMIN',
     },
   });

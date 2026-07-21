@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type { Request } from 'express';
-import bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
+import { hashPassword, verifyPassword } from '../password.js';
 import { z } from 'zod';
 import { prisma } from '../prisma.js';
 import { ah } from '../util.js';
@@ -101,7 +101,7 @@ authRouter.post(
     const existing = await prisma.user.findUnique({ where: { email: body.email } });
     if (existing) return res.status(409).json({ error: 'conflict', message: 'Bu email allaqachon ro\'yxatdan o\'tgan' });
 
-    const passwordHash = await bcrypt.hash(body.password, 12);
+    const passwordHash = await hashPassword(body.password);
     const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
     const tenant = await prisma.tenant.create({
@@ -152,8 +152,8 @@ authRouter.post(
       return lockedResponse(res, lockRemainingSeconds(u));
     }
 
-    const ok = await bcrypt.compare(body.password, u.passwordHash);
-    if (!ok) {
+    const vr = await verifyPassword(u.passwordHash, body.password);
+    if (!vr.ok) {
       const next = nextFailedState(u);
       await prisma.user.update({ where: { id: u.id }, data: next });
       logFailedLogin(req, body.email, next.lockedUntil ? 'bad_password_locked' : 'bad_password');
@@ -163,6 +163,8 @@ authRouter.post(
 
     // Muvaffaqiyatli login — hisoblagichni tozalaymiz (kerak bo'lsa).
     if (needsClear(u)) await prisma.user.update({ where: { id: u.id }, data: CLEARED_STATE });
+    // Eski bcrypt hash bo'lsa — shaffof argon2id'ga ko'chiramiz.
+    if (vr.needsRehash) await prisma.user.update({ where: { id: u.id }, data: { passwordHash: await hashPassword(body.password) } });
 
     const accessToken = signTenantAccess({ sub: u.id, tenantId: u.tenantId, role: u.role });
     const refresh = await issueRefreshToken({ kind: 'tenant', subjectId: u.id, tenantId: u.tenantId, role: u.role });
@@ -223,7 +225,7 @@ authRouter.post(
       });
     }
 
-    const passwordHash = await bcrypt.hash(body.newPassword, 12);
+    const passwordHash = await hashPassword(body.newPassword);
     // Parol tiklanganda lockout ham tozalanadi (aks holda foydalanuvchi
     // parolni yangilab ham bloklangan bo'lib qolardi).
     await prisma.user.update({ where: { id: u.id }, data: { passwordHash, ...CLEARED_STATE } });

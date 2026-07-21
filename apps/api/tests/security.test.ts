@@ -9,6 +9,8 @@ import { hmacHashToken, legacyHashToken } from '../src/auth.js';
 import { totpAt, verifyTOTP, generateSecret, base32Encode, base32Decode, otpauthURL } from '../src/totp.js';
 import { encryptSecret, decryptSecret } from '../src/totpCrypto.js';
 import { sniffAudio } from '../src/routes/voice.js';
+import bcryptjs from 'bcryptjs';
+import { hashPassword, verifyPassword } from '../src/password.js';
 
 // ─── URL maydonlari (avatarUrl/logoUrl/imageUrl) ─────────────────────────────
 
@@ -233,4 +235,35 @@ test('sniffAudio: soxta/mos kelmaydigan fayllarni rad etadi', () => {
   assert.equal(sniffAudio(Buffer.from('GIF89a' + '\0'.repeat(12))), false);
   assert.equal(sniffAudio(Buffer.from('%PDF-1.7' + '\0'.repeat(8))), false);
   assert.equal(sniffAudio(Buffer.from([0x00, 0x01, 0x02])), false); // juda qisqa
+});
+
+// ─── Parol hashing: argon2id + bcrypt backward-compat (F9, CWE-916) ──────────
+
+test('hashPassword: argon2id hash yaratadi', async () => {
+  const h = await hashPassword('Parol#123');
+  assert.ok(h.startsWith('$argon2id$'));
+});
+
+test('verifyPassword: argon2 to\'g\'ri parolni tasdiqlaydi, needsRehash=false', async () => {
+  const h = await hashPassword('Parol#123');
+  const r = await verifyPassword(h, 'Parol#123');
+  assert.equal(r.ok, true);
+  assert.equal(r.needsRehash, false);
+});
+
+test('verifyPassword: argon2 noto\'g\'ri parolni rad etadi', async () => {
+  const h = await hashPassword('Parol#123');
+  assert.equal((await verifyPassword(h, 'boshqa')).ok, false);
+});
+
+test('verifyPassword: legacy bcrypt to\'g\'ri -> ok=true, needsRehash=true (migratsiya)', async () => {
+  const legacy = await bcryptjs.hash('Eski#Parol', 10);
+  const r = await verifyPassword(legacy, 'Eski#Parol');
+  assert.equal(r.ok, true);
+  assert.equal(r.needsRehash, true); // argon2'ga ko'chirilishi kerak
+});
+
+test('verifyPassword: legacy bcrypt noto\'g\'ri -> ok=false', async () => {
+  const legacy = await bcryptjs.hash('Eski#Parol', 10);
+  assert.equal((await verifyPassword(legacy, 'xato')).ok, false);
 });

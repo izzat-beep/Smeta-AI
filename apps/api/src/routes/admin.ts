@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
+import { hashPassword, verifyPassword } from '../password.js';
 import { z } from 'zod';
 import { prisma, toNum } from '../prisma.js';
 import { ah, optionalHttpUrl } from '../util.js';
@@ -63,8 +63,8 @@ adminRouter.post(
     const admin = await prisma.adminUser.findUnique({ where: { email: identifier } });
     if (admin) {
       if (isLocked(admin)) return locked(lockRemainingSeconds(admin));
-      const ok = await bcrypt.compare(body.password, admin.passwordHash);
-      if (!ok) {
+      const vr = await verifyPassword(admin.passwordHash, body.password);
+      if (!vr.ok) {
         const next = nextFailedState(admin);
         await prisma.adminUser.update({ where: { id: admin.id }, data: next });
         if (next.lockedUntil) return locked(lockRemainingSeconds(next));
@@ -89,6 +89,7 @@ adminRouter.post(
         }
       }
       if (needsClear(admin)) await prisma.adminUser.update({ where: { id: admin.id }, data: CLEARED_STATE });
+      if (vr.needsRehash) await prisma.adminUser.update({ where: { id: admin.id }, data: { passwordHash: await hashPassword(body.password) } });
       const accessToken = signAdminAccess({ sub: admin.id, role: admin.role });
       const refresh = await issueRefreshToken({ kind: 'admin', subjectId: admin.id, role: admin.role });
       setRefreshCookie(res, 'admin', refresh);
@@ -99,8 +100,8 @@ adminRouter.post(
     const v = await prisma.vendor.findUnique({ where: { login: identifier } });
     if (v) {
       if (isLocked(v)) return locked(lockRemainingSeconds(v));
-      const ok = await bcrypt.compare(body.password, v.passwordHash);
-      if (!ok) {
+      const vr = await verifyPassword(v.passwordHash, body.password);
+      if (!vr.ok) {
         const next = nextFailedState(v);
         await prisma.vendor.update({ where: { id: v.id }, data: next });
         if (next.lockedUntil) return locked(lockRemainingSeconds(next));
@@ -108,6 +109,7 @@ adminRouter.post(
       }
       if (v.status === 'BLOCKED') return res.status(403).json({ error: 'forbidden', message: 'Hisobingiz bloklangan. Administrator bilan bog\'laning.' });
       if (needsClear(v)) await prisma.vendor.update({ where: { id: v.id }, data: CLEARED_STATE });
+      if (vr.needsRehash) await prisma.vendor.update({ where: { id: v.id }, data: { passwordHash: await hashPassword(body.password) } });
       const accessToken = signAdminAccess({ sub: v.id, role: 'VENDOR' });
       const refresh = await issueRefreshToken({ kind: 'admin', subjectId: v.id, role: 'VENDOR' });
       setRefreshCookie(res, 'admin', refresh);
@@ -184,7 +186,7 @@ adminRouter.post(
       return res.status(409).json({ error: 'conflict', message: 'Bu email allaqachon mavjud' });
     }
 
-    const passwordHash = await bcrypt.hash(body.password, 10);
+    const passwordHash = await hashPassword(body.password);
     const admin = await prisma.adminUser.create({
       data: {
         email: body.email,
@@ -448,7 +450,7 @@ adminRouter.post(
         tenantId: body.tenantId,
         fullName: body.fullName,
         email: body.email,
-        passwordHash: await bcrypt.hash(body.password, 10),
+        passwordHash: await hashPassword(body.password),
         role: body.role ?? 'ENGINEER',
         position: body.position ?? null,
       },
@@ -527,7 +529,7 @@ adminRouter.post(
         name: body.name,
         phone: body.phone ?? null,
         login: body.login,
-        passwordHash: await bcrypt.hash(body.password, 12),
+        passwordHash: await hashPassword(body.password),
         shopName: body.shopName ?? null,
         logoUrl: body.logoUrl ?? null,
         mustChangePassword: true,
@@ -556,7 +558,7 @@ adminRouter.patch(
     if (!ex) return res.status(404).json({ error: 'not_found', message: 'Sotuvchi topilmadi' });
     const data: any = { name: body.name, phone: body.phone, shopName: body.shopName, logoUrl: body.logoUrl, status: body.status };
     if (body.password) {
-      data.passwordHash = await bcrypt.hash(body.password, 12);
+      data.passwordHash = await hashPassword(body.password);
       data.mustChangePassword = true;
       // Parol tiklanganda lockout ham tozalanadi.
       data.failedLoginAttempts = 0;
@@ -613,7 +615,7 @@ adminRouter.post(
     const body = z.object({ newPassword: z.string().min(6) }).parse(req.body);
     await prisma.vendor.update({
       where: { id: req.admin!.sub },
-      data: { passwordHash: await bcrypt.hash(body.newPassword, 12), mustChangePassword: false },
+      data: { passwordHash: await hashPassword(body.newPassword), mustChangePassword: false },
     });
     res.json({ ok: true });
   }),
