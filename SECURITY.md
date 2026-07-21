@@ -57,6 +57,18 @@ Regression testlar: `tests/security.test.ts` (`sniffAudio` qabul/rad — 8 asser
 | **F2** | Admin/moliya amallari uchun o'zgarmas iz yo'q (non-repudiation) | CWE-778 | **Append-only `AuditLog`** modeli (migratsiya `20260721110000_audit_log`) + `audit()` helper (`src/audit.ts`). admin.ts mutatsiyalari (user/vendor/tenant create/delete/update/block) log qilinadi (actor, IP, target, meta). Kodda faqat `create` — hech qachon update/delete. |
 | **F8** | Eskirgan refresh-token yozuvlari to'planardi | CWE-459 | `src/cleanup.ts` — kunlik in-process job: expired + 30 kundan eski bekor tokenlarni o'chiradi (`startCleanupJobs`). |
 
+## 1.3. Pentest-audit To'lqin 3 (2026-07-21) — arxitektura
+
+| ID | Zaiflik | CWE | Tuzatish |
+|----|---------|-----|----------|
+| **F9** | bcrypt → argon2id afzalroq (GPU-resistant) | CWE-916 | `src/password.ts` — argon2id (OWASP params) + **bcrypt backward-compat**: eski hash'lar login paytida SHAFFOF argon2id'ga ko'chiriladi (`needsRehash`), migratsiyasiz. Barcha yozish yo'llari (register/forgot/admin/vendor/bootstrap) argon2id. 5 regression test (jami **48**). |
+| **F7** | CSP `style-src 'unsafe-inline'` (Tailwind) | CWE-79 | **Qabul qilingan risk**: `script-src` allaqachon hash-based (H10); `style-src` nonce Tailwind bilan katta refaktor. XSS asosiy yuzasi (script) yopiq — style-inline ta'siri cheklangan. Kelajak ish. |
+| **PG** | SSL/least-priv/backup | — | `deploy/postgres-hardening.md` (least-priv `smeta_app` roli, `hostssl` `pg_hba`, AuditLog UPDATE/DELETE REVOKE); `deploy/backup.sh` (3-2-1 age-shifrlangan + restore-test); DB porti tashqariga ochilmagan ✅. |
+| **Monitor** | Anomaliya alertlari yo'q | CWE-778 | `deploy/monitoring.md` — brute-force/CORS-skan/kutilmagan-admin/AI-cost alert qoidalari (Loki/Vector yoki minimal journalctl+audit-digest). |
+
+> **F9 breaking-risk:** yo'q — eski parollar ishlashda davom etadi, login'da avtomatik ko'chadi.
+> **PG least-priv breaking:** ikki-URL (migrate owner / runtime smeta_app) — ataylab, hujjatlashtirilgan.
+
 ## 2. Tekshirilgan va xavfsiz topilgan joylar
 
 - **SQL injection**: Kodda `$queryRaw`/`$executeRaw` **umuman ishlatilmagan** — barcha DB murojaatlari Prisma query builder orqali (parametrlangan). Xavf yo'q.
