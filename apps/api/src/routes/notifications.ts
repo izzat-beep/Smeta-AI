@@ -3,6 +3,7 @@
 // oladigan router quriladi. RBAC: har kim FAQAT o'z bildirishnomalarini ko'radi.
 import { Router } from 'express';
 import type { Request } from 'express';
+import { z } from 'zod';
 import { prisma } from '../prisma.js';
 import { ah } from '../util.js';
 import * as s from '../serialize.js';
@@ -71,3 +72,33 @@ export function buildNotificationsRouter(ownerWhere: (req: Request) => OwnerWher
 
 // Mijoz (tenant useri) uchun: /api/notifications
 export const notificationsRouter = buildNotificationsRouter((req) => ({ userId: req.user!.sub }));
+
+// ─── Push qurilma tokeni (STAGE 3.9 mobil) ───────────────────────────────────
+const deviceSchema = z.object({
+  token: z.string().min(10).max(256),
+  platform: z.enum(['ios', 'android', 'web']).optional(),
+});
+
+// Login'da mobil ilova Expo push tokenini ro'yxatdan o'tkazadi (upsert).
+notificationsRouter.post(
+  '/register-device',
+  ah(async (req, res) => {
+    const { token, platform } = deviceSchema.parse(req.body);
+    await prisma.deviceToken.upsert({
+      where: { token },
+      update: { userId: req.user!.sub, platform: platform ?? null },
+      create: { token, userId: req.user!.sub, platform: platform ?? null },
+    });
+    res.json({ ok: true });
+  }),
+);
+
+// Logout / o'chirishda tokenni olib tashlaydi.
+notificationsRouter.delete(
+  '/device',
+  ah(async (req, res) => {
+    const { token } = z.object({ token: z.string() }).parse(req.body);
+    await prisma.deviceToken.deleteMany({ where: { token, userId: req.user!.sub } });
+    res.json({ ok: true });
+  }),
+);

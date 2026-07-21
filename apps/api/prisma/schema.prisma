@@ -159,8 +159,23 @@ model User {
   chatSessions    ChatSession[]
   refreshTokens   RefreshToken[]
   notifications   Notification[]
+  deviceTokens    DeviceToken[]
 
   @@index([tenantId])
+}
+
+// Push bildirishnoma uchun qurilma tokeni (Expo). Bir foydalanuvchida bir necha
+// qurilma bo'lishi mumkin; token UNIQUE (qayta ro'yxatdan o'tsa upsert).
+model DeviceToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform  String? // 'ios' | 'android' | 'web'
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model AdminUser {

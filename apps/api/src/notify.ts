@@ -2,6 +2,7 @@
 // tranzaksiya ichida bajarilishi uchun funksiyalar tx (TransactionClient) oladi.
 // title/body — uz fallback; data JSON (orderNo, status, ...) — clientda UZ/RU render uchun.
 import type { Prisma, PrismaClient } from '@prisma/client';
+import { pushToUser } from './push.js';
 
 type Db = Prisma.TransactionClient | PrismaClient;
 
@@ -78,16 +79,13 @@ export async function notifyVendorsNewOrder(
 export async function notifyOrderStatus(db: Db, order: OrderLike, status: string): Promise<void> {
   const userId = await resolveCustomerUserId(db, order);
   if (!userId) return;
+  const title = `Buyurtma #${order.no}`;
+  const body = `Buyurtmangiz #${order.no} ${STATUS_UZ[status] ?? status}.`;
   await db.notification.create({
-    data: {
-      userId,
-      type: 'ORDER_STATUS',
-      title: `Buyurtma #${order.no}`,
-      body: `Buyurtmangiz #${order.no} ${STATUS_UZ[status] ?? status}.`,
-      data: { orderNo: order.no, status },
-      orderId: order.id,
-    },
+    data: { userId, type: 'ORDER_STATUS', title, body, data: { orderNo: order.no, status }, orderId: order.id },
   });
+  // Push — fire-and-forget (global prisma; tx'ga bog'liq emas, best-effort).
+  void pushToUser(userId, { title, body, data: { orderNo: order.no, status, orderId: order.id } });
 }
 
 // Sotuvchidan mijozga ixtiyoriy matnli xabar.
@@ -99,14 +97,9 @@ export async function notifyCustomerMessage(
 ): Promise<void> {
   const userId = await resolveCustomerUserId(db, order);
   if (!userId) return;
+  const title = `Buyurtma #${order.no} — xabar`;
   await db.notification.create({
-    data: {
-      userId,
-      type: 'MESSAGE',
-      title: `Buyurtma #${order.no} — xabar`,
-      body: text,
-      data: { orderNo: order.no, from: fromName },
-      orderId: order.id,
-    },
+    data: { userId, type: 'MESSAGE', title, body: text, data: { orderNo: order.no, from: fromName }, orderId: order.id },
   });
+  void pushToUser(userId, { title, body: text, data: { orderNo: order.no, orderId: order.id } });
 }
