@@ -36,6 +36,19 @@ Sana: 2026-07-03 · Qamrov: `apps/api`, `apps/web`, `apps/admin`, infra (Caddy/n
 
 ---
 
+## 1.1. Pentest-audit To'lqin 1 (2026-07-21) — non-breaking hardening
+
+| ID | Zaiflik | CWE | Tuzatish |
+|----|---------|-----|----------|
+| **F3** | Global API rate-limiter yo'q edi (faqat auth/ai/voice) | CWE-770 | `index.ts`ga IP bo'yicha 300/min global limiter (DoS to'ri). |
+| **F4** | `jwt.verify` `algorithms` pin qilinmagan (alg-confusion kelajak riski) | CWE-347 | `{ algorithms: ['HS256'] }` (tenant + admin). |
+| **F5** | Audio upload faqat client-MIME'ga ishonardi | CWE-434 | `sniffAudio()` magic-byte tekshiruvi (OGG/WebM/WAV/MP4/MP3); soxta MIME → 415. |
+| **F6** | Qidiruv/matn kirishi cheklanmagan (cost/DoS) | CWE-400 | materials/projects `q` `.slice(100)`, voice text `.slice(2000)`. |
+| **F11** | `POST /register-device` rate-limitsiz | CWE-770 | user bo'yicha 20/soat limiter. |
+| **Infra** | TLS/headerlar/VPS hardening | — | Caddyfile (HSTS preload, TLS1.2+, `-Server`, HTTP/3); `deploy/` (UFW, SSH key-only, fail2ban, Docker no-new-privileges/cap_drop/read-only). |
+
+Regression testlar: `tests/security.test.ts` (`sniffAudio` qabul/rad — 8 assertion). Jami **43 test** yashil.
+
 ## 2. Tekshirilgan va xavfsiz topilgan joylar
 
 - **SQL injection**: Kodda `$queryRaw`/`$executeRaw` **umuman ishlatilmagan** — barcha DB murojaatlari Prisma query builder orqali (parametrlangan). Xavf yo'q.

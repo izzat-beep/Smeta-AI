@@ -1,0 +1,75 @@
+# Smeta AI — Docker hardening override.
+# Ishlatish:  docker compose -f docker-compose.prod.yml -f deploy/docker-compose.hardened.yml up -d
+# Har bir servisga: non-root (Dockerfile'da), no-new-privileges, cap_drop,
+# read-only fs (yozish kerak joylar tmpfs), resurs limitlari.
+# ESLATMA: db read_only bo'lolmaydi (Postgres data yozadi) — unga faqat
+# no-new-privileges + resurs limiti + ichki tarmoq (port ochilmagan) qo'llanadi.
+services:
+  db:
+    security_opt:
+      - no-new-privileges:true
+    # Portni TASHQARIGA ochmaymiz (prod compose'da allaqachon ochilmagan ✅).
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  api:
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  web:
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+
+  admin:
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+
+  caddy:
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M

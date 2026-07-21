@@ -1,0 +1,24 @@
+# Smeta AI — fail2ban jail. /etc/fail2ban/jail.local ga ko'chiriladi (harden.sh).
+[DEFAULT]
+bantime  = 3600
+findtime = 600
+maxretry = 5
+backend  = systemd
+# O'z IP'ingizni bloklab qolmang:
+# ignoreip = 127.0.0.1/8 ::1 <SIZNING_STATIK_IP>
+
+[sshd]
+enabled  = true
+port     = 2222
+maxretry = 3
+bantime  = 86400
+
+# Caddy JSON access-log'dagi 401/403 spike'lari (brute-force/skan).
+# Caddyfile'da log yoqilgan bo'lishi kerak (log { output file /var/log/caddy/access.log }).
+[caddy-auth]
+enabled  = true
+filter   = caddy-auth
+logpath  = /var/log/caddy/access.log
+maxretry = 10
+findtime = 300
+bantime  = 3600

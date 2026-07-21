@@ -1,13 +1,39 @@
-# Smeta AI — reverse proxy + avtomatik HTTPS (Let's Encrypt)
+# Smeta AI — reverse proxy + avtomatik HTTPS (Let's Encrypt).
 # DOMAIN va ACME_EMAIL .env dan olinadi.
 {
 	email {$ACME_EMAIL}
+	# HTTP/1.1 + HTTP/2 + HTTP/3 (QUIC).
+	servers {
+		protocols h1 h2 h3
+	}
+}
+
+# Umumiy xavfsizlik snippeti (har ikki saytga import qilinadi).
+(security) {
+	header {
+		# HSTS preload — 2 yil, subdomenlar bilan. ESLATMA: "preload" ro'yxatiga
+		# qo'shilish (hstspreload.org) QAYTMAS majburiyat — avval barcha subdomenlar
+		# HTTPS ekaniga ishonch hosil qiling.
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), geolocation=(), microphone=(self)"
+		Cross-Origin-Opener-Policy "same-origin"
+		# Server versiyasini yashiramiz (info-leak).
+		-Server
+	}
+	# TLS: minimal 1.2 (keng kompatibellik). Faqat TLS 1.3 kerak bo'lsa quyidagini
+	# `tls1.3 tls1.3` ga o'zgartiring — lekin eski qurilmalar (Android<10 va h.k.)
+	# uchun risk. OCSP stapling Caddy'da default yoqilgan.
+	tls {
+		protocols tls1.2 tls1.3
+	}
 }
 
 # Mijoz ilovasi: https://DOMAIN
 {$DOMAIN} {
-	# HSTS: brauzer 1 yil davomida faqat HTTPS ishlatadi (subdomenlar bilan).
-	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	import security
 	@api path /api/*
 	handle @api {
 		reverse_proxy api:4000
@@ -19,7 +45,7 @@
 
 # Admin panel: https://admin.DOMAIN
 admin.{$DOMAIN} {
-	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	import security
 	@api path /api/*
 	handle @api {
 		reverse_proxy api:4000
