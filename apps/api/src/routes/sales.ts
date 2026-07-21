@@ -27,6 +27,7 @@ salesRouter.get(
       },
       orderBy: { soldAt: 'desc' },
       include: { payments: true, realtor: true, project: true },
+      take: 500, // CWE-770 xavfsizlik cap'i
     });
 
     // Valyuta bo'yicha alohida yig'indilar (UZS va USD aralashmasin)

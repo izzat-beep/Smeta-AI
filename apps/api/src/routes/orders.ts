@@ -15,6 +15,7 @@ ordersRouter.get(
       where: { tenantId: req.user!.tenantId },
       include: { items: true },
       orderBy: { createdAt: 'desc' },
+      take: 500, // CWE-770 xavfsizlik cap'i
     });
     res.json(orders.map(s.order));
   }),

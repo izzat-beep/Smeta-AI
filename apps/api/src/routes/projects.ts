@@ -20,6 +20,7 @@ projectsRouter.get(
       where,
       include: { manager: true },
       orderBy: { createdAt: 'desc' },
+      take: 500, // CWE-770 xavfsizlik cap'i (to'liq pagination — To'lqin 2b)
     });
     res.json(projects.map(s.project));
   }),

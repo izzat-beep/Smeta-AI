@@ -16,6 +16,7 @@ realtorsRouter.get(
     const realtors = await prisma.realtor.findMany({
       where: { tenantId: req.user!.tenantId },
       orderBy: { createdAt: 'desc' },
+      take: 500, // CWE-770 xavfsizlik cap'i
       include: {
         _count: { select: { sales: true } },
         sales: { select: { currency: true, commissionAmount: true } },

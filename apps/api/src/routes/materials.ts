@@ -23,7 +23,7 @@ materialsRouter.get(
     // oddiy (vendorsiz) global materiallar doim ko'rinadi.
     and.push({ OR: [{ vendorId: null }, { AND: [{ isActive: true }, { vendor: { status: 'ACTIVE' } }] }] });
     where.AND = and;
-    const materials = await prisma.material.findMany({ where, orderBy: { name: 'asc' }, include: { vendor: true } });
+    const materials = await prisma.material.findMany({ where, orderBy: { name: 'asc' }, include: { vendor: true }, take: 500 });
     res.json(materials.map(s.material));
   }),
 );

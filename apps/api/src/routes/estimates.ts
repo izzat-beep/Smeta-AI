@@ -69,6 +69,7 @@ estimatesRouter.get(
       where: { tenantId: req.user!.tenantId, ...proj },
       include: { items: true, stages: { orderBy: { order: 'asc' } } },
       orderBy: { createdAt: 'desc' },
+      take: 500, // CWE-770 xavfsizlik cap'i
     });
     res.json(estimates.map(s.estimate));
   }),
