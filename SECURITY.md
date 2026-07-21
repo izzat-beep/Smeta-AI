@@ -49,6 +49,14 @@ Sana: 2026-07-03 · Qamrov: `apps/api`, `apps/web`, `apps/admin`, infra (Caddy/n
 
 Regression testlar: `tests/security.test.ts` (`sniffAudio` qabul/rad — 8 assertion). Jami **43 test** yashil.
 
+## 1.2. Pentest-audit To'lqin 2 (2026-07-21)
+
+| ID | Zaiflik | CWE | Tuzatish |
+|----|---------|-----|----------|
+| **F1** | Ro'yxat so'rovlarida pagination yo'q (unbounded) | CWE-770 | projects/orders/sales/estimates/materials/realtors `take: 500` xavfsizlik cap'i (**non-breaking**; javob shakli o'zgarmadi). To'liq pagination — kelajak (breaking). |
+| **F2** | Admin/moliya amallari uchun o'zgarmas iz yo'q (non-repudiation) | CWE-778 | **Append-only `AuditLog`** modeli (migratsiya `20260721110000_audit_log`) + `audit()` helper (`src/audit.ts`). admin.ts mutatsiyalari (user/vendor/tenant create/delete/update/block) log qilinadi (actor, IP, target, meta). Kodda faqat `create` — hech qachon update/delete. |
+| **F8** | Eskirgan refresh-token yozuvlari to'planardi | CWE-459 | `src/cleanup.ts` — kunlik in-process job: expired + 30 kundan eski bekor tokenlarni o'chiradi (`startCleanupJobs`). |
+
 ## 2. Tekshirilgan va xavfsiz topilgan joylar
 
 - **SQL injection**: Kodda `$queryRaw`/`$executeRaw` **umuman ishlatilmagan** — barcha DB murojaatlari Prisma query builder orqali (parametrlangan). Xavf yo'q.

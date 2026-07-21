@@ -164,6 +164,25 @@ model User {
   @@index([tenantId])
 }
 
+// Audit log (append-only, CWE-778): sezgir/admin amallari uchun o'zgarmas iz.
+// Hech qanday relation yo'q — subyekt o'chsa ham log qoladi (non-repudiation).
+// Kodda FAQAT create qilinadi (update/delete YO'Q).
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorKind  String // 'admin' | 'vendor' | 'tenant'
+  actorEmail String?
+  action     String // masalan 'admin.user.create', 'vendor.block'
+  targetType String?
+  targetId   String?
+  ip         String?
+  meta       String? // JSON string (ixtiyoriy qo'shimcha kontekst)
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([createdAt])
+}
+
 // Push bildirishnoma uchun qurilma tokeni (Expo). Bir foydalanuvchida bir necha
 // qurilma bo'lishi mumkin; token UNIQUE (qayta ro'yxatdan o'tsa upsert).
 model DeviceToken {

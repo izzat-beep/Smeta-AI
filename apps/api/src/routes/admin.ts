@@ -18,6 +18,7 @@ import {
 import * as s from '../serialize.js';
 import { isLocked, lockRemainingSeconds, nextFailedState, CLEARED_STATE, needsClear } from '../lockout.js';
 import { verifyTOTP, generateSecret, otpauthURL } from '../totp.js';
+import { audit } from '../audit.js';
 import { encryptSecret, decryptSecret } from '../totpCrypto.js';
 import { PLAN_PRICES } from '@smeta/shared';
 import { allowedNextStatuses, notifyOrderStatus, notifyCustomerMessage } from '../notify.js';
@@ -193,6 +194,7 @@ adminRouter.post(
       },
     });
 
+    await audit(req, { actorId: req.admin!.sub, actorKind: 'admin', action: 'admin.user.create', targetType: 'AdminUser', targetId: admin.id, meta: { email: body.email, role: body.role } });
     res.status(201).json(s.adminUser(admin));
   })
 );
@@ -205,6 +207,7 @@ adminRouter.delete(
       return res.status(400).json({ error: 'bad_request', message: "O'zingizni o'chira olmaysiz" });
     }
     await prisma.adminUser.delete({ where: { id: req.params.id } });
+    await audit(req, { actorId: req.admin!.sub, actorKind: 'admin', action: 'admin.user.delete', targetType: 'AdminUser', targetId: req.params.id });
     res.json({ ok: true });
   })
 );
@@ -390,6 +393,7 @@ adminRouter.patch(
     const existing = await prisma.tenant.findUnique({ where: { id: req.params.id } });
     if (!existing) return res.status(404).json({ error: 'not_found', message: 'Mijoz topilmadi' });
     const t = await prisma.tenant.update({ where: { id: req.params.id }, data: body });
+    await audit(req, { actorId: req.admin!.sub, actorKind: 'admin', action: 'admin.tenant.update', targetType: 'Tenant', targetId: t.id, meta: body });
     res.json(s.tenant(t));
   }),
 );
@@ -450,6 +454,7 @@ adminRouter.post(
       },
       include: { tenant: true },
     });
+    await audit(req, { actorId: req.admin!.sub, actorKind: 'admin', action: 'admin.user.create', targetType: 'User', targetId: u.id, meta: { email: body.email, tenantId: body.tenantId, role: u.role } });
     res.status(201).json({ ...s.user(u), tenantName: u.tenant.name });
   }),
 );
@@ -480,6 +485,7 @@ adminRouter.delete(
     const ex = await prisma.user.findUnique({ where: { id: req.params.id } });
     if (!ex) return res.status(404).json({ error: 'not_found', message: 'Foydalanuvchi topilmadi' });
     await prisma.user.delete({ where: { id: req.params.id } });
+    await audit(req, { actorId: req.admin!.sub, actorKind: 'admin', action: 'admin.user.delete', targetType: 'User', targetId: req.params.id, meta: { email: ex.email } });
     res.status(204).end();
   }),
 );
@@ -527,6 +533,7 @@ adminRouter.post(
         mustChangePassword: true,
       },
     });
+    await audit(req, { actorId: req.admin!.sub, actorKind: 'admin', action: 'admin.vendor.create', targetType: 'Vendor', targetId: v.id, meta: { login: body.login } });
     res.status(201).json(s.vendor(v));
   }),
 );
@@ -560,6 +567,14 @@ adminRouter.patch(
       await prisma.refreshToken.updateMany({ where: { adminId: req.params.id, revokedAt: null }, data: { revokedAt: new Date() } });
     }
     const v = await prisma.vendor.update({ where: { id: req.params.id }, data });
+    await audit(req, {
+      actorId: req.admin!.sub,
+      actorKind: 'admin',
+      action: body.status === 'BLOCKED' ? 'admin.vendor.block' : 'admin.vendor.update',
+      targetType: 'Vendor',
+      targetId: v.id,
+      meta: { status: body.status, passwordReset: !!body.password },
+    });
     res.json(s.vendor(v));
   }),
 );
@@ -571,6 +586,7 @@ adminRouter.delete(
     const ex = await prisma.vendor.findUnique({ where: { id: req.params.id } });
     if (!ex) return res.status(404).json({ error: 'not_found', message: 'Sotuvchi topilmadi' });
     await prisma.vendor.delete({ where: { id: req.params.id } }); // materiallari cascade o'chadi
+    await audit(req, { actorId: req.admin!.sub, actorKind: 'admin', action: 'admin.vendor.delete', targetType: 'Vendor', targetId: req.params.id, meta: { login: ex.login } });
     res.status(204).end();
   }),
 );

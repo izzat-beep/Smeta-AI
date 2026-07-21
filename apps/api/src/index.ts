@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 import { ZodError } from 'zod';
 import { config } from './config.js';
 import { requireAuth } from './auth.js';
+import { startCleanupJobs } from './cleanup.js';
 import { authRouter } from './routes/auth.js';
 import { dashboardRouter } from './routes/dashboard.js';
 import { projectsRouter } from './routes/projects.js';
@@ -146,4 +147,6 @@ app.listen(config.port, () => {
   console.log(
     `  🌐  CORS ruxsat: ${config.cors.origins.join(', ') || '(BO\'SH! productionda DOMAIN yoki WEB_ORIGIN o\'rnating — aks holda brauzer so\'rovlari 403 bo\'ladi)'}\n`,
   );
+  // F8: eskirgan refresh-tokenlarni davriy tozalash (kunlik).
+  startCleanupJobs();
 });
