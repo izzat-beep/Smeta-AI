@@ -8,8 +8,10 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '@/i18n';
 import { queryClient } from '@/lib/query';
+import * as Notifications from 'expo-notifications';
 import { useAuth } from '@/lib/auth/authStore';
 import { useSettings } from '@/lib/settingsStore';
+import { registerForPush } from '@/lib/push';
 import { colors } from '@/theme/tokens';
 
 // Auth-gate: sessiya holatiga qarab (auth) va (tabs) guruhlari orasida
@@ -28,6 +30,19 @@ function AuthGate() {
       router.replace('/(tabs)');
     }
   }, [status, segments, router]);
+
+  // Push: autentifikatsiyadan keyin qurilma tokenini ro'yxatdan o'tkazish.
+  useEffect(() => {
+    if (status === 'authenticated') void registerForPush();
+  }, [status]);
+
+  // Push bildirishnoma bosilganda buyurtmalarga o'tish.
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener(() => {
+      router.push('/buyurtmalar');
+    });
+    return () => sub.remove();
+  }, [router]);
 
   if (status === 'loading') {
     return (

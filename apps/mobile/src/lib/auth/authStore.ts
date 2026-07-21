@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { User, Tenant } from '@smeta/shared';
 import { api } from '@/lib/api/client';
 import { tokenStore } from '@/lib/auth/tokenStore';
+import { unregisterPush } from '@/lib/push';
 
 // Mobil login/register javobi — web AuthResponse + mobil uchun refreshToken (G1).
 interface MobileAuthResponse {
@@ -95,6 +96,7 @@ export const useAuth = create<AuthState>((set) => ({
   },
 
   async logout() {
+    await unregisterPush().catch(() => undefined); // access token hali amal qiladi
     const refreshToken = await tokenStore.getRefresh();
     await api.post('/auth/logout', { refreshToken }).catch(() => undefined);
     await tokenStore.clear();
