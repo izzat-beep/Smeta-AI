@@ -51,6 +51,17 @@ export default function DashboardScreen() {
         <StatCard icon="trending-up-outline" label={t('dashboard.productivity')} value={`${stats.productivity}%`} />
       </View>
 
+      <Pressable
+        onPress={() => router.push('/hisobotlar')}
+        className="flex-row items-center justify-between rounded-2xl border border-border/40 bg-black/20 p-4 active:bg-white/5"
+      >
+        <View className="flex-row items-center gap-2">
+          <Ionicons name="bar-chart-outline" size={18} color={colors.purple} />
+          <Text className="text-white text-sm font-medium">{t('reports.title')}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+      </Pressable>
+
       {data.aiRecommendation ? (
         <View className="rounded-2xl border border-purple/30 bg-purple/10 p-4">
           <View className="flex-row items-center gap-2 mb-1">

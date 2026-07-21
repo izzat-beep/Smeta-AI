@@ -12,6 +12,7 @@ import type {
   ExpenseCategory,
   Material,
   Order,
+  ReportsSummary,
 } from '@smeta/shared';
 
 // Query string quruvchi (bo'sh/undefined qiymatlarni tashlab).
@@ -124,4 +125,10 @@ export interface UpdateProfileInput {
 
 export const settingsApi = {
   update: (input: UpdateProfileInput) => api.patch<unknown>('/settings', input),
+};
+
+// ─── Hisobotlar ──────────────────────────────────────────────────────────────
+export const reportsApi = {
+  summary: (params?: { projectId?: string; period?: string }) =>
+    api.get<ReportsSummary>(`/reports/summary${qs(params)}`),
 };
