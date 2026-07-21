@@ -39,6 +39,9 @@ export function VoiceButton({ onResult }: { onResult: (r: VoiceResult) => void }
       <Pressable
         onPress={toggle}
         disabled={processing}
+        accessibilityRole="button"
+        accessibilityLabel={recording ? t('voice.listening') : t('voice.record')}
+        hitSlop={8}
         className={`flex-row items-center justify-center gap-2 h-11 rounded-xl border ${
           recording ? 'bg-danger/15 border-danger/50' : 'bg-black/20 border-border/40'
         } active:opacity-80`}

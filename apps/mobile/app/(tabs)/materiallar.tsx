@@ -74,6 +74,8 @@ export default function MaterialsScreen() {
       {count > 0 ? (
         <Pressable
           onPress={() => router.push('/savat')}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('cart.title')}: ${count}`}
           className="absolute bottom-6 right-6 flex-row items-center gap-2 px-5 h-14 rounded-full bg-purple shadow-lg active:bg-purple-dark"
         >
           <Ionicons name="cart" size={20} color={colors.white} />

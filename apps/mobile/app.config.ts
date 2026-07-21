@@ -11,6 +11,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: 'portrait',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
+  // OTA update'lar uchun runtime versiyasi (EAS Update bilan).
+  runtimeVersion: { policy: 'appVersion' },
+  web: {
+    bundler: 'metro',
+    favicon: './assets/favicon.png',
+  },
   icon: './assets/icon.png',
   splash: {
     image: './assets/splash.png',

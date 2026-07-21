@@ -23,6 +23,9 @@ export function Button({ title, loading, variant = 'primary', disabled, ...rest 
   return (
     <Pressable
       disabled={loading || disabled}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: !!(loading || disabled), busy: !!loading }}
       className={`h-12 flex-row items-center justify-center rounded-xl disabled:opacity-50 ${VARIANT[variant]}`}
       {...rest}
     >
