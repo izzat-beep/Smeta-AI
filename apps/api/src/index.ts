@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
 import { ZodError } from 'zod';
 import { config } from './config.js';
 import { requireAuth } from './auth.js';
@@ -61,6 +62,20 @@ app.use(
 app.use(cookieParser());
 // Request body hajmi cheklovi (file upload'siz endpointlar uchun).
 app.use(express.json({ limit: '1mb' }));
+
+// Global API rate-limit (DoS xavfsizlik to'ri) — IP bo'yicha. Auth qatlamidan
+// oldin ishlagani uchun IP asosida; sezgir endpointlar (login/ai/voice) o'z
+// qat'iyroq limitlariga ega. Ofis/NAT bo'lgan foydalanuvchilar uchun mo''tadil.
+app.use(
+  '/api',
+  rateLimit({
+    windowMs: 60_000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'too_many_requests', message: 'Juda ko\'p so\'rov. Biroz kuting.' },
+  }),
+);
 
 // API javoblari hech qachon keshlanmasin — deploy'dan keyin brauzer/proxy
 // eski ma'lumotni ko'rsatib qolmasligi uchun.

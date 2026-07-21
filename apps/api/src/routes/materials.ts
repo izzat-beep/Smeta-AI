@@ -12,8 +12,9 @@ materialsRouter.get(
   '/',
   ah(async (req, res) => {
     const tenantId = req.user!.tenantId;
-    const q = (req.query.q as string | undefined)?.trim();
-    const category = req.query.category as string | undefined;
+    // Qidiruv kirishini cheklaymiz (CWE-400: unbounded input DB'ga tushmasin).
+    const q = (req.query.q as string | undefined)?.trim().slice(0, 100);
+    const category = (req.query.category as string | undefined)?.slice(0, 60);
     const where: any = { OR: [{ tenantId: null }, { tenantId }] };
     const and: any[] = [];
     if (q) and.push({ OR: [{ name: { contains: q, mode: 'insensitive' } }, { provider: { contains: q, mode: 'insensitive' } }] });

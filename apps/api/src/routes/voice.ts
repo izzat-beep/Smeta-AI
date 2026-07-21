@@ -68,6 +68,20 @@ const intentSchema = z.object({
 });
 type Intent = z.infer<typeof intentSchema>;
 
+// Magic-byte tekshiruvi (CWE-434): client MIME'ga ishonmaymiz — buffer boshini
+// haqiqiy audio konteyner imzosi bilan solishtiramiz (OGG/WebM/MP3/WAV/MP4).
+export function sniffAudio(buf: Buffer): boolean {
+  if (buf.length < 12) return false;
+  const a4 = buf.subarray(0, 4);
+  if (a4.toString('latin1') === 'OggS') return true; // Ogg/Opus
+  if (buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3) return true; // WebM/Matroska (EBML)
+  if (a4.toString('latin1') === 'RIFF') return true; // WAV
+  if (buf.subarray(4, 8).toString('latin1') === 'ftyp') return true; // MP4/M4A
+  if (buf.subarray(0, 3).toString('latin1') === 'ID3') return true; // MP3 (ID3 tag, 3 bayt)
+  if (buf[0] === 0xff && (buf[1] & 0xe0) === 0xe0) return true; // MP3 frame sync
+  return false;
+}
+
 // ─── Whisper (STT) ────────────────────────────────────────────────────────
 async function transcribe(buffer: Buffer, mimetype: string): Promise<string> {
   if (!openai) throw new Error('STT_NOT_CONFIGURED');
@@ -177,9 +191,14 @@ voiceRouter.post(
   voiceLimiter,
   upload.single('audio'),
   ah(async (req, res) => {
-    let transcript = typeof req.body?.text === 'string' ? req.body.text.trim() : '';
+    // Matn kirishini cheklaymiz (CWE-400: LLM cost-drain) — 2000 belgi kifoya.
+    let transcript = typeof req.body?.text === 'string' ? req.body.text.trim().slice(0, 2000) : '';
 
     if (!transcript && req.file) {
+      // Magic-byte tekshiruvi — soxta MIME bilan yuborilgan fayl rad etiladi.
+      if (!sniffAudio(req.file.buffer)) {
+        return res.status(415).json({ error: 'unsupported_media', message: 'Audio fayl formati tan olinmadi.' });
+      }
       try {
         transcript = (await transcribe(req.file.buffer, req.file.mimetype)).trim();
       } catch (e: any) {

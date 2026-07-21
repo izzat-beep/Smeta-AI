@@ -8,6 +8,7 @@ import { isLocked, nextFailedState, needsClear, lockRemainingSeconds, LOCKOUT } 
 import { hmacHashToken, legacyHashToken } from '../src/auth.js';
 import { totpAt, verifyTOTP, generateSecret, base32Encode, base32Decode, otpauthURL } from '../src/totp.js';
 import { encryptSecret, decryptSecret } from '../src/totpCrypto.js';
+import { sniffAudio } from '../src/routes/voice.js';
 
 // ─── URL maydonlari (avatarUrl/logoUrl/imageUrl) ─────────────────────────────
 
@@ -208,4 +209,28 @@ test('decryptSecret: buzilgan ciphertext (GCM tag) rad etiladi', () => {
   const parts = enc.split(':');
   parts[3] = Buffer.from('buzilgan-data').toString('base64'); // ciphertextni almashtiramiz
   assert.throws(() => decryptSecret(parts.join(':')));
+});
+
+// ─── Fayl upload magic-byte (F5, CWE-434) ────────────────────────────────────
+
+function padded(head: number[]): Buffer {
+  const b = Buffer.alloc(16);
+  Buffer.from(head).copy(b, 0);
+  return b;
+}
+
+test('sniffAudio: haqiqiy audio imzolarini qabul qiladi', () => {
+  assert.equal(sniffAudio(Buffer.from('OggS' + '\0'.repeat(12))), true); // Ogg
+  assert.equal(sniffAudio(padded([0x1a, 0x45, 0xdf, 0xa3])), true); // WebM
+  assert.equal(sniffAudio(Buffer.from('RIFF' + '\0'.repeat(12))), true); // WAV
+  assert.equal(sniffAudio(Buffer.from('\0\0\0\0ftypM4A ' + '\0')), true); // MP4/M4A
+  assert.equal(sniffAudio(Buffer.from('ID3' + '\0'.repeat(12))), true); // MP3 ID3
+  assert.equal(sniffAudio(padded([0xff, 0xfb, 0x90, 0x00])), true); // MP3 frame
+});
+
+test('sniffAudio: soxta/mos kelmaydigan fayllarni rad etadi', () => {
+  assert.equal(sniffAudio(Buffer.from('<?php system($_GET[0]); ?>')), false);
+  assert.equal(sniffAudio(Buffer.from('GIF89a' + '\0'.repeat(12))), false);
+  assert.equal(sniffAudio(Buffer.from('%PDF-1.7' + '\0'.repeat(8))), false);
+  assert.equal(sniffAudio(Buffer.from([0x00, 0x01, 0x02])), false); // juda qisqa
 });

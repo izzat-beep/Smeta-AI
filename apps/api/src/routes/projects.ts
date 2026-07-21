@@ -11,8 +11,8 @@ projectsRouter.get(
   '/',
   ah(async (req, res) => {
     const tenantId = req.user!.tenantId;
-    const q = (req.query.q as string | undefined)?.trim();
-    const status = req.query.status as string | undefined;
+    const q = (req.query.q as string | undefined)?.trim().slice(0, 100);
+    const status = (req.query.status as string | undefined)?.slice(0, 40);
     const where: any = { tenantId };
     if (q) where.OR = [{ title: { contains: q, mode: 'insensitive' } }, { clientName: { contains: q, mode: 'insensitive' } }];
     if (status) where.status = status;

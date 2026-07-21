@@ -191,7 +191,8 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const token = extractToken(req);
   if (!token) return res.status(401).json({ error: 'unauthorized', message: 'Token topilmadi' });
   try {
-    const payload = jwt.verify(token, config.jwt.secret) as TenantTokenPayload;
+    // algorithms pin — alg-confusion (masalan RS256↔HS256) oldini oladi (CWE-347).
+    const payload = jwt.verify(token, config.jwt.secret, { algorithms: ['HS256'] }) as TenantTokenPayload;
     if (payload.kind !== 'tenant') throw new Error('wrong kind');
     req.user = payload;
     next();
@@ -205,7 +206,7 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   const token = extractToken(req);
   if (!token) return res.status(401).json({ error: 'unauthorized', message: 'Token topilmadi' });
   try {
-    const payload = jwt.verify(token, config.jwt.secret) as AdminTokenPayload;
+    const payload = jwt.verify(token, config.jwt.secret, { algorithms: ['HS256'] }) as AdminTokenPayload;
     if (payload.kind !== 'admin') throw new Error('wrong kind');
     req.admin = payload;
     next();

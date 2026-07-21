@@ -3,6 +3,7 @@
 // oladigan router quriladi. RBAC: har kim FAQAT o'z bildirishnomalarini ko'radi.
 import { Router } from 'express';
 import type { Request } from 'express';
+import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { prisma } from '../prisma.js';
 import { ah } from '../util.js';
@@ -79,9 +80,20 @@ const deviceSchema = z.object({
   platform: z.enum(['ios', 'android', 'web']).optional(),
 });
 
+// Token ro'yxatga olishga rate-limit (CWE-770: token/DB spam oldini olish).
+const deviceLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.sub ?? req.ip ?? 'anon',
+  message: { error: 'too_many_requests', message: 'Juda ko\'p urinish.' },
+});
+
 // Login'da mobil ilova Expo push tokenini ro'yxatdan o'tkazadi (upsert).
 notificationsRouter.post(
   '/register-device',
+  deviceLimiter,
   ah(async (req, res) => {
     const { token, platform } = deviceSchema.parse(req.body);
     await prisma.deviceToken.upsert({
