@@ -28,7 +28,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundColor: '#0F3473',
     },
   },
-  plugins: ['expo-router', 'expo-secure-store', 'expo-localization'],
+  plugins: [
+    'expo-router',
+    'expo-secure-store',
+    'expo-localization',
+    ['expo-av', { microphonePermission: 'Ovozli buyruq uchun mikrofonga ruxsat bering.' }],
+  ],
   experiments: {
     typedRoutes: true,
   },

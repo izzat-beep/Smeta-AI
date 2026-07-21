@@ -184,6 +184,15 @@ export const ru: Translations = {
     DELIVERED: 'Доставлен',
     CANCELLED: 'Отменён',
   },
+  voice: {
+    record: 'Голосовая команда',
+    listening: 'Слушаю... нажмите, чтобы остановить',
+    processing: 'Обработка...',
+    notUnderstood: 'Не понял, попробуйте ещё раз',
+    micDenied: 'Доступ к микрофону запрещён',
+    added: 'Позиция добавлена голосом ✓',
+    heard: 'Услышано',
+  },
   reports: {
     title: 'Отчёты',
     totalExpense: 'Общие расходы',

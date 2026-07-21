@@ -9,6 +9,8 @@ import { computeTotals } from '@/lib/estimate';
 import { formatMoney } from '@/lib/format';
 import { ApiError } from '@/lib/api/client';
 import { Button } from '@/components/Button';
+import { VoiceButton } from '@/components/VoiceButton';
+import type { VoiceResult } from '@/lib/voice';
 import { colors } from '@/theme/tokens';
 import type { EstimateItemType, Currency } from '@smeta/shared';
 
@@ -48,6 +50,25 @@ export default function CalculatorScreen() {
   }
   function removeRow(key: string) {
     setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.key !== key) : prev));
+  }
+
+  // Ovozli buyruq: "g'isht besh ming dona, donasi ming so'm" -> yangi qator.
+  function onVoice(r: VoiceResult) {
+    const i = r.intent;
+    if (i.action === 'calculator_input') {
+      setRows((prev) => [
+        ...prev,
+        {
+          key: `r${counter++}`,
+          type: 'MATERIAL',
+          name: i.itemName ?? r.transcript.slice(0, 30),
+          qty: i.qty != null ? String(i.qty) : '1',
+          unitPrice: i.unitPrice != null ? String(i.unitPrice) : '',
+          unit: i.unit ?? 'dona',
+        },
+      ]);
+      if (i.currency) setCurrency(i.currency);
+    }
   }
 
   async function onSave() {
@@ -135,6 +156,9 @@ export default function CalculatorScreen() {
           </View>
         </View>
       </View>
+
+      {/* Ovozli buyruq */}
+      <VoiceButton onResult={onVoice} />
 
       {/* Qatorlar */}
       <View className="gap-3">

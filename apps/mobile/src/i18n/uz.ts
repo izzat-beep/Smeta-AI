@@ -183,6 +183,15 @@ export const uz = {
     DELIVERED: 'Yetkazildi',
     CANCELLED: 'Bekor qilindi',
   },
+  voice: {
+    record: 'Ovozli buyruq',
+    listening: 'Tinglayapman... to‘xtatish uchun bosing',
+    processing: 'Ishlanmoqda...',
+    notUnderstood: 'Tushunmadim, qayta urinib ko‘ring',
+    micDenied: 'Mikrofonga ruxsat berilmadi',
+    added: 'Ovozdan qator qo‘shildi ✓',
+    heard: 'Eshitildi',
+  },
   reports: {
     title: 'Hisobotlar',
     totalExpense: 'Umumiy xarajat',
